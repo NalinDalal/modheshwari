@@ -1,7 +1,3 @@
-Here’s a **Code of Conduct** draft for your **Modheshwari** community project:
-
----
-
 # Modheshwari Code of Conduct
 
 ## 1. Purpose
