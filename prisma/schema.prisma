@@ -1,0 +1,220 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums for standardized field values
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum BloodGroup {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// Main user model representing community members
+model User {
+  id        String    @id @default(uuid())
+  // Personal Information
+  name      String
+  surname   String
+  email     String?   // Optional, non-unique email
+  password  String    @db.VarChar(255)
+  gender    Gender
+  bloodGroup BloodGroup?
+  dateOfBirth DateTime?
+  
+  // Contact Information
+  phone     String?   // Optional, non-unique phone
+  address   String?   @db.Text
+  city      String?
+  state     String?
+  pincode   Int?
+  avatar    String?   // URL to avatar image
+
+  // Status Fields
+  status    UserStatus @default(ACTIVE)
+  verified  Boolean    @default(false)  // Profile verification status
+  isAlive   Boolean    @default(true)   // Tracks if person is deceased
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Family Tree References
+  spouseId  String?   @unique  // Making this unique for one-to-one relation
+  fatherId  String?   // Biological father reference
+  motherId  String?   // Biological mother reference
+  
+  // Organizational References
+  gotraId   Int?      // Gotra (clan) reference
+  familyId  Int?      // Family unit reference
+
+  // Relations - Gotra & Family
+  gotra     Gotra?    @relation(fields: [gotraId], references: [id])
+  family    Family?   @relation("FamilyMember", fields: [familyId], references: [id])
+
+  // Marriage Relations
+  spouse    User?     @relation("SpouseRelation", fields: [spouseId], references: [id])
+  spousedBy User?     @relation("SpouseRelation")
+
+  // Reverse Relations
+  headOfGotra    Gotra?   @relation("GotraHead")
+  headOfFamily   Family?  @relation("HeadOfFamily")
+  
+  // Event Relations
+  createdEvents Event[]   @relation("EventOrganizer")
+  attendingEvents EventAttendee[]
+
+  // Marriage Record Relations
+  marriagesAsSpouse1 Marriage[] @relation("Spouse1Relation")
+  marriagesAsSpouse2 Marriage[] @relation("Spouse2Relation")
+
+  // Education & Professional Info
+  education Education[]
+  occupation Occupation[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+// Gotra (clan) model
+model Gotra {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?  @db.Text
+  headId      String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  head        User?    @relation("GotraHead", fields: [headId], references: [id])
+  members     User[]   // Members belonging to this Gotra
+  families    Family[] // Families belonging to this Gotra
+
+  @@index([name])
+}
+
+// Family unit model
+model Family {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?  @db.Text
+  headId      String?  @unique
+  gotraId     Int?
+  address     String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  head        User?    @relation("HeadOfFamily", fields: [headId], references: [id])
+  members     User[]   @relation("FamilyMember")
+  gotra       Gotra?   @relation(fields: [gotraId], references: [id])
+
+  @@index([name])
+}
+
+// Marriage record model
+model Marriage {
+  id            Int       @id @default(autoincrement())
+  spouse1Id     String
+  spouse2Id     String
+  marriageDate  DateTime
+  marriagePlace String?
+  certificate   String?   // URL to marriage certificate
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  spouse1       User      @relation("Spouse1Relation", fields: [spouse1Id], references: [id])
+  spouse2       User      @relation("Spouse2Relation", fields: [spouse2Id], references: [id])
+
+  @@unique([spouse1Id, spouse2Id])
+}
+
+// Event model for community events
+model Event {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?   @db.Text
+  startDate   DateTime
+  endDate     DateTime?
+  venue       String?
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  organizer   User      @relation("EventOrganizer", fields: [createdBy], references: [id])
+  attendees   EventAttendee[]
+
+  @@index([startDate])
+}
+
+// Junction model for event attendance
+model EventAttendee {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  userId    String
+  status    String   // ATTENDING, MAYBE, NOT_ATTENDING
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  event     Event    @relation(fields: [eventId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+}
+
+// Education details model
+model Education {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  institution String
+  degree      String?
+  fieldOfStudy String?
+  startYear   Int
+  endYear     Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+// Occupation details model
+model Occupation {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  company     String
+  title       String
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+}
