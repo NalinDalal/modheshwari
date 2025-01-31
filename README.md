@@ -122,5 +122,13 @@ every field with some data
 `npx prisma studio` -> to open database in visual format
 
 # Next Steps:
-Start working on api endpoints like user auth, start with google and phone
-number
+Start working on api endpoints like user auth, start with google and phone number
+well 1 thing to keep in mind, like google translate have all pages switched to
+hindi and gujrati
+ use next-i18next, a popular library for internationalization in Next.js.
+ install next-i18next, configure to root file, update config files
+
+ done, now add profile page and add authentication logic
+
+ 30.01->
+ install next-auth

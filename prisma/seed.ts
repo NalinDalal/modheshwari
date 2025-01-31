@@ -6,34 +6,35 @@ async function main() {
   // Seed Gotras
   const gotra1 = await prisma.gotra.create({
     data: {
-      name: "Sharma",
-      description: "A prominent Brahmin Gotra",
+      name: "Maithiya",
+      description: "Largest Gotra",
     },
   });
 
   const gotra2 = await prisma.gotra.create({
     data: {
-      name: "Verma",
-      description: "A respected Kayastha Gotra",
+      name: "Bagaiyaa",
+      description: "A respected Gotra",
     },
   });
 
   // Seed Users
   const user1 = await prisma.user.create({
     data: {
-      name: "John",
-      surname: "Doe",
-      email: "john.doe@example.com",
-      password: "hashedpassword1", // Replace with actual hashed password
+      name: "Nalin",
+      surname: "Dalal",
+      email: "nalindalal2004@gmail.com",
+      password: "Nalindalal@2004", // Replace with actual hashed password
       gender: "MALE",
       bloodGroup: "O_POSITIVE",
-      dateOfBirth: new Date("1990-01-01"),
-      phone: "1234567890",
-      address: "123 Main St",
-      city: "CityName",
-      state: "StateName",
-      pincode: 123456,
-      avatar: "http://example.com/avatar.jpg",
+      dateOfBirth: new Date("2004-08-24"),
+      phone: "7440620675",
+      address: "03, Ward No 28, Maharana Pratap Singh Road",
+      city: "Burhanpur",
+      state: "Madhya Pradesh",
+      pincode: 450331,
+      avatar:
+        "https://lh3.googleusercontent.com/a/ACg8ocIzhAsZXZeI4WS5fs38KfshdBgRWyM71Cymw2HBTOESz7Lc4w8t=s192-c-rg-br100",
       status: "ACTIVE",
       verified: true,
       isAlive: true,
@@ -70,10 +71,10 @@ async function main() {
   // Create Families
   const family1 = await prisma.family.create({
     data: {
-      name: "Doe Family",
+      name: "Dalal(mandiwala) Family",
       headId: user1.id,
       gotraId: gotra1.id,
-      address: "123 Main St, CityName",
+      address: "Near Khan Bhai Factory, Maharana Pratap Singh Road, Burhanpur",
     },
   });
 
@@ -180,4 +181,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-
