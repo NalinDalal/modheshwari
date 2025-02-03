@@ -8,11 +8,11 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function Login() {
+export default function Register() {
   const [particles, setParticles] = useState<JSX.Element[]>([]);
-  const [loginType, setLoginType] = useState<"familyMember" | "familyHead">(
-    "familyMember",
-  );
+  const [registerType, setRegisterType] = useState<
+    "familyMember" | "familyHead"
+  >("familyMember");
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function Login() {
         <Card className="p-6 mt-10 w-full max-w-md text-gray-800 bg-white rounded-2xl shadow-2xl">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">
-              {loginType === "familyMember"
+              {registerType === "familyMember"
                 ? t("Family Member Login")
                 : t("Family Head Login")}
             </CardTitle>
@@ -81,7 +81,7 @@ export default function Login() {
                 />
               </div>
               <Button className="w-full text-white bg-indigo-600 hover:bg-indigo-700">
-                {t("Login")}
+                {t("Register")}
               </Button>
             </form>
 
@@ -90,12 +90,12 @@ export default function Login() {
                 variant="outline"
                 className="w-full"
                 onClick={() =>
-                  setLoginType((prev) =>
+                  setRegisterType((prev) =>
                     prev === "familyMember" ? "familyHead" : "familyMember",
                   )
                 }
               >
-                {loginType === "familyMember"
+                {registerType === "familyMember"
                   ? t("Switch to Family Head Login")
                   : t("Switch to Family Member Login")}
               </Button>

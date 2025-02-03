@@ -1,26 +1,3 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-yarn dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-to add packages:
-```bash
-yarn add <package-name>
-```
-
-to buuld and run in production
-```bash
-yarn build
-yarn start
-```
-
 # Use-Cases
 
 Database: PostgreSQL. 
@@ -110,7 +87,7 @@ Integration with Govt. API for Verification (eg. Aadhar etc) Provides fast and e
 - API Gateway routes the registration request to the Backend 
 - Process the request; 
 - interacts with the Payment Gateway; 
-- store in DB A confirmation notification is sent to the user via Email/SMS.
+- store in DB. A confirmation notification is sent to the user via Email/SMS.
 
 Head if gets changed then the privilegs must also be transferred
 
@@ -132,3 +109,18 @@ hindi and gujrati
 
  30.01->
  install next-auth
+
+03.02->
+added auth routes, 
+need to have now role based auth, do it with google oauth also, with database
+4 roles-> admin, subadmin, family-head, family-member
+need to add family via family-head, family-member can join family
+
+i think it is also done
+what do next->
+1. add   },
+  providerId: 'google',
+  message: 'client_id is required'
+} for google auth
+
+2. have a good landing page, and ui
