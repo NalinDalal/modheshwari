@@ -11,12 +11,12 @@ export default function Navigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="p-4 bg-white bg-opacity-10">
-      <ul className="flex justify-center space-x-6">
+    <nav className="p-6 bg-gradient-to-r from-purple-800 via-indigo-800 to-blue-800 rounded-lg shadow-lg">
+      <ul className="flex justify-center items-center space-x-8">
         <li>
           <Link
             href="/"
-            className="transition duration-300 hover:text-gray-300"
+            className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
           >
             {t("home")}
           </Link>
@@ -26,7 +26,7 @@ export default function Navigation() {
             <li>
               <Link
                 href="/profile"
-                className="transition duration-300 hover:text-gray-300"
+                className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
               >
                 {t("profile")}
               </Link>
@@ -34,7 +34,7 @@ export default function Navigation() {
             <li>
               <Link
                 href="/family"
-                className="transition duration-300 hover:text-gray-300"
+                className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
               >
                 {t("family")}
               </Link>
@@ -42,7 +42,7 @@ export default function Navigation() {
             <li>
               <Link
                 href="/events"
-                className="transition duration-300 hover:text-gray-300"
+                className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
               >
                 {t("events")}
               </Link>
@@ -50,7 +50,7 @@ export default function Navigation() {
             <li>
               <button
                 onClick={() => signOut()}
-                className="transition duration-300 hover:text-gray-300"
+                className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
               >
                 {t("signOut")}
               </button>
@@ -60,7 +60,7 @@ export default function Navigation() {
           <li>
             <Link
               href="/auth/signin"
-              className="transition duration-300 hover:text-gray-300"
+              className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
             >
               {t("signIn")}
             </Link>

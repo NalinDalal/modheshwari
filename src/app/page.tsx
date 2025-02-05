@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Particle from "../components/Particle";
-
+import Particle from "@/components/Particle";
+import Navigation from "@/components/Navigation";
 export default function Home() {
   const [particles, setParticles] = useState<JSX.Element[]>([]);
 
@@ -29,6 +29,7 @@ export default function Home() {
   return (
     <main className="overflow-hidden relative min-h-screen text-white bg-gradient-to-br from-purple-900 to-indigo-900">
       {particles}
+      <Navigation />
       <div className="container relative z-10 py-16 px-4 mx-auto">
         <motion.h1
           initial={{ opacity: 0, y: -50 }}

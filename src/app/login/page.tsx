@@ -4,7 +4,7 @@ import Particle from "@/components/Particle";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "next-i18next";
-import LanguageToggle from "@/components/LanguageToggle";
+//import LanguageToggle from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -39,9 +39,6 @@ export default function Login() {
     <main className="overflow-hidden relative min-h-screen text-white bg-gradient-to-br from-purple-900 to-indigo-900">
       {particles}
       <div className="container flex relative z-10 flex-col justify-center items-center py-16 px-4 mx-auto">
-        {/* Language Toggle */}
-        <LanguageToggle />
-
         <Card className="p-6 mt-10 w-full max-w-md text-gray-800 bg-white rounded-2xl shadow-2xl">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">
