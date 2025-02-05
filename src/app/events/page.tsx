@@ -18,7 +18,19 @@ export default function Events() {
   }, []);
 
   if (!session) {
-    return <div>{t("notSignedIn")}</div>;
+    return (
+      <div>
+        <motion.div
+          key={event.id}
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="p-6 bg-white bg-opacity-10 rounded-lg"
+        >
+          {t("notSignedIn")}
+        </motion.div>
+      </div>
+    );
   }
 
   return (
