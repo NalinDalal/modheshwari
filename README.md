@@ -46,8 +46,7 @@ Role-based access control (Admins, Members, etc.).
 ## Non Functional Requirements
 - Provide multilingual support.
 - Regular backups of data.
-**Hindu Calendar Integration**
-- Display Hindu calendar with important community events.
+
 
 **Data Privacy and Security**
 - Ensure sensitive data like Aadhar numbers are hidden. Secure communication using HTTPS.
@@ -100,27 +99,21 @@ every field with some data
 
 # Next Steps:
 Start working on api endpoints like user auth, start with google and phone number
-well 1 thing to keep in mind, like google translate have all pages switched to
-hindi and gujrati
- use next-i18next, a popular library for internationalization in Next.js.
- install next-i18next, configure to root file, update config files
+now add profile page and add authentication logic
 
- done, now add profile page and add authentication logic
+## 30.01->
+ install next-auth, clerk as need to have multiple login routes
 
- 30.01->
- install next-auth
-
-03.02->
+## 03.02->
 added auth routes, 
 need to have now role based auth, do it with google oauth also, with database
 4 roles-> admin, subadmin, family-head, family-member
 need to add family via family-head, family-member can join family
 
 i think it is also done
-what do next->
-1. add   },
-  providerId: 'google',
-  message: 'client_id is required'
-} for google auth
 
-2. have a good landing page, and ui
+## 05.02->
+landing page and ui initiated
+
+what do next->
+1. add for role based auth via oauth, clerk, jwt
