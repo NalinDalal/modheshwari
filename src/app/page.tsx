@@ -37,7 +37,7 @@ export default function Home() {
           transition={{ duration: 0.8 }}
           className="mb-8 text-5xl font-bold text-center md:text-7xl"
         >
-          Community Management
+          Modheshwari
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 50 }}

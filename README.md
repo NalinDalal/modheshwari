@@ -117,3 +117,23 @@ landing page and ui initiated
 
 what do next->
 1. add for role based auth via oauth, clerk, jwt
+since we have what no of users-> i think 4
+Admin-> head of community{create by own}
+SubAdmin-> sub-head of community, 
+->Head of Sub-Community
+->Family Head{part of sub-community}
+->Family Member{normal user}
+
+Gotra{create them, they are literally 10 i think}
+their admin, subadmin totals to 20, create their own endpoints, seed into db
+{like hardcode them}
+do generalised for normal user, family admin, so that i would need to make
+literally 2 types of accounts
+
+uhh, added for oauth, needed to add client, go to for oauth client{just surf it
+you will get there}
+now from developers.google.com we configured oauth, and it points to `http://localhost:3000/authorised`
+
+what we want to acheive, like add family-head signup via oauth, it generates a fresh
+family-id and seed into db
+now user signup with oauth and the family id and gets authorised

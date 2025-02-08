@@ -44,7 +44,6 @@ The community management application will provide users with easy-to-use feature
 
 - **Admin**: Full access to all features including family management and event creation.
 - **User**: Limited access to profile, events, and notifications.
-- **Guest**: Limited access; needs to log in to access most features.
 
 ### 2.4 **Design and Implementation Constraints**
 

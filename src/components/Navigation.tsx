@@ -18,7 +18,7 @@ export default function Navigation() {
             href="/"
             className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
           >
-            {t("home")}
+            {t("Home")}
           </Link>
         </li>
         {session ? (
@@ -28,7 +28,7 @@ export default function Navigation() {
                 href="/profile"
                 className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
               >
-                {t("profile")}
+                {t("Profile")}
               </Link>
             </li>
             <li>
@@ -36,7 +36,7 @@ export default function Navigation() {
                 href="/family"
                 className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
               >
-                {t("family")}
+                {t("Family")}
               </Link>
             </li>
             <li>
@@ -44,7 +44,7 @@ export default function Navigation() {
                 href="/events"
                 className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
               >
-                {t("events")}
+                {t("Events")}
               </Link>
             </li>
             <li>
@@ -52,7 +52,7 @@ export default function Navigation() {
                 onClick={() => signOut()}
                 className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
               >
-                {t("signOut")}
+                {t("SignOut")}
               </button>
             </li>
           </>
@@ -62,7 +62,7 @@ export default function Navigation() {
               href="/auth/signin"
               className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
             >
-              {t("signIn")}
+              {t("SignIn")}
             </Link>
           </li>
         )}
