@@ -1,12 +1,13 @@
+//custom
 "use client";
 
 import Particle from "@/components/Particle";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "next-i18next";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SignUp } from "@clerk/nextjs";
 
 export default function Register() {
   const [particles, setParticles] = useState<JSX.Element[]>([]);
@@ -43,44 +44,55 @@ export default function Register() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">
               {registerType === "familyMember"
-                ? t("Family Member Login")
-                : t("Family Head Login")}
+                ? t("Family Member Registration")
+                : t("Family Head Registration")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {t("Email")}
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  className="block p-2 mt-1 w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  placeholder={t("Enter your email")}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {t("Password")}
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  className="block p-2 mt-1 w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  placeholder={t("Enter your password")}
-                />
-              </div>
-              <Button className="w-full text-white bg-indigo-600 hover:bg-indigo-700">
-                {t("Register")}
-              </Button>
-            </form>
+            {/* Clerk SignUp Component */}
+            <SignUp
+              appearance={{
+                elements: {
+                  card: "shadow-none border-none bg-transparent",
+                  headerTitle: "text-xl font-bold text-gray-900",
+                  formFieldInput:
+                    "block p-2 mt-1 w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500",
+                  primaryButton:
+                    "w-full text-white bg-indigo-600 hover:bg-indigo-700",
+                  footerActionLink: "text-indigo-600 hover:underline",
+                },
+              }}
+              afterSignUp={async (user) => {
+                if (user.publicMetadata?.role === "family-head") {
+                  const response = await fetch("/api/family/create", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId: user.id }),
+                  });
+
+                  if (response.ok) {
+                    const { familyId } = await response.json();
+
+                    // Save familyId in Clerk metadata
+                    await fetch(
+                      `https://api.clerk.dev/v1/users/${user.id}/metadata`,
+                      {
+                        method: "PATCH",
+                        headers: {
+                          Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          public_metadata: { familyId },
+                        }),
+                      },
+                    );
+
+                    router.push("/dashboard");
+                  }
+                }
+              }}
+            />
 
             <div className="mt-4 text-center">
               <Button
@@ -93,8 +105,8 @@ export default function Register() {
                 }
               >
                 {registerType === "familyMember"
-                  ? t("Switch to Family Head Login")
-                  : t("Switch to Family Member Login")}
+                  ? t("Switch to Family Head Registration")
+                  : t("Switch to Family Member Registration")}
               </Button>
             </div>
           </CardContent>

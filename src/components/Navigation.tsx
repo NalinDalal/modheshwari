@@ -2,26 +2,34 @@
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { useSession, signOut } from "next-auth/react";
+//import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-
+import { Sidebar } from "@/components/ui/Sidebar";
+import { useUser, SignOutButton } from "@clerk/nextjs";
 export default function Navigation() {
   const { t } = useTranslation();
-  const { data: session } = useSession();
-  const pathname = usePathname();
 
+  const pathname = usePathname();
+  const { user, isSignedIn } = useUser();
   return (
-    <nav className="p-6 bg-gradient-to-r from-purple-800 via-indigo-800 to-blue-800 rounded-lg shadow-lg">
-      <ul className="flex justify-center items-center space-x-8">
+    <nav className="p-3 bg-gradient-to-r from-purple-800 via-indigo-800 to-blue-800 rounded-lg shadow-lg">
+      <ul className="flex gap-x-6 justify-between items-center md:justify-center">
+        {/* Sidebar (Hamburger Menu) */}
         <li>
+          <Sidebar />
+        </li>
+        {/* Navigation Links */}
+        <li className="hidden md:block">
           <Link
             href="/"
-            className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
+            className={`text-lg font-semibold text-white transition duration-300 hover:opacity-80 ${
+              pathname === "/" ? "border-b-2 border-white" : ""
+            }`}
           >
             {t("Home")}
           </Link>
         </li>
-        {session ? (
+        {isSignedIn ? (
           <>
             <li>
               <Link
@@ -48,12 +56,7 @@ export default function Navigation() {
               </Link>
             </li>
             <li>
-              <button
-                onClick={() => signOut()}
-                className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
-              >
-                {t("SignOut")}
-              </button>
+              <SignOutButton />
             </li>
           </>
         ) : (
@@ -65,7 +68,7 @@ export default function Navigation() {
               {t("SignIn")}
             </Link>
           </li>
-        )}
+        )}{" "}
       </ul>
     </nav>
   );

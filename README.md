@@ -137,3 +137,22 @@ now from developers.google.com we configured oauth, and it points to `http://loc
 what we want to acheive, like add family-head signup via oauth, it generates a fresh
 family-id and seed into db
 now user signup with oauth and the family id and gets authorised
+
+
+first priority->
+create a sidebar to navigate like every service, but keep it in a burger
+button{done 09.02.2025}
+
+now for role based auth we will use clerk unfortunately, so work on middleware.ts file-> add clerk there
+now call diff builtin options in layout.tsx, wrap clerkprovider inside
+sessionprovider
+
+update env
+
+see i want to do what->
+- create a family-id if family-head signsup, via clerk
+- join a family  with a family id if a family-member signups with clerk
+
+01:17 09.02.2025
+what is done, done with normal-user auth via clerk
+now to implement for admin and subadmins
