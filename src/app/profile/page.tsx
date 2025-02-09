@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-
+import NotSigned from "@/components/ui/NotSigned";
 export default function Profile() {
   const { data: session } = useSession();
   const { t } = useTranslation();
@@ -20,7 +20,11 @@ export default function Profile() {
   }, [session]);
 
   if (!session) {
-    return <div>{t("notSignedIn")}</div>;
+    return (
+      <div>
+        <NotSigned />
+      </div>
+    );
   }
 
   return (

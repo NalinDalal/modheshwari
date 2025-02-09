@@ -154,5 +154,8 @@ see i want to do what->
 - join a family  with a family id if a family-member signups with clerk
 
 01:17 09.02.2025
-what is done, done with normal-user auth via clerk
-now to implement for admin and subadmins
+what is done, done with normal-user auth via clerk and google oauth
+
+Next Procedure to do:
+call for all types of routes, like create family, join family for normal user,
+gotra bhi partcularly seed kr lo

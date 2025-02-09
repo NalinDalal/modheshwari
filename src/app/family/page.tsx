@@ -1,25 +1,26 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useUser } from "@clerk/nextjs";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import NotSigned from "@/components/ui/NotSigned";
+
 export default function Family() {
-  const { data: session } = useSession();
+  const { user } = useUser();
   const { t } = useTranslation();
   const [familyData, setFamilyData] = useState(null);
 
   useEffect(() => {
-    if (session?.user?.id) {
+    if (user?.id) {
       // Fetch family data from API
-      fetch(`/api/family/${session.user.id}`)
+      fetch(`/api/family/${user.id}`)
         .then((res) => res.json())
         .then((data) => setFamilyData(data));
     }
-  }, [session]);
+  }, [user]);
 
-  if (!session) {
+  if (!user) {
     return <NotSigned />;
   }
 
