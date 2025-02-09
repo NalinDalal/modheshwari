@@ -10,7 +10,8 @@ export default function Family() {
   const { user } = useUser();
   const { t } = useTranslation();
   const [familyData, setFamilyData] = useState(null);
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   useEffect(() => {
     if (user?.id) {
       // Fetch family data from API
@@ -23,6 +24,8 @@ export default function Family() {
   if (!user) {
     return <NotSigned />;
   }
+  if (loading) return <div className="text-center">{t("loading")}</div>;
+  if (error) return <div className="text-center text-red-500">{error}</div>;
 
   return (
     <div className="container py-8 mx-auto">

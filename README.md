@@ -150,8 +150,8 @@ sessionprovider
 update env
 
 see i want to do what->
-- create a family-id if family-head signsup, via clerk
-- join a family  with a family id if a family-member signups with clerk
+- create a family-id if family-head signsup
+- join a family  with a family id if a family-member signups
 
 01:17 09.02.2025
 what is done, done with normal-user auth via clerk and google oauth

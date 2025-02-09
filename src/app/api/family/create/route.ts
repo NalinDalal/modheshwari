@@ -1,24 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-
+import { getServerSession } from "next-auth";
 const prisma = new PrismaClient();
 
-export async function POST(req: NextRequest) {
-  try {
-    const { userId } = await req.json();
+export async function POST(req: Request) {
+  const session = await getServerSession();
+  if (!session || session.user.role !== "family-head") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
-    const newFamily = await prisma.family.create({
+  const { name, gotra, address } = await req.json();
+  if (!name || !gotra || !address) {
+    return NextResponse.json(
+      { error: "Missing required fields" },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const family = await prisma.family.create({
       data: {
-        headId: userId,
-        name: `New Family`,
+        name,
+        gotra,
+        address,
+        headId: session.user.id,
       },
     });
-
-    return NextResponse.json({ familyId: newFamily.id }, { status: 201 });
+    return NextResponse.json(family, { status: 201 });
   } catch (error) {
-    console.error("Error creating family:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Error creating family" },
       { status: 500 },
     );
   }
