@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import NotSigned from "@/components/ui/NotSigned";
+import { Sidebar } from "@/components/ui/Sidebar";
 export default function Profile() {
   const { data: session } = useSession();
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ export default function Profile() {
 
   return (
     <div className="container py-8 mx-auto">
+      <Sidebar />
       <motion.h1
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}

@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.11.1",
+    "@emailjs/browser": "^4.4.1",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
     "@next-auth/prisma-adapter": "^1.0.7",
@@ -26,6 +27,7 @@
     "next": "15.1.6",
     "next-auth": "^4.24.11",
     "next-i18next": "^15.4.1",
+    "nodemailer": "^6.10.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",

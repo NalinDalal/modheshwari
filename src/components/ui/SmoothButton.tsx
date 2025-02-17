@@ -10,5 +10,3 @@ export const SmoothButton = ({ label, onClick, className }) => {
     </button>
   );
 };
-
-//export default SmoothButton;

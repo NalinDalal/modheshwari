@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-//import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/ui/Sidebar";
 import { useUser, SignOutButton } from "@clerk/nextjs";
+
 export default function Navigation() {
   const { t } = useTranslation();
-
   const pathname = usePathname();
-  const { user, isSignedIn } = useUser();
+  const { isSignedIn } = useUser();
+
   return (
     <nav className="p-3 bg-gradient-to-r from-purple-800 via-indigo-800 to-blue-800 rounded-lg shadow-lg">
       <ul className="flex gap-x-6 justify-between items-center md:justify-center">
@@ -18,6 +18,7 @@ export default function Navigation() {
         <li>
           <Sidebar />
         </li>
+
         {/* Navigation Links */}
         <li className="hidden md:block">
           <Link
@@ -29,6 +30,7 @@ export default function Navigation() {
             {t("Home")}
           </Link>
         </li>
+
         {isSignedIn ? (
           <>
             <li>
@@ -60,15 +62,25 @@ export default function Navigation() {
             </li>
           </>
         ) : (
-          <li>
-            <Link
-              href="/auth/signin"
-              className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
-            >
-              {t("SignIn")}
-            </Link>
-          </li>
-        )}{" "}
+          <>
+            <li>
+              <Link
+                href="/auth/signin"
+                className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
+              >
+                {t("SignIn")}
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/auth/signup"
+                className="text-xl font-semibold text-white transition duration-300 hover:text-gray-300 hover:underline"
+              >
+                {t("SignUp")}
+              </Link>
+            </li>
+          </>
+        )}
       </ul>
     </nav>
   );

@@ -159,3 +159,15 @@ what is done, done with normal-user auth via clerk and google oauth
 Next Procedure to do:
 call for all types of routes, like create family, join family for normal user,
 gotra bhi partcularly seed kr lo
+
+area wise rendering of families
+message easily sabhi ko pahuch jye-> sort of notification
+
+by defualt user login
+make admin routes custom, keep oauth in them, then works with type of user
+like user has 5 types, so different routes has diff user type via oauth
+
+17.02.2025
+updated ui
+added for services like diff routes
+updated contact, about page

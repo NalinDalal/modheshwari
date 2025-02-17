@@ -1,14 +1,14 @@
 "use client";
 
-import Particle from "@/components/Particle";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useTranslation } from "next-i18next";
-//import LanguageToggle from "@/components/LanguageToggle";
+import { useTranslation } from "react-i18next";
+import Particle from "@/components/Particle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Login() {
+  const router = useRouter(); // ✅ Initialize Next.js router
   const [particles, setParticles] = useState<JSX.Element[]>([]);
   const [loginType, setLoginType] = useState<"familyMember" | "familyHead">(
     "familyMember",
@@ -35,6 +35,18 @@ export default function Login() {
     };
   }, []);
 
+  // ✅ Handle form submission
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    // Simulated login API call (Replace this with actual login logic)
+    const isAuthenticated = true; // Assume login is successful
+
+    if (isAuthenticated) {
+      router.push("/profile"); // ✅ Redirect to profile page
+    }
+  };
+
   return (
     <main className="overflow-hidden relative min-h-screen text-white bg-gradient-to-br from-purple-900 to-indigo-900">
       {particles}
@@ -48,7 +60,7 @@ export default function Login() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleLogin}>
               <div>
                 <label
                   htmlFor="email"
@@ -59,6 +71,7 @@ export default function Login() {
                 <input
                   type="email"
                   id="email"
+                  required
                   className="block p-2 mt-1 w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   placeholder={t("Enter your email")}
                 />
@@ -73,11 +86,15 @@ export default function Login() {
                 <input
                   type="password"
                   id="password"
+                  required
                   className="block p-2 mt-1 w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   placeholder={t("Enter your password")}
                 />
               </div>
-              <Button className="w-full text-white bg-indigo-600 hover:bg-indigo-700">
+              <Button
+                type="submit"
+                className="w-full text-white bg-indigo-600 hover:bg-indigo-700"
+              >
                 {t("Login")}
               </Button>
             </form>
