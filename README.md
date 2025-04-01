@@ -171,3 +171,6 @@ like user has 5 types, so different routes has diff user type via oauth
 updated ui
 added for services like diff routes
 updated contact, about page
+
+manually put a types.ts file with required user permission, for that make some permission, then import them into user, then handle with auth
+like admin has all rights, but family admin doesn't, so handle the rendering of the components based on user role
