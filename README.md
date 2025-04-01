@@ -171,3 +171,9 @@ like user has 5 types, so different routes has diff user type via oauth
 updated ui
 added for services like diff routes
 updated contact, about page
+
+lic ki policy dena h
+do it's data entry
+take details, payment
+policy no get's alloted-> system
+no user power 
