@@ -116,7 +116,7 @@ i think it is also done
 landing page and ui initiated
 
 what do next->
-1. add for role based auth via oauth, clerk, jwt
+1. add for role based auth via oauth, jwt
 since we have what no of users-> i think 4
 Admin-> head of community{create by own}
 SubAdmin-> sub-head of community, 
@@ -143,10 +143,6 @@ first priority->
 create a sidebar to navigate like every service, but keep it in a burger
 button{done 09.02.2025}
 
-now for role based auth we will use clerk unfortunately, so work on middleware.ts file-> add clerk there
-now call diff builtin options in layout.tsx, wrap clerkprovider inside
-sessionprovider
-
 update env
 
 see i want to do what->
@@ -154,7 +150,7 @@ see i want to do what->
 - join a family  with a family id if a family-member signups
 
 01:17 09.02.2025
-what is done, done with normal-user auth via clerk and google oauth
+what is done, done with normal-user auth via google oauth
 
 Next Procedure to do:
 call for all types of routes, like create family, join family for normal user,
@@ -198,3 +194,23 @@ After that just fetch api and render on client
 Then see for other microservices
 
 build this one : charge maybe once it's built {16000 INR}
+
+05/04: removed clerk, get this shit sorted out today itself for role-based auth
+need to sort various pages, also decide b/w custom jwt to use or oauth to use.
+well we will use both
+install dependencies-> `npm install next-auth @auth/core jsonwebtoken`
+
+Create Auth Route Handler-> `/app/api/auth/[...nextauth]/route.ts`
+
+update prisma files with new logic
+removed clerk node_modules
+updated seed.ts file
+
+updated the whole schema->client migration-> `npx prisma migrate dev --name add-role-sub-to-user`
+generation-> `npx prisma generate`
+re run seed-> `npm run seed`
+done with it,
+
+now what to do:->
+start writing the fe logic for a user, then will see for other things
+fe logic contains-> contact, events etc things like that

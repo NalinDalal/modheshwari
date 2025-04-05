@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
+//import { PrismaClient } from "@prisma/client";
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
@@ -7,7 +7,7 @@ async function main() {
   const gotra1 = await prisma.gotra.create({
     data: {
       name: "Maithiya",
-      description: "Largest Gotra",
+      description: "A prominent Gotra",
     },
   });
 
@@ -24,33 +24,32 @@ async function main() {
       name: "Nalin",
       surname: "Dalal",
       email: "nalindalal2004@gmail.com",
-      password: "Nalindalal@2004", // Replace with actual hashed password
       gender: "MALE",
       bloodGroup: "O_POSITIVE",
       dateOfBirth: new Date("2004-08-24"),
       phone: "7440620675",
-      address: "03, Ward No 28, Maharana Pratap Singh Road",
+      address: "03, WardNo. 28",
       city: "Burhanpur",
       state: "Madhya Pradesh",
-      pincode: 450331,
-      avatar:
-        "https://lh3.googleusercontent.com/a/ACg8ocIzhAsZXZeI4WS5fs38KfshdBgRWyM71Cymw2HBTOESz7Lc4w8t=s192-c-rg-br100",
+      pincode: 123456,
+      avatar: "http://example.com/avatar.jpg",
       status: "ACTIVE",
       verified: true,
       isAlive: true,
       gotraId: gotra1.id,
       createdAt: new Date(),
       updatedAt: new Date(),
+      role: "HEAD_OF_COMMUNITY",
+      sub: "google-sub-nalin",
     },
   });
 
   const user2 = await prisma.user.create({
     data: {
-      name: "Jane",
-      surname: "Smith",
-      email: "jane.smith@example.com",
-      password: "hashedpassword2", // Replace with actual hashed password
-      gender: "FEMALE",
+      name: "Ajay",
+      surname: "Shah",
+      email: "ajayshah@gmail.com",
+      gender: "MALE",
       bloodGroup: "A_NEGATIVE",
       dateOfBirth: new Date("1995-05-15"),
       phone: "9876543210",
@@ -65,16 +64,18 @@ async function main() {
       gotraId: gotra2.id,
       createdAt: new Date(),
       updatedAt: new Date(),
+      role: "SUBCOMMUNITY_HEAD",
+      sub: "google-sub-ajay",
     },
   });
 
   // Create Families
   const family1 = await prisma.family.create({
     data: {
-      name: "Dalal(mandiwala) Family",
+      name: "Doe Family",
       headId: user1.id,
       gotraId: gotra1.id,
-      address: "Near Khan Bhai Factory, Maharana Pratap Singh Road, Burhanpur",
+      address: "123 Main St, CityName",
     },
   });
 

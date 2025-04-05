@@ -36,66 +36,61 @@ enum UserStatus {
 
 // Main user model representing community members
 model User {
-  id        String    @id @default(uuid())
-  // Personal Information
-  name      String
-  surname   String
-  email     String?   // Optional, non-unique email
-  password  String    @db.VarChar(255)
-  gender    Gender
-  bloodGroup BloodGroup?
+  id         String    @id @default(cuid())
+
+  // OAuth Fields
+  email      String
+  sub        String?    // Google's `sub`, allows multiple users with same Google account
+  provider   String    @default("google")
+  name       String
+  avatar     String?
+  
+  // Auth Info
+  role       String    @default("USER")
+  otp        String?   // Still useful for fallback or SMS-based login if ever needed
+
+  // Personal Info
+  surname     String
+  gender      Gender
+  bloodGroup  BloodGroup?
   dateOfBirth DateTime?
-  
-  // Contact Information
-  phone     String?   // Optional, non-unique phone
-  address   String?   @db.Text
-  city      String?
-  state     String?
-  pincode   Int?
-  avatar    String?   // URL to avatar image
+  phone       String?   // Optional, not unique
+  address     String?   @db.Text
+  city        String?
+  state       String?
+  pincode     Int?
 
-  // Status Fields
-  status    UserStatus @default(ACTIVE)
-  verified  Boolean    @default(false)  // Profile verification status
-  isAlive   Boolean    @default(true)   // Tracks if person is deceased
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  // Status Info
+  status     UserStatus @default(ACTIVE)
+  verified   Boolean    @default(false)
+  isAlive    Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
-  // Family Tree References
-  spouseId  String?   @unique  // Making this unique for one-to-one relation
-  fatherId  String?   // Biological father reference
-  motherId  String?   // Biological mother reference
-  
-  // Organizational References
-  gotraId   Int?      // Gotra (clan) reference
-  familyId  Int?      // Family unit reference
+  // Family References
+  familyId   Int?
+  gotraId    Int?
+  spouseId   String?   @unique
+  fatherId   String?
+  motherId   String?
 
-  // Relations - Gotra & Family
-  gotra     Gotra?    @relation(fields: [gotraId], references: [id])
-  family    Family?   @relation("FamilyMember", fields: [familyId], references: [id])
-
-  // Marriage Relations
-  spouse    User?     @relation("SpouseRelation", fields: [spouseId], references: [id])
-  spousedBy User?     @relation("SpouseRelation")
-
-  // Reverse Relations
-  headOfGotra    Gotra?   @relation("GotraHead")
-  headOfFamily   Family?  @relation("HeadOfFamily")
-  
-  // Event Relations
+  // Relations
+  family     Family?   @relation("FamilyMember", fields: [familyId], references: [id])
+  gotra      Gotra?    @relation(fields: [gotraId], references: [id])
+  spouse     User?     @relation("SpouseRelation", fields: [spouseId], references: [id])
+  spousedBy  User?     @relation("SpouseRelation")
+  headOfGotra Gotra?   @relation("GotraHead")
+  headOfFamily Family? @relation("HeadOfFamily")
   createdEvents Event[]   @relation("EventOrganizer")
   attendingEvents EventAttendee[]
-
-  // Marriage Record Relations
   marriagesAsSpouse1 Marriage[] @relation("Spouse1Relation")
   marriagesAsSpouse2 Marriage[] @relation("Spouse2Relation")
-
-  // Education & Professional Info
-  education Education[]
+  education  Education[]
   occupation Occupation[]
 
   @@index([email])
   @@index([phone])
+  @@unique([email, sub]) // Allows same Google ID to be used with different accounts
 }
 
 // Gotra (clan) model
@@ -217,4 +212,14 @@ model Occupation {
 
   // Relations
   user        User     @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  USER
+  FAMILY_HEAD
+  SUBCOMMUNITY_HEAD
+  SUBHEAD_OF_COMMUNITY
+  HEAD_OF_COMMUNITY
+  ADMIN
+  SUBADMIN
 }
