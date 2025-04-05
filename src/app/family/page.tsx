@@ -1,6 +1,4 @@
 "use client";
-
-import { useUser } from "@clerk/nextjs";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";

@@ -3,8 +3,6 @@
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useUser } from "@clerk/nextjs";
-
 export default function Events() {
   const { user, isSignedIn } = useUser();
   const { t } = useTranslation();

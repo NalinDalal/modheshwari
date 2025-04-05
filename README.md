@@ -181,3 +181,20 @@ no user power
 
 manually put a types.ts file with required user permission, for that make some permission, then import them into user, then handle with auth
 like admin has all rights, but family admin doesn't, so handle the rendering of the components based on user role
+well the thing is we also want like oauth but role based from types.ts file
+
+Modheshwari auth
+
+When a family head signs up
+Make a form after that with all data to be put their
+
+But when user sings up with family id, just ask for personal details like blood grp etc
+Rest is put into db as per familyid like head of family, their surnames erc
+
+Hmm the thing is i just need to have logic to authenticate user for now
+How role based signup happens, their signin
+After that just fetch api and render on client
+
+Then see for other microservices
+
+build this one : charge maybe once it's built {16000 INR}

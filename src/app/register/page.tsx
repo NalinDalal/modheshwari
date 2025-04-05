@@ -4,7 +4,6 @@ import Particle from "@/components/Particle";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "next-i18next";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 

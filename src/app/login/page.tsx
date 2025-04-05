@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import Particle from "@/components/Particle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Role from "@/types/auth";
 
 export default function Login() {
   const router = useRouter(); // ✅ Initialize Next.js router
