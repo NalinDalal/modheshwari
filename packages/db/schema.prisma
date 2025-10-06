@@ -1,0 +1,128 @@
+// Prisma schema for Community Management Platform
+// Based on design doc: users, families, events, resource requests, notifications, etc.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  name        String
+  role        Role
+  profile     Profile?
+  families    FamilyMember[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  status      Boolean
+
+  // Relations
+  headedFamilies Family[] @relation("FamilyHead")
+  createdEvents Event[] @relation("EventCreatedBy")
+  eventRegistrations EventRegistration[]
+  payments Payment[]
+  requestedResourceRequests ResourceRequest[] @relation("RequestedBy")
+  approvedResourceRequests ResourceRequest[] @relation("ApprovedBy")
+  notifications Notification[]
+}
+
+enum Role {
+  COMMUNITY_HEAD
+  COMMUNITY_SUBHEAD
+  GOTRA_HEAD
+  FAMILY_HEAD
+  MEMBER
+}
+
+model Profile {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  phone     String?
+  address   String?
+  profession String?
+  gotra     String?
+  location  String?
+  status    String? // alive/deceased
+}
+
+model Family {
+  id        String   @id @default(uuid())
+  name      String
+  uniqueId  String   @unique
+  members   FamilyMember[]
+  headId    String?
+  head      User?    @relation("FamilyHead", fields: [headId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model FamilyMember {
+  id        String   @id @default(uuid())
+  family    Family   @relation(fields: [familyId], references: [id])
+  familyId  String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  role      Role
+  joinedAt  DateTime @default(now())
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  date        DateTime
+  venue       String?
+  createdBy   User     @relation("EventCreatedBy", fields: [createdById], references: [id])
+  createdById String
+  registrations EventRegistration[]
+  payments    Payment[]
+  createdAt   DateTime @default(now())
+}
+
+model EventRegistration {
+  id        String   @id @default(uuid())
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  registeredAt DateTime @default(now())
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  amount    Float
+  status    String
+  createdAt DateTime @default(now())
+}
+
+model ResourceRequest {
+  id        String   @id @default(uuid())
+  user      User     @relation("RequestedBy", fields: [userId], references: [id])
+  userId    String
+  resource  String
+  status    String
+  approver  User?    @relation("ApprovedBy", fields: [approverId], references: [id])
+  approverId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

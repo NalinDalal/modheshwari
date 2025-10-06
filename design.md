@@ -289,8 +289,8 @@ graph TD
 | Role               | Permissions                                                                   |
 | ------------------ | ----------------------------------------------------------------------------- |
 | **Community Head** | Full system access, approve all requests, manage all events, view all data    |
-| **Subhead**        | Manage assigned gotras, approve gotra-level requests, create community events |
-| **Gotra Head**     | Manage families in gotra, approve family requests, create gotra events        |
+| **Subhead**        | Manage assigned gotras, approve gotra-level requests, create and manage community events |
+| **Gotra Head**     | Manage families in gotra, approve family requests, create and manage gotra events        |
 | **Family Head**    | Manage family members, submit resource requests, register family for events   |
 | **Family Member**  | View family info, register for events, participate in forums                  |
 
@@ -870,7 +870,6 @@ flowchart TD
 **Authentication:**
 
 - JWT tokens with expiration (15 min access, 7 day refresh)
-- OAuth 2.0 integration (Google)
 - Secure password hashing (bcrypt, salt rounds: 10)
 - Password complexity requirements
 - Account lockout after failed attempts
