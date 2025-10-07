@@ -1,0 +1,18 @@
+# Coderabbit Docs Configuration
+# See https://docs.coderabbit.ai for all options
+
+project:
+  name: modheshwari
+  description: Monorepo for Modheshwari project
+  root: .
+  docs: ./docs
+  include:
+    - apps/**
+    - packages/**
+    - README.md
+    - package.json
+    - turbo.json
+    - steps.md
+    - design.md
+
+# You can add more config options as needed
