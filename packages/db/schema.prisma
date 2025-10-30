@@ -1,5 +1,36 @@
-// Prisma schema for Community Management Platform
-// Based on design doc: users, families, events, resource requests, notifications, etc.
+//
+// ============================================================================
+// COMMUNITY MANAGEMENT SYSTEM - PRISMA SCHEMA (WITH USER RELATION TABLE)
+// ============================================================================
+//
+// -------------------- OVERVIEW --------------------
+// Models a community structure of families, gotras, and administrative hierarchy.
+// Supports users, family lineage, event workflows, approvals, notifications,
+// and resource tracking.
+//
+// -------------------- FAMILY LOGIC --------------------
+// - Each User belongs to exactly ONE active Family via FamilyMember.
+// - When a member marries or moves, only FamilyMember.familyId changes.
+// - Historical family links are retained (no hard deletions).
+//
+// -------------------- EVENT WORKFLOW --------------------
+// 1. A User (usually FAMILY_HEAD) creates an Event → status = PENDING.
+// 2. System auto-generates EventApproval records for:
+//      - COMMUNITY_HEAD
+//      - COMMUNITY_SUBHEAD
+//      - GOTRA_HEAD
+// 3. Approvers may Approve / Reject / Request Changes.
+// 4. Once all required roles approve → Event.status = APPROVED.
+// 5. Creator and heads receive Notifications at each step.
+//
+// -------------------- ROLE HIERARCHY --------------------
+// COMMUNITY_HEAD     → Full control, top-level approvals
+// COMMUNITY_SUBHEAD  → Co-reviewer / secondary approval
+// GOTRA_HEAD         → Gotra-level oversight
+// FAMILY_HEAD        → Leads a single family
+// MEMBER             → Regular member
+//
+// ============================================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -10,27 +41,45 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//
+// -------------------- USER --------------------
+// Represents a community member. May head a family or perform admin actions.
+//
+
 model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  password    String
-  name        String
-  role        Role
-  profile     Profile?
-  families    FamilyMember[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  status      Boolean
+  id        String           @id @default(uuid())
+  email     String           @unique
+  password  String
+  name      String
+  role      Role
+  profile   Profile?
+  families  FamilyMember[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  status    Boolean
 
   // Relations
-  headedFamilies Family[] @relation("FamilyHead")
-  createdEvents Event[] @relation("EventCreatedBy")
-  eventRegistrations EventRegistration[]
-  payments Payment[]
-  requestedResourceRequests ResourceRequest[] @relation("RequestedBy")
-  approvedResourceRequests ResourceRequest[] @relation("ApprovedBy")
-  notifications Notification[]
+  headedFamilies            Family[]            @relation("FamilyHead")
+  createdEvents             Event[]             @relation("EventCreatedBy")
+  eventRegistrations        EventRegistration[]
+  payments                  Payment[]
+  requestedResourceRequests ResourceRequest[]   @relation("RequestedBy")
+  approvedResourceRequests  ResourceRequest[]   @relation("ApprovedBy")
+  notifications             Notification[]
+
+  // New reverse relation for EventApproval
+  eventApprovalsReviewed    EventApproval[]     @relation("UserEventApprovals")
+
+  // User relations
+  relationsFrom UserRelation[] @relation("FromUser")
+  relationsTo   UserRelation[] @relation("ToUser")
 }
+
+
+//
+// -------------------- ROLE ENUM --------------------
+// Defines user hierarchy and permissions.
+//
 
 enum Role {
   COMMUNITY_HEAD
@@ -40,63 +89,162 @@ enum Role {
   MEMBER
 }
 
+//
+// -------------------- PROFILE --------------------
+// Stores personal non-relational data.
+//
+
 model Profile {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @unique
-  phone     String?
-  address   String?
+  id         String  @id @default(uuid())
+  user       User    @relation(fields: [userId], references: [id])
+  userId     String  @unique
+  phone      String?
+  address    String?
   profession String?
-  gotra     String?
-  location  String?
-  status    String? // alive/deceased
+  gotra      String?
+  location   String?
+  status     String? // e.g. "alive", "deceased"
 }
+
+//
+// -------------------- FAMILY --------------------
+// Represents a nuclear family unit led by one head.
+//
 
 model Family {
-  id        String   @id @default(uuid())
+  id        String         @id @default(uuid())
   name      String
-  uniqueId  String   @unique
+  uniqueId  String         @unique
   members   FamilyMember[]
   headId    String?
-  head      User?    @relation("FamilyHead", fields: [headId], references: [id])
-  createdAt DateTime @default(now())
+  head      User?          @relation("FamilyHead", fields: [headId], references: [id])
+  createdAt DateTime       @default(now())
 }
+
+//
+// -------------------- FAMILY MEMBER --------------------
+// Junction model linking User <-> Family.
+// Moving a user to another family updates familyId.
+//
 
 model FamilyMember {
-  id        String   @id @default(uuid())
-  family    Family   @relation(fields: [familyId], references: [id])
-  familyId  String
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  role      Role
-  joinedAt  DateTime @default(now())
+  id       String   @id @default(uuid())
+  family   Family   @relation(fields: [familyId], references: [id])
+  familyId String
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String
+  role     Role
+  joinedAt DateTime @default(now())
 }
+
+//
+// -------------------- USER RELATION --------------------
+// Tracks relationship between two users (e.g., spouse, parent, sibling, etc.)
+// This allows modeling complex family trees.
+//
+
+model UserRelation {
+  id         String   @id @default(uuid())
+  fromUser   User     @relation("FromUser", fields: [fromUserId], references: [id])
+  fromUserId String
+  toUser     User     @relation("ToUser", fields: [toUserId], references: [id])
+  toUserId   String
+  type       RelationType
+  createdAt  DateTime @default(now())
+
+  @@unique([fromUserId, toUserId, type])
+}
+
+//
+// -------------------- RELATION TYPE ENUM --------------------
+// Defines recognized user relationship kinds.
+//
+
+enum RelationType {
+  SPOUSE
+  PARENT
+  CHILD
+  SIBLING
+}
+
+//
+// -------------------- EVENT --------------------
+// Represents a community event created by a user.
+// Goes through multi-role approval pipeline.
+//
 
 model Event {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  date        DateTime
-  venue       String?
-  createdBy   User     @relation("EventCreatedBy", fields: [createdById], references: [id])
-  createdById String
+  id            String              @id @default(uuid())
+  name          String
+  description   String?
+  date          DateTime
+  venue         String?
+  createdBy     User                @relation("EventCreatedBy", fields: [createdById], references: [id])
+  createdById   String
+  status        EventStatus         @default(PENDING)
+  approvals     EventApproval[]     // handled cascade from EventApproval side
   registrations EventRegistration[]
-  payments    Payment[]
-  createdAt   DateTime @default(now())
+  payments      Payment[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 }
 
+
+//
+// -------------------- EVENT STATUS ENUM --------------------
+// Tracks the lifecycle of an event.
+//
+
+enum EventStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+//
+// -------------------- EVENT APPROVAL --------------------
+// Tracks the review/approval workflow for events.
+//
+
+model EventApproval {
+  id           String   @id @default(uuid())
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId      String
+  approver     User     @relation("UserEventApprovals", fields: [approverId], references: [id])
+  approverId   String
+  approverName String
+  role         Role
+  status       String
+  remarks      String?
+  reviewedAt   DateTime?
+  createdAt    DateTime @default(now())
+
+  @@unique([eventId, approverId])
+}
+
+//
+// -------------------- EVENT REGISTRATION --------------------
+// Tracks event participation.
+//
+
 model EventRegistration {
-  id        String   @id @default(uuid())
-  event     Event    @relation(fields: [eventId], references: [id])
-  eventId   String
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
+  id           String   @id @default(uuid())
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId      String
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
   registeredAt DateTime @default(now())
 }
 
+//
+// -------------------- PAYMENT --------------------
+// Tracks event-related payments.
+//
+
 model Payment {
-  id        String   @id @default(uuid())
-  event     Event    @relation(fields: [eventId], references: [id])
+id        String   @id @default(uuid())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId   String
   user      User     @relation(fields: [userId], references: [id])
   userId    String
@@ -105,24 +253,36 @@ model Payment {
   createdAt DateTime @default(now())
 }
 
+//
+// -------------------- RESOURCE REQUEST --------------------
+// Tracks user requests and admin approvals for community resources.
+//
+
 model ResourceRequest {
-  id        String   @id @default(uuid())
-  user      User     @relation("RequestedBy", fields: [userId], references: [id])
-  userId    String
-  resource  String
-  status    String
-  approver  User?    @relation("ApprovedBy", fields: [approverId], references: [id])
-  approverId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  user         User     @relation("RequestedBy", fields: [userId], references: [id])
+  userId       String
+  resource     String
+  status       String                   // "pending", "approved", "rejected"
+  approver     User?    @relation("ApprovedBy", fields: [approverId], references: [id])
+  approverId   String?
+  approverName String?                   // cached name of approver for quick access
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
+
+//
+// -------------------- NOTIFICATION --------------------
+// System-generated user alerts.
+//
 
 model Notification {
   id        String   @id @default(uuid())
   user      User     @relation(fields: [userId], references: [id])
   userId    String
-  type      String
+  type      String                   // e.g. "event_approval", "resource_request"
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
