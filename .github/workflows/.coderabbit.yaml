@@ -1,0 +1,25 @@
+# .coderabbit.yaml
+version: 1
+review:
+  # Analyze code deeply before suggesting
+  depth: deep
+  # Improve or add missing JSDoc comments automatically
+  auto_doc: true
+  # Enable per-file inline comments
+  inline_comments: true
+  # Be strict about type hints and param docs
+  documentation_level: high
+  # Enable multi-language understanding (TS, Rust, Go, etc.)
+  languages: [ts, js, json, md]
+  # Generate PR if significant doc/code improvements are needed
+  create_pr: true
+
+commit:
+  # Auto-commit minor doc fixes to a branch (optional)
+  auto_commit_docs: false
+  branch_name: coderabbit/docs-update
+
+notifications:
+  # Comment style on PRs
+  comment_style: concise
+

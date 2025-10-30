@@ -51,3 +51,6 @@ finally done with db
 
 31.10.2025
 family head signup done
+
+to do next: signin for family head, then same thing for family members
+once it is done, we take care of higher level auth
