@@ -1,15 +1,18 @@
 # Project Steps & Data Model Rationale
 
 ## 1. Requirements & Design Doc Review
+
 - Analyzed the design document outlining the Community Management Platform.
 - Identified core features: user management, family management, event management, resource requests, notifications, search, and more.
 - Noted technical stack: Next.js, Node.js, PostgreSQL, Prisma ORM, AWS, etc.
 
 ## 2. Data Model Planning
+
 - Broke down features into entities: User, Profile, Family, FamilyMember, Event, EventRegistration, Payment, ResourceRequest, Notification.
 - Considered relationships, privacy, extensibility, and scalability.
 
 ## 3. Why This Specific Schema?
+
 - **User vs Profile:**
   - `User` holds authentication and core account info (email, password, role).
   - `Profile` holds extended, often optional, user details (phone, address, profession, gotra, etc.).
@@ -28,6 +31,7 @@
   - Timestamps and optional audit fields for tracking changes and compliance.
 
 ## 4. Steps for Application Development
+
 1. **Initialize monorepo** with Bun, TurboRepo, and workspaces for apps and packages.
 2. **Set up UI library** and add basic test cases.
 3. **Configure CI/CD** with GitHub Actions for build, test, and deploy.
@@ -41,3 +45,6 @@
 ---
 
 This file will be updated as the project progresses, documenting all major architectural and development decisions.
+
+30.10.2025
+finally done with db
