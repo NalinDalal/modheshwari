@@ -3,13 +3,22 @@
 // then write up logic for login like: userid+pwd, then if the endpoint is specifically like: /api/login/FamilyHead
 // then check if userid+pwd with role=familyhead check with db
 // if true then log logged in else log you are not a family head
-//index.ts lightweight (only routing, not logic).
+// index.ts lightweight (only routing, not logic).
 
 import { serve } from "bun";
+import { join } from "path";
+import { config } from "dotenv";
+
+//  Load .env from project root before anything else
+// (so utils like jwt.ts can access process.env.JWT_SECRET)
+config({ path: join(process.cwd(), "../../.env") });
+
 import { handleSignup } from "./routes/auth-family-head/signup";
 import { handleLogin } from "./routes/auth-family-head/login";
-console.log("Server started on localhost:3001!");
 
+console.log(" Server started on http://localhost:3001!");
+
+// --- Lightweight routing layer using Bun's native server ---
 serve({
   port: 3001,
   async fetch(req) {
@@ -17,23 +26,23 @@ serve({
       const url = new URL(req.url);
       const method = req.method.toUpperCase();
 
-      // --- Signup for family head ---
-      if (url.pathname === "/api/signup/familyhead" && req.method === "POST") {
+      // --- Signup for Family Head ---
+      if (url.pathname === "/api/signup/familyhead" && method === "POST") {
         return handleSignup(req, "FAMILY_HEAD");
       }
 
-      // --- Login for FamilyHead ---
-      if (url.pathname === "/api/login/familyhead" && req.method === "POST") {
+      // --- Login for Family Head ---
+      if (url.pathname === "/api/login/familyhead" && method === "POST") {
         return handleLogin(req, "FAMILY_HEAD");
       }
 
-      // --- Default 404 ---
+      // --- Default 404 handler ---
       return new Response(JSON.stringify({ error: "Endpoint not found" }), {
         status: 404,
         headers: { "Content-Type": "application/json" },
       });
     } catch (err) {
-      console.error("Unhandled Error:", err);
+      console.error(" Unhandled Error:", err);
       return new Response(JSON.stringify({ error: "Internal server error" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },

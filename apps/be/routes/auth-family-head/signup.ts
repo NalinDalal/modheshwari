@@ -10,7 +10,6 @@
  *   7. Return JWT and created records.
  */
 
-import { Elysia } from "elysia";
 import prisma from "@modheshwari/db";
 import { hashPassword } from "@modheshwari/utils/hash";
 import { signJWT } from "@modheshwari/utils/jwt";
@@ -27,86 +26,78 @@ import { signJWT } from "@modheshwari/utils/jwt";
  * Handles signup for FamilyHead users.
  *
  * @async
- * @function signupRoute
+ * @function handleSignup
  * @route POST /api/signup/familyhead
- * @param {Object} ctx - The Elysia request context.
- * @param {SignupBody} ctx.body - The signup request payload.
- * @param {Object} ctx.set - Used to modify HTTP response status.
- * @returns {Promise<Object>} JSON object with created user, family, and token.
- *
- * @example
- * // POST /api/signup/familyhead
- * {
- *   "name": "Ramesh Modh",
- *   "email": "ramesh@example.com",
- *   "password": "strongPass123",
- *   "familyName": "Modheshwari Parivar"
- * }
- *
- * // Response (success)
- * {
- *   "message": "Signup successful",
- *   "user": { "id": 1, "name": "Ramesh Modh", "email": "ramesh@example.com", "role": "FAMILY_HEAD" },
- *   "family": { "id": 1, "name": "Modheshwari Parivar" },
- *   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp..."
- * }
+ * @param {Request} req - The HTTP request object.
+ * @param {string} role - The user role ("FAMILY_HEAD").
+ * @returns {Promise<Response>} HTTP JSON response.
  */
-export const signupRoute = new Elysia().post(
-  "/api/signup/familyhead",
-  async ({ body, set }) => {
-    try {
-      const { name, email, password, familyName } = body;
+export async function signupRoute(req: Request, role: string) {
+  try {
+    const body = await req.json();
+    const { name, email, password, familyName } = body;
 
-      // --- Input validation ---
-      if (!name || !email || !password || !familyName) {
-        set.status = 400;
-        return { error: "Missing required fields" };
-      }
-
-      // --- Check for existing user ---
-      const existingUser = await prisma.user.findUnique({ where: { email } });
-      if (existingUser) {
-        set.status = 400;
-        return { error: "Email already registered" };
-      }
-
-      // --- Securely hash password ---
-      const hashed = await hashPassword(password);
-
-      // --- Create Family Head user ---
-      const user = await prisma.user.create({
-        data: {
-          name,
-          email,
-          password: hashed,
-          role: "FAMILY_HEAD",
-          status: true,
+    // --- Step 1: Input validation ---
+    if (!name || !email || !password || !familyName) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
         },
-      });
+      );
+    }
 
-      // --- Create Family entry ---
-      const family = await prisma.family.create({
-        data: {
-          name: familyName,
-          uniqueId: `FAM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-          headId: user.id,
+    // --- Step 2: Check if email already exists ---
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return new Response(
+        JSON.stringify({ error: "Email already registered" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
         },
-      });
+      );
+    }
 
-      // --- Link user as FamilyMember ---
-      await prisma.familyMember.create({
-        data: {
-          familyId: family.id,
-          userId: user.id,
-          role: "FAMILY_HEAD",
-        },
-      });
+    // --- Step 3: Hash password securely ---
+    const hashedPassword = await hashPassword(password);
 
-      // --- Sign JWT token ---
-      const token = signJWT({ userId: user.id, role: user.role });
+    // --- Step 4: Create Family Head user ---
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role,
+        status: true,
+      },
+    });
 
-      // --- Return structured response ---
-      return {
+    // --- Step 5: Create Family entry ---
+    const family = await prisma.family.create({
+      data: {
+        name: familyName,
+        uniqueId: `FAM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+        headId: user.id,
+      },
+    });
+
+    // --- Step 6: Link Family Head as FamilyMember ---
+    await prisma.familyMember.create({
+      data: {
+        familyId: family.id,
+        userId: user.id,
+        role,
+      },
+    });
+
+    // --- Step 7: Generate JWT token ---
+    const token = signJWT({ userId: user.id, role: user.role });
+
+    // --- Step 8: Return structured success response ---
+    return new Response(
+      JSON.stringify({
         message: "Signup successful",
         user: {
           id: user.id,
@@ -120,11 +111,17 @@ export const signupRoute = new Elysia().post(
           uniqueId: family.uniqueId,
         },
         token,
-      };
-    } catch (err) {
-      console.error("Signup Error:", err);
-      set.status = 500;
-      return { error: "Internal server error" };
-    }
-  },
-);
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  } catch (err) {
+    console.error("Signup Error:", err);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}

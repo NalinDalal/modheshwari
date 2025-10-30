@@ -48,3 +48,6 @@ This file will be updated as the project progresses, documenting all major archi
 
 30.10.2025
 finally done with db
+
+31.10.2025
+family head signup done
