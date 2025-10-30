@@ -47,15 +47,15 @@ datasource db {
 //
 
 model User {
-  id        String           @id @default(uuid())
-  email     String           @unique
+  id        String         @id @default(uuid())
+  email     String         @unique
   password  String
   name      String
   role      Role
   profile   Profile?
   families  FamilyMember[]
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
   status    Boolean
 
   // Relations
@@ -68,13 +68,12 @@ model User {
   notifications             Notification[]
 
   // New reverse relation for EventApproval
-  eventApprovalsReviewed    EventApproval[]     @relation("UserEventApprovals")
+  eventApprovalsReviewed EventApproval[] @relation("UserEventApprovals")
 
   // User relations
   relationsFrom UserRelation[] @relation("FromUser")
   relationsTo   UserRelation[] @relation("ToUser")
 }
-
 
 //
 // -------------------- ROLE ENUM --------------------
@@ -144,13 +143,13 @@ model FamilyMember {
 //
 
 model UserRelation {
-  id         String   @id @default(uuid())
-  fromUser   User     @relation("FromUser", fields: [fromUserId], references: [id])
+  id         String       @id @default(uuid())
+  fromUser   User         @relation("FromUser", fields: [fromUserId], references: [id])
   fromUserId String
-  toUser     User     @relation("ToUser", fields: [toUserId], references: [id])
+  toUser     User         @relation("ToUser", fields: [toUserId], references: [id])
   toUserId   String
   type       RelationType
-  createdAt  DateTime @default(now())
+  createdAt  DateTime     @default(now())
 
   @@unique([fromUserId, toUserId, type])
 }
@@ -182,13 +181,12 @@ model Event {
   createdBy     User                @relation("EventCreatedBy", fields: [createdById], references: [id])
   createdById   String
   status        EventStatus         @default(PENDING)
-  approvals     EventApproval[]     // handled cascade from EventApproval side
+  approvals     EventApproval[] // handled cascade from EventApproval side
   registrations EventRegistration[]
   payments      Payment[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 }
-
 
 //
 // -------------------- EVENT STATUS ENUM --------------------
@@ -208,17 +206,17 @@ enum EventStatus {
 //
 
 model EventApproval {
-  id           String   @id @default(uuid())
-  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id           String    @id @default(uuid())
+  event        Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId      String
-  approver     User     @relation("UserEventApprovals", fields: [approverId], references: [id])
+  approver     User      @relation("UserEventApprovals", fields: [approverId], references: [id])
   approverId   String
   approverName String
   role         Role
   status       String
   remarks      String?
   reviewedAt   DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   @@unique([eventId, approverId])
 }
@@ -243,7 +241,7 @@ model EventRegistration {
 //
 
 model Payment {
-id        String   @id @default(uuid())
+  id        String   @id @default(uuid())
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId   String
   user      User     @relation(fields: [userId], references: [id])
@@ -263,10 +261,10 @@ model ResourceRequest {
   user         User     @relation("RequestedBy", fields: [userId], references: [id])
   userId       String
   resource     String
-  status       String                   // "pending", "approved", "rejected"
+  status       String // "pending", "approved", "rejected"
   approver     User?    @relation("ApprovedBy", fields: [approverId], references: [id])
   approverId   String?
-  approverName String?                   // cached name of approver for quick access
+  approverName String? // cached name of approver for quick access
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -280,9 +278,8 @@ model Notification {
   id        String   @id @default(uuid())
   user      User     @relation(fields: [userId], references: [id])
   userId    String
-  type      String                   // e.g. "event_approval", "resource_request"
+  type      String // e.g. "event_approval", "resource_request"
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
-
