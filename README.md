@@ -26,11 +26,15 @@ This project is a full-stack platform for managing local community operations, i
    ```bash
    npx ts-node packages/db/seed.ts
    ```
-4. **Run the app:**
+4. **Generate JWT Secret:**
+   ```bash
+   bunx node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+5. **Run the app:**
    ```bash
    bun run dev
    ```
-5. To generate code documentation:
+6. To generate code documentation:
    ```bash
    bun run docs:gen
    ```
@@ -57,8 +61,3 @@ This project is a full-stack platform for managing local community operations, i
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-we are using bun every where
-
-to generate jwt secret:
-`bunx node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
