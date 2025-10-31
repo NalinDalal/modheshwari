@@ -1,5 +1,5 @@
-import { Project, SyntaxKind } from "ts-morph";
 import path from "path";
+import { Project, SyntaxKind } from "ts-morph";
 
 const ROOT = process.cwd();
 
@@ -66,7 +66,6 @@ for (const file of files) {
 
     const name = variable.getName();
 
-    //  FIX: Check docs on the arrow function itself, not the variable
     const existingDocs = initializer.getJsDocs();
     if (existingDocs.length > 0) continue;
 

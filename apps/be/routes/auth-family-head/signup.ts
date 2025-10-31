@@ -13,6 +13,7 @@
 import prisma from "@modheshwari/db";
 import { hashPassword } from "@modheshwari/utils/hash";
 import { signJWT } from "@modheshwari/utils/jwt";
+import { success, failure } from "@modheshwari/utils/response";
 
 /**
  * @typedef {Object} SignupBody
@@ -32,32 +33,23 @@ import { signJWT } from "@modheshwari/utils/jwt";
  * @param {string} role - The user role ("FAMILY_HEAD").
  * @returns {Promise<Response>} HTTP JSON response.
  */
-export async function signupRoute(req: Request, role: string) {
+export async function handleSignup(req: Request, role: string) {
   try {
-    const body = await req.json();
+    console.log("signup endpoint for family-head");
+
+    const body = await req.json().catch(() => null);
+    if (!body) return failure("Invalid JSON body", "Bad Request", 400);
+
     const { name, email, password, familyName } = body;
 
     // --- Step 1: Input validation ---
-    if (!name || !email || !password || !familyName) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-    }
+    if (!name || !email || !password || !familyName)
+      return failure("Missing required fields", "Validation Error", 400);
 
     // --- Step 2: Check if email already exists ---
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return new Response(
-        JSON.stringify({ error: "Email already registered" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return failure("Email already registered", "Duplicate Entry", 409);
     }
 
     // --- Step 3: Hash password securely ---
@@ -96,9 +88,12 @@ export async function signupRoute(req: Request, role: string) {
     const token = signJWT({ userId: user.id, role: user.role });
 
     // --- Step 8: Return structured success response ---
-    return new Response(
-      JSON.stringify({
-        message: "Signup successful",
+    console.log(
+      `Signup successful: ${user.name} (${user.email}) — Family: ${family.name} (${family.id})`,
+    );
+    return success(
+      "Signup successful",
+      {
         user: {
           id: user.id,
           name: user.name,
@@ -111,17 +106,11 @@ export async function signupRoute(req: Request, role: string) {
           uniqueId: family.uniqueId,
         },
         token,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
       },
+      201,
     );
   } catch (err) {
     console.error("Signup Error:", err);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return failure("Internal server error", "Unexpected Error", 500);
   }
 }

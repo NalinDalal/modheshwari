@@ -1,16 +1,22 @@
 {
   "name": "modheshwari",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "docs:gen": "bun run packages/scripts/generate-docs.ts"
   },
   "devDependencies": {
     "@prisma/client": "6.18.0",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-unused-imports": "^4.3.0",
     "jsdoc": "^4.0.5",
     "prettier": "^3.6.2",
     "prisma": "6.18.0",

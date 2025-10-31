@@ -5,21 +5,20 @@
 // if true then log logged in else log you are not a family head
 // index.ts lightweight (only routing, not logic).
 
+
 import { serve } from "bun";
-import { join } from "path";
 import { config } from "dotenv";
+import { join } from "path";
 
 //  Load .env from project root before anything else
 // (so utils like jwt.ts can access process.env.JWT_SECRET)
 config({ path: join(process.cwd(), "../../.env") });
 
-import { handleSignup } from "./routes/auth-family-head/signup";
 import { handleLogin } from "./routes/auth-family-head/login";
-
-console.log(" Server started on http://localhost:3001!");
+import { handleSignup } from "./routes/auth-family-head/signup";
 
 // --- Lightweight routing layer using Bun's native server ---
-serve({
+const server = serve({
   port: 3001,
   async fetch(req) {
     try {
@@ -51,3 +50,7 @@ serve({
   },
 });
 
+console.log(` Server started on http://localhost:${server.port}!`);
+
+// Keep process alive
+await new Promise(() => {});
