@@ -7,7 +7,12 @@ type Props = Omit<ImageProps, "src"> & {
   srcDark: string;
 };
 
-const ThemeImage = (props: Props) => {
+const ThemeImage = /**
+ * Executes  theme image operation.
+ * @param {Props} props - Description of props
+ * @returns {React.JSX.Element} Description of return value
+ */
+(props: Props) => {
   const { srcLight, srcDark, ...rest } = props;
 
   return (
@@ -18,6 +23,12 @@ const ThemeImage = (props: Props) => {
   );
 };
 
+/**
+ * Auto-generated documentation for Home
+ * @function Home
+ * @param TODO: describe parameters
+ * @returns TODO: describe return value
+ */
 export default function Home() {
   return (
     <div className={styles.page}>

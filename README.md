@@ -30,6 +30,10 @@ This project is a full-stack platform for managing local community operations, i
    ```bash
    bun run dev
    ```
+5. To generate code documentation:
+   ```bash
+   bun run docs:gen
+   ```
 
 ## Monorepo Structure
 

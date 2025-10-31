@@ -1,6 +1,12 @@
 import { PrismaClient, Role, RelationType, EventStatus } from "@prisma/client";
 const prisma = new PrismaClient();
 
+/**
+ * Auto-generated documentation for main
+ * @function main
+ * @param TODO: describe parameters
+ * @returns TODO: describe return value
+ */
 async function main() {
   console.log("🌱  Seeding database...");
 

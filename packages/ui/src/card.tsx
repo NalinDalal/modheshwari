@@ -1,5 +1,11 @@
 import { type JSX } from "react";
 
+/**
+ * Auto-generated documentation for Card
+ * @function Card
+ * @param TODO: describe parameters
+ * @returns TODO: describe return value
+ */
 export function Card({
   className,
   title,

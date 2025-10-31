@@ -3,10 +3,10 @@ import jwt from "jsonwebtoken";
 import { config } from "dotenv";
 import { join } from "path";
 
-// ✅ Load .env from monorepo root if not already loaded
+// Load .env from monorepo root if not already loaded
 config({ path: join(process.cwd(), "../../.env") });
 
-// ✅ Check for secret *after* loading .env
+// Check for secret *after* loading .env
 if (!process.env.JWT_SECRET) {
   throw new Error("❌ Missing JWT_SECRET in environment variables");
 }

@@ -8,7 +8,12 @@ interface ButtonProps {
   appName: string;
 }
 
-export const Button = ({ children, className, appName }: ButtonProps) => {
+export const Button = /**
+ * Executes  button operation.
+ * @param {ButtonProps} { children, className, appName } - Description of { children, className, appName }
+ * @returns {React.JSX.Element} Description of return value
+ */
+({ children, className, appName }: ButtonProps) => {
   return (
     <button
       className={className}
