@@ -13,6 +13,8 @@ project.addSourceFilesAtPaths([
   "packages/utils/**/*.ts",
   "packages/db/*.ts",
   "packages/ui/**/*.tsx",
+  "apps/web/**/**/*.tsx",
+  "apps/web/**/**/*.ts",
 ]);
 
 const files = project.getSourceFiles();
