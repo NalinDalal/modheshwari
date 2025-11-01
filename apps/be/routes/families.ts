@@ -104,6 +104,12 @@ export async function handleAddMember(req: any, familyId: string) {
 }
 
 // List pending invites for a family (family-head only)
+/**
+ * Performs handle list invites operation.
+ * @param {any} req - Description of req
+ * @param {string} familyId - Description of familyId
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleListInvites(req: any, familyId: string) {
   try {
     const authCheck = requireAuth(req as Request);
@@ -127,6 +133,14 @@ export async function handleListInvites(req: any, familyId: string) {
 }
 
 // Review (approve/reject) an invite
+/**
+ * Performs handle review invite operation.
+ * @param {any} req - Description of req
+ * @param {string} familyId - Description of familyId
+ * @param {string} inviteId - Description of inviteId
+ * @param {string} action - Description of action
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleReviewInvite(
   req: any,
   familyId: string,
