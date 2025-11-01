@@ -11,30 +11,37 @@ This project is a full-stack platform for managing local community operations, i
 - Role-based access and privacy controls
 
 ## Quick Start
+1. **Copy over environement variables:**
+   ```bash
+   cp .env.example .env
+   ```
 
-1. **Install dependencies:**
+2. **Install dependencies:**
    ```bash
    bun install
    ```
-2. **Set up your database:**
+3. **Set up your database:**
    - Configure your `DATABASE_URL` in `.env`.
    - Run Prisma migrations:
      ```bash
      npx prisma migrate dev --schema=packages/db/schema.prisma
      ```
-3. **Seed the database (optional):**
+4. **Seed the database (optional):**
    ```bash
    npx ts-node packages/db/seed.ts
    ```
-4. **Generate JWT Secret:**
+5. **Generate JWT Secret:**
    ```bash
    bunx node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
-5. **Run the app:**
+   put it into `.env`
+
+6. **Run the app:**
    ```bash
    bun run dev
    ```
-6. To generate code documentation:
+
+7. To generate code documentation:
    ```bash
    bun run docs:gen
    ```
