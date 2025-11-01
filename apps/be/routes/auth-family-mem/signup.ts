@@ -58,7 +58,10 @@ export async function handleMemberSignup(req: Request) {
       );
 
     // --- Step 3: Ensure email is unique ---
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    //  `User.email` is not marked @unique in the Prisma schema, use findFirst
+    // to avoid runtime validation errors. Consider adding @unique to the
+    // schema and running a migration if you want DB-level enforcement.
+    const existingUser = await prisma.user.findFirst({ where: { email } });
     if (existingUser) {
       return failure("Email already registered", "Duplicate Entry", 409);
     }

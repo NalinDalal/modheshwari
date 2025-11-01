@@ -42,7 +42,7 @@ datasource db {
 
 model User {
   id        String         @id @default(uuid())
-  email     String         
+  email     String
   password  String
   name      String
   role      Role
@@ -65,8 +65,8 @@ model User {
   eventApprovalsReviewed EventApproval[] @relation("UserEventApprovals")
 
   // Member invites relations
-  memberInvitesReceived MemberInvite[]   @relation("InvitedUser")
-  memberInvitesReviewed MemberInvite[]   @relation("InviteReviewedBy")
+  memberInvitesReceived MemberInvite[] @relation("InvitedUser")
+  memberInvitesReviewed MemberInvite[] @relation("InviteReviewedBy")
 
   // User relations
   relationsFrom UserRelation[] @relation("FromUser")
@@ -109,13 +109,14 @@ model Profile {
 //
 
 model Family {
-  id        String         @id @default(uuid())
-  name      String
-  uniqueId  String         @unique
-  members   FamilyMember[]
-  headId    String?
-  head      User?          @relation("FamilyHead", fields: [headId], references: [id])
-  createdAt DateTime       @default(now())
+  id           String         @id @default(uuid())
+  name         String
+  uniqueId     String         @unique
+  members      FamilyMember[]
+  headId       String?
+  head         User?          @relation("FamilyHead", fields: [headId], references: [id])
+  createdAt    DateTime       @default(now())
+  MemberInvite MemberInvite[]
 }
 
 //
@@ -132,12 +133,12 @@ model FamilyMember {
   userId   String
   role     Role
   joinedAt DateTime @default(now())
-  
-  @@unique([familyId, userId, role]) // ensures one unique role per user within a family
   // This allows:
   //  ✅ Same user can exist in multiple families.
   //  ✅ Same user can hold different roles in same or different families.
   //  ❌ Same user cannot hold the same role twice in the same family.
+
+  @@unique([familyId, userId, role]) // ensures one unique role per user within a family
 }
 
 //
@@ -292,23 +293,23 @@ model Notification {
 // Tracks pending requests or invites to join a Family. Created when a user
 // requests to join a family or when a Family Head invites an external email.
 model MemberInvite {
-  id             String   @id @default(uuid())
-  family         Family   @relation(fields: [familyId], references: [id])
-  familyId       String
-  invitedUser    User?    @relation("InvitedUser", fields: [invitedUserId], references: [id])
-  invitedUserId  String?
-  inviteEmail    String?
-  status         InviteStatus @default(PENDING)
-  token          String?
-  createdAt      DateTime @default(now())
-  expiresAt      DateTime?
-  reviewedBy     User?    @relation("InviteReviewedBy", fields: [reviewedById], references: [id])
-  reviewedById   String?
-  reviewedAt     DateTime?
-  remarks        String?
+  id            String       @id @default(uuid())
+  family        Family       @relation(fields: [familyId], references: [id])
+  familyId      String
+  invitedUser   User?        @relation("InvitedUser", fields: [invitedUserId], references: [id])
+  invitedUserId String?
+  inviteEmail   String?
+  status        InviteStatus @default(PENDING)
+  token         String?
+  createdAt     DateTime     @default(now())
+  expiresAt     DateTime?
+  reviewedBy    User?        @relation("InviteReviewedBy", fields: [reviewedById], references: [id])
+  reviewedById  String?
+  reviewedAt    DateTime?
+  remarks       String?
 
-  @@index([familyId])
   @@unique([familyId, inviteEmail])
+  @@index([familyId])
 }
 
 enum InviteStatus {
@@ -316,4 +317,3 @@ enum InviteStatus {
   APPROVED
   REJECTED
 }
-
