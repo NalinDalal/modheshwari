@@ -17,6 +17,7 @@ import { handleFHLogin } from "./routes/auth-family-head/login";
 import { handleFHSignup } from "./routes/auth-family-head/signup";
 import { handleMemberLogin } from "./routes/auth-family-mem/login";
 import { handleMemberSignup } from "./routes/auth-family-mem/signup";
+import { handleCreateFamily, handleAddMember, handleListInvites, handleReviewInvite } from "./routes/families";
 
 // --- Lightweight routing layer using Bun's native server ---
 const server = serve({
@@ -45,6 +46,39 @@ const server = serve({
       if (url.pathname === "/api/login/member" && method === "POST") {
         return handleMemberLogin(req);
       }
+
+        // --- Create family (authenticated user becomes head) ---
+        if (url.pathname === "/api/families" && method === "POST") {
+          return handleCreateFamily(req);
+        }
+
+        // --- Add member to family ---
+        if (url.pathname.startsWith("/api/families/") && url.pathname.endsWith("/members") && method === "POST") {
+          // extract familyId from path: /api/families/:id/members
+          const parts = url.pathname.split("/").filter(Boolean);
+          // parts -> ["api","families",":id","members"]
+          const familyId = parts[2];
+          return handleAddMember(req, familyId);
+        }
+
+        // --- List invites for family (family head) ---
+        if (url.pathname.startsWith("/api/families/") && url.pathname.endsWith("/invites") && method === "GET") {
+          const parts = url.pathname.split("/").filter(Boolean);
+          // parts -> ["api","families",":id","invites"]
+          const familyId = parts[2];
+          return handleListInvites(req, familyId);
+        }
+
+        // --- Review invite (approve/reject) ---
+        if (url.pathname.startsWith("/api/families/") && url.pathname.includes("/invites/") && method === "PATCH") {
+          // path example: /api/families/:id/invites/:inviteId/approve
+          const parts = url.pathname.split("/").filter(Boolean);
+          // parts -> ["api","families",":id","invites",":inviteId",":action"]
+          const familyId = parts[2];
+          const inviteId = parts[4];
+          const action = parts[5] || "";
+          return handleReviewInvite(req, familyId, inviteId, action);
+        }
 
       // --- Default 404 handler ---
       return new Response(JSON.stringify({ error: "Endpoint not found" }), {

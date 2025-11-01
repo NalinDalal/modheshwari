@@ -64,6 +64,10 @@ model User {
   // New reverse relation for EventApproval
   eventApprovalsReviewed EventApproval[] @relation("UserEventApprovals")
 
+  // Member invites relations
+  memberInvitesReceived MemberInvite[]   @relation("InvitedUser")
+  memberInvitesReviewed MemberInvite[]   @relation("InviteReviewedBy")
+
   // User relations
   relationsFrom UserRelation[] @relation("FromUser")
   relationsTo   UserRelation[] @relation("ToUser")
@@ -282,4 +286,33 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// -------------------- MEMBER INVITE --------------------
+// Tracks pending requests or invites to join a Family. Created when a user
+// requests to join a family or when a Family Head invites an external email.
+model MemberInvite {
+  id             String   @id @default(uuid())
+  family         Family   @relation(fields: [familyId], references: [id])
+  familyId       String
+  invitedUser    User?    @relation("InvitedUser", fields: [invitedUserId], references: [id])
+  invitedUserId  String?
+  inviteEmail    String?
+  status         InviteStatus @default(PENDING)
+  token          String?
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime?
+  reviewedBy     User?    @relation("InviteReviewedBy", fields: [reviewedById], references: [id])
+  reviewedById   String?
+  reviewedAt     DateTime?
+  remarks        String?
+
+  @@index([familyId])
+  @@unique([familyId, inviteEmail])
+}
+
+enum InviteStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

@@ -421,6 +421,39 @@ model Notification {
 }
 ```
 
+### `MemberInvite` (new)
+
+Tracks pending requests or invites to join a `Family`. This model separates pending invites from accepted memberships and is used to implement the approval workflow described in the SRS.
+
+Prisma reference:
+
+```prisma
+model MemberInvite {
+  id             String   @id @default(uuid())
+  family         Family   @relation(fields: [familyId], references: [id])
+  familyId       String
+  invitedUser    User?    @relation("InvitedUser", fields: [invitedUserId], references: [id])
+  invitedUserId  String?
+  inviteEmail    String?
+  status         InviteStatus @default(PENDING)
+  token          String?
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime?
+  reviewedBy     User?    @relation("InviteReviewedBy", fields: [reviewedById], references: [id])
+  reviewedById   String?
+  reviewedAt     DateTime?
+  remarks        String?
+}
+
+enum InviteStatus { PENDING APPROVED REJECTED }
+```
+
+Notes:
+- `invitedUserId` may be null when the invite targets an email that has not yet registered. When that email later registers, application logic can link the user to the pending invite (claim flow).
+- `token` supports email-based claim links where the recipient can accept without immediate login, or for verifying ownership of the invited email.
+- Keep `inviteEmail` indexed and prevent duplicate pending invites per (family, email).
+```
+
 **Notes**
 
 - Keep `type` as well-known values (`event_approval`, `event_created`, `resource_status` etc.). Consider storing a `payload JSON` in future to allow structured notification actions.
@@ -486,6 +519,13 @@ This is the seed setup used for development and QA. It maps directly to your ear
 - `PATCH /api/events/:id/approvals/:approvalId` — approver action (update `EventApproval.status`, `remarks`, `reviewedAt`); update `Event.status` according to business rules
 - `POST /api/resource-requests` — create `ResourceRequest`
 - `PATCH /api/resource-requests/:id/approve` — approve and set `approverId`, `approverName`, `status`
+
+New invite endpoints (family-join flow):
+
+- `POST /api/signup/member` — create `User` and `MemberInvite` (status = `PENDING`) when `familyId` is supplied. Respond with invite id and status.
+- `GET /api/families/:id/invites` — (Family Head only) list pending invites.
+- `PATCH /api/families/:id/invites/:inviteId/approve` — approve invite: create `FamilyMember`, set invite status to `APPROVED`, record reviewer.
+- `PATCH /api/families/:id/invites/:inviteId/reject` — reject invite: set invite status to `REJECTED` and optionally include remarks.
 
 **Design notes**
 

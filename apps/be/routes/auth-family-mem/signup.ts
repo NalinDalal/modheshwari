@@ -77,25 +77,37 @@ export async function handleMemberSignup(req: Request) {
       },
     });
 
-    // --- Step 6: Link Member to existing Family ---
-    await prisma.familyMember.create({
+    // --- Step 6: Create a pending MemberInvite instead of immediate membership ---
+    const invite = await prisma.memberInvite.create({
       data: {
         familyId: family.id,
-        userId: user.id,
-        role: "MEMBER",
+        invitedUserId: user.id,
+        inviteEmail: user.email,
+        status: "PENDING",
       },
     });
 
-    // --- Step 7: Generate JWT token ---
+    // Notify family head about pending invite (if head exists)
+    if (family.headId) {
+      await prisma.notification.create({
+        data: {
+          userId: family.headId,
+          type: "family_invite",
+          message: `New join request from ${user.name} for family ${family.name}`,
+        },
+      });
+    }
+
+    // --- Step 7: Generate JWT token (user can still login but is not yet a family member) ---
     const token = signJWT({ userId: user.id, role: user.role });
 
-    // --- Step 8: Return structured success response ---
+    // --- Step 8: Return structured success response (invite pending) ---
     console.log(
-      `Member signup successful: ${user.name} joined family ${family.name}`,
+      `Member signup requested: ${user.name} requested to join family ${family.name}`,
     );
 
     return success(
-      "Signup successful",
+      "Signup requested — pending family approval",
       {
         user: {
           id: user.id,
@@ -103,10 +115,14 @@ export async function handleMemberSignup(req: Request) {
           email: user.email,
           role: user.role,
         },
-        family: {
-          id: family.id,
-          name: family.name,
-          uniqueId: family.uniqueId,
+        invite: {
+          id: invite.id,
+          status: invite.status,
+          family: {
+            id: family.id,
+            name: family.name,
+            uniqueId: family.uniqueId,
+          },
         },
         token,
       },

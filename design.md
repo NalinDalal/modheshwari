@@ -315,6 +315,27 @@ graph TD
 4. Family Head receives notification and approves member
 5. Member gains access to family dashboard
 
+**Member Invite & Approval (detailed)**
+
+- When a user signs up and supplies a `familyId` (or unique family code), the system will create a pending `MemberInvite` record rather than immediately creating a `FamilyMember` entry.
+- The `MemberInvite` stores: target `familyId`, `inviteEmail` (or invitedUserId when the user exists), `status` (PENDING/APPROVED/REJECTED), optional `token`, `createdAt`, `expiresAt`, and review metadata (`reviewedBy`, `reviewedAt`, `remarks`).
+- The Family Head (or authorized approver) is notified and can view pending invites on a dedicated invites UI. They can Approve or Reject each invite.
+- On Approve: the backend creates the `FamilyMember` record (role MEMBER by default), sets the invite `status` to APPROVED, records `reviewedBy`/`reviewedAt`, and sends a notification to the new member.
+- On Reject: the invite `status` becomes REJECTED and the requester is notified with any optional remarks.
+
+Why this approach:
+
+- Prevents unauthorized auto-joins and gives Family Heads control.
+- Keeps membership history clean (invites separate from accepted FamilyMember rows).
+- Supports invite-by-email scenarios (invite pre-registered or external emails).
+
+API (examples):
+
+- POST /api/signup/member — creates User and MemberInvite (status=PENDING) when `familyId` supplied.
+- GET /api/families/:id/invites — family-head only: list pending invites.
+- PATCH /api/families/:id/invites/:inviteId/approve — approve invite → create FamilyMember.
+- PATCH /api/families/:id/invites/:inviteId/reject — reject invite.
+
 **Features:**
 
 - View family tree
