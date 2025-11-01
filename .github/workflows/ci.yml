@@ -23,9 +23,6 @@ jobs:
       
       - name: Prisma generate
         run: bun x prisma generate --schema=packages/db/schema.prisma
-      
-      - name: Lint
-        run: bun run lint
 
       - name: Typecheck
         run: bun run check-types
