@@ -98,7 +98,7 @@ export async function handleMemberSignup(req: Request) {
       });
     }
 
-    // --- Step 7: Generate JWT token (user can still login but is not yet a family member) ---
+    // --- Step 7: Generate JWT token  (user can still login but is not yet a family member) ---
     const token = signJWT({ userId: user.id, role: user.role });
 
     // --- Step 8: Return structured success response (invite pending) ---
@@ -107,7 +107,7 @@ export async function handleMemberSignup(req: Request) {
     );
 
     return success(
-      "Signup requested — pending family approval",
+      "Signup successful, pending family approval",
       {
         user: {
           id: user.id,

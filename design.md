@@ -286,13 +286,13 @@ graph TD
 
 ### Role Permissions
 
-| Role               | Permissions                                                                   |
-| ------------------ | ----------------------------------------------------------------------------- |
-| **Community Head** | Full system access, approve all requests, manage all events, view all data    |
+| Role               | Permissions                                                                              |
+| ------------------ | ---------------------------------------------------------------------------------------- |
+| **Community Head** | Full system access, approve all requests, manage all events, view all data               |
 | **Subhead**        | Manage assigned gotras, approve gotra-level requests, create and manage community events |
 | **Gotra Head**     | Manage families in gotra, approve family requests, create and manage gotra events        |
-| **Family Head**    | Manage family members, submit resource requests, register family for events   |
-| **Family Member**  | View family info, register for events, participate in forums                  |
+| **Family Head**    | Manage family members, submit resource requests, register family for events              |
+| **Family Member**  | View family info, register for events, participate in forums                             |
 
 ---
 

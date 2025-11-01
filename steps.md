@@ -37,6 +37,7 @@
 3. **Configure CI/CD** with GitHub Actions for build, test, and deploy. - done
 4. **Design and document database schema** using Prisma, based on design doc. - done
 5. **Implement backend services** (APIs, authentication, business logic) using Node.js and Prisma.
+   Authentication implemented for family, need to see for admin routes
 6. **Develop frontend apps** (web, admin, etc.) using Next.js and shared UI components.
 7. **Write comprehensive tests** for all features (unit, integration, e2e).
 8. **Deploy to production** using CI/CD pipeline and cloud infrastructure.

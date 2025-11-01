@@ -316,3 +316,4 @@ enum InviteStatus {
   APPROVED
   REJECTED
 }
+

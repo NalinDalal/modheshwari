@@ -61,8 +61,9 @@ export async function handleFHLogin(
       return failure("Invalid credentials", "Authentication Error", 401);
     }
 
-  // --- Generate JWT token ---
-  const token = signJWT({ id: user.id, role: user.role });
+    // --- Generate JWT token ---
+    // Standardize token payload to { id, role }
+    const token = signJWT({ id: user.id, role: user.role });
 
     // --- Success response ---
     return success(
@@ -78,8 +79,6 @@ export async function handleFHLogin(
       },
       200,
     );
-
-    
   } catch (err) {
     console.error("Login Error:", err);
     return new Response(JSON.stringify({ error: "Server error" }), {

@@ -239,6 +239,41 @@ model FamilyMember {
 
 ---
 
+### `MemberInvite` (new)
+
+Tracks pending requests or invites to join a `Family`. This model separates pending invites from accepted memberships and is used to implement the approval workflow described in the SRS.
+
+Prisma reference:
+
+```prisma
+model MemberInvite {
+  id             String   @id @default(uuid())
+  family         Family   @relation(fields: [familyId], references: [id])
+  familyId       String
+  invitedUser    User?    @relation("InvitedUser", fields: [invitedUserId], references: [id])
+  invitedUserId  String?
+  inviteEmail    String?
+  status         InviteStatus @default(PENDING)
+  token          String?
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime?
+  reviewedBy     User?    @relation("InviteReviewedBy", fields: [reviewedById], references: [id])
+  reviewedById   String?
+  reviewedAt     DateTime?
+  remarks        String?
+}
+
+enum InviteStatus { PENDING APPROVED REJECTED }
+```
+
+Notes:
+
+- `invitedUserId` may be null when the invite targets an email that has not yet registered. When that email later registers, application logic can link the user to the pending invite (claim flow).
+- `token` supports email-based claim links where the recipient can accept without immediate login, or for verifying ownership of the invited email.
+- Keep `inviteEmail` indexed and prevent duplicate pending invites per (family, email).
+
+---
+
 ### `UserRelation`
 
 ```prisma
