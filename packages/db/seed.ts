@@ -1,5 +1,7 @@
 import "dotenv/config";
 import { PrismaClient, Role, RelationType, EventStatus } from "@prisma/client";
+import { hashPassword } from "@modheshwari/utils/hash";
+
 const prisma = new PrismaClient();
 
 /**
@@ -17,7 +19,7 @@ async function main() {
       data: {
         name: "Aarav Mehta",
         email: "community@demo.com",
-        password: "123",
+        password: await hashPassword("123"),
         role: Role.COMMUNITY_HEAD,
         status: true,
       },
@@ -26,6 +28,7 @@ async function main() {
       data: {
         name: "Diya Shah",
         email: "subhead@demo.com",
+        password: await hashPassword("123"),
         password: "123",
         role: Role.COMMUNITY_SUBHEAD,
         status: true,
@@ -35,6 +38,7 @@ async function main() {
       data: {
         name: "Kabir Patel",
         email: "gotra@demo.com",
+        password: await hashPassword("123"),
         password: "123",
         role: Role.GOTRA_HEAD,
         status: true,
@@ -64,7 +68,7 @@ async function main() {
       data: {
         name: headName,
         email: `${headName.toLowerCase().split(" ")[0]}@demo.com`,
-        password: "123",
+        password: await hashPassword("123"),
         role: Role.FAMILY_HEAD,
         status: true,
       },
@@ -73,7 +77,7 @@ async function main() {
       data: {
         name: spouseName,
         email: `${spouseName.toLowerCase().split(" ")[0]}@demo.com`,
-        password: "123",
+        password: await hashPassword("123"),
         role: Role.MEMBER,
         status: true,
       },
@@ -82,7 +86,7 @@ async function main() {
       data: {
         name: childName,
         email: `${childName.toLowerCase().split(" ")[0]}@demo.com`,
-        password: "123",
+        password: await hashPassword("123"),
         role: Role.MEMBER,
         status: true,
       },

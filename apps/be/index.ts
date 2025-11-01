@@ -15,6 +15,8 @@ config({ path: join(process.cwd(), "../../.env") });
 
 import { handleFHLogin } from "./routes/auth-family-head/login";
 import { handleFHSignup } from "./routes/auth-family-head/signup";
+import { handleMemberLogin } from "./routes/auth-family-mem/login";
+import { handleMemberSignup } from "./routes/auth-family-mem/signup";
 
 // --- Lightweight routing layer using Bun's native server ---
 const server = serve({
@@ -32,6 +34,16 @@ const server = serve({
       // --- Login for Family Head ---
       if (url.pathname === "/api/login/familyhead" && method === "POST") {
         return handleFHLogin(req, "FAMILY_HEAD");
+      }
+
+      // --- Signup for Family Member ---
+      if (url.pathname === "/api/signup/member" && method === "POST") {
+        return handleMemberSignup(req);
+      }
+
+      // --- Login for Family Member ---
+      if (url.pathname === "/api/login/member" && method === "POST") {
+        return handleMemberLogin(req);
       }
 
       // --- Default 404 handler ---

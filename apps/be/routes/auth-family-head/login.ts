@@ -6,6 +6,7 @@
 import prisma from "@modheshwari/db";
 import { comparePassword } from "@modheshwari/utils/hash";
 import { signJWT } from "@modheshwari/utils/jwt";
+import { success, failure } from "@modheshwari/utils/response";
 
 /**
  * Handles user login for a specific role.
@@ -37,36 +38,48 @@ export async function handleFHLogin(
 
     // --- Basic input validation ---
     if (!email || !password) {
-      return new Response(JSON.stringify({ error: "Missing credentials" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return failure("Missing credentials", "Validation Error", 400);
     }
 
     // --- Fetch user by email ---
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({
+      where: { email, role: "FAMILY_HEAD" },
+      include: { families: { include: { family: true } } },
+    });
 
     // --- Verify existence and role match ---
-    if (!user || user.role !== expectedRole) {
-      return new Response(
-        JSON.stringify({ error: `You are not authorized as ${expectedRole}` }),
-        { status: 401, headers: { "Content-Type": "application/json" } },
+    if (!user || user.role !== expectedRole)
+      return failure(
+        `You are not authorized as ${expectedRole}`,
+        "Unauthorized",
+        401,
       );
-    }
 
     // --- Compare password with stored hash ---
     const valid = await comparePassword(password, user.password);
     if (!valid) {
-      return new Response(JSON.stringify({ error: "Invalid credentials" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return failure("Invalid credentials", "Authentication Error", 401);
     }
 
     // --- Generate JWT token ---
     const token = signJWT({ id: user.id, role: user.role });
 
     // --- Success response ---
+    return success(
+      "Logged in successfully",
+      {
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
+      200,
+    );
+
+    /*
     return new Response(
       JSON.stringify({
         message: "Logged in successfully",
@@ -80,6 +93,7 @@ export async function handleFHLogin(
       }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
+            */
   } catch (err) {
     console.error("Login Error:", err);
     return new Response(JSON.stringify({ error: "Server error" }), {

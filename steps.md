@@ -56,5 +56,4 @@ to do next: signin for family head, then same thing for family members
 once it is done, we take care of higher level auth
 
 01.11.2025
-authentication for family-head is done
-move to family members now
+[authentication for family-head, family-members done](./auth.md)
