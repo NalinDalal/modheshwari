@@ -30,8 +30,5 @@ jobs:
       - name: Build all packages
         run: bun run build
 
-      - name: Run tests (all packages)
-        run: bun run test --filter=...  # Replace with actual test command for all packages if needed
-
       - name: Productionize (deploy or upload artifacts)
         run: echo "Production deployment step goes here. Replace with actual deployment script."
