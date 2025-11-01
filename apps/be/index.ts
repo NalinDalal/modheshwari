@@ -45,7 +45,7 @@ const server = serve({
 
       // --- Signup for Family Member ---
       if (url.pathname === "/api/signup/member" && method === "POST") {
-        return handleMemberSignup(req);
+        return handleFMSignup(req);
       }
 
       // --- Login for Family Member ---
