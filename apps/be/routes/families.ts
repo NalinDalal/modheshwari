@@ -1,7 +1,7 @@
 import prisma from "@modheshwari/db";
-import { verifyJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 import { hashPassword } from "@modheshwari/utils/hash";
+import { requireAuth } from "./auth-middleware";
 
 /**
  * Create a Family for the authenticated user and make them the head.
@@ -10,13 +10,10 @@ import { hashPassword } from "@modheshwari/utils/hash";
  */
 export async function handleCreateFamily(req: any) {
   try {
-    const auth = req.headers.get("authorization") || "";
-    const token = auth.replace("Bearer ", "").trim();
-    const decoded: any = verifyJWT(token);
-    if (!decoded || !(decoded.userId || decoded.id))
-      return failure("Unauthorized", "Auth Error", 401);
-
-    const userId = decoded.userId ?? decoded.id;
+    // Require authentication (any role)
+    const authCheck = requireAuth(req as Request);
+    if (!authCheck.ok) return authCheck.response;
+    const userId = authCheck.payload.userId ?? authCheck.payload.id;
 
     const body = await req.json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
@@ -56,13 +53,9 @@ export async function handleCreateFamily(req: any) {
  */
 export async function handleAddMember(req: any, familyId: string) {
   try {
-    const auth = req.headers.get("authorization") || "";
-    const token = auth.replace("Bearer ", "").trim();
-    const decoded: any = verifyJWT(token);
-    if (!decoded || !(decoded.userId || decoded.id))
-      return failure("Unauthorized", "Auth Error", 401);
-
-    const requesterId = decoded.userId ?? decoded.id;
+    const authCheck = requireAuth(req as Request);
+    if (!authCheck.ok) return authCheck.response;
+    const requesterId = authCheck.payload.userId ?? authCheck.payload.id;
 
     // Verify requester is head of the family
     const family = await prisma.family.findUnique({ where: { id: familyId } });
@@ -79,7 +72,9 @@ export async function handleAddMember(req: any, familyId: string) {
     if (userId) {
       user = await prisma.user.findUnique({ where: { id: userId } });
     } else if (email) {
-      user = await prisma.user.findUnique({ where: { email } });
+      // email is not unique at the schema level; use findFirst to avoid
+      // Prisma validation errors. Consider adding @unique to User.email.
+      user = await prisma.user.findFirst({ where: { email } });
     } else {
       return failure("Provide userId or email to add", "Validation Error", 400);
     }
@@ -90,7 +85,8 @@ export async function handleAddMember(req: any, familyId: string) {
     const existing = await prisma.familyMember.findFirst({
       where: { familyId: family.id, userId: user.id, role: role ?? "MEMBER" },
     });
-    if (existing) return failure("User already member with that role", "Conflict", 409);
+    if (existing)
+      return failure("User already member with that role", "Conflict", 409);
 
     const fm = await prisma.familyMember.create({
       data: {
@@ -110,13 +106,9 @@ export async function handleAddMember(req: any, familyId: string) {
 // List pending invites for a family (family-head only)
 export async function handleListInvites(req: any, familyId: string) {
   try {
-    const auth = req.headers.get("authorization") || "";
-    const token = auth.replace("Bearer ", "").trim();
-    const decoded: any = verifyJWT(token);
-    if (!decoded || !(decoded.userId || decoded.id))
-      return failure("Unauthorized", "Auth Error", 401);
-
-    const requesterId = decoded.userId ?? decoded.id;
+    const authCheck = requireAuth(req as Request);
+    if (!authCheck.ok) return authCheck.response;
+    const requesterId = authCheck.payload.userId ?? authCheck.payload.id;
     const family = await prisma.family.findUnique({ where: { id: familyId } });
     if (!family) return failure("Family not found", "Not Found", 404);
     if (family.headId !== requesterId)
@@ -135,23 +127,27 @@ export async function handleListInvites(req: any, familyId: string) {
 }
 
 // Review (approve/reject) an invite
-export async function handleReviewInvite(req: any, familyId: string, inviteId: string, action: string) {
+export async function handleReviewInvite(
+  req: any,
+  familyId: string,
+  inviteId: string,
+  action: string,
+) {
   try {
-    const auth = req.headers.get("authorization") || "";
-    const token = auth.replace("Bearer ", "").trim();
-    const decoded: any = verifyJWT(token);
-    if (!decoded || !(decoded.userId || decoded.id))
-      return failure("Unauthorized", "Auth Error", 401);
-
-    const reviewerId = decoded.userId ?? decoded.id;
+    const authCheck = requireAuth(req as Request, ["FAMILY_HEAD"]);
+    if (!authCheck.ok) return authCheck.response;
+    const reviewerId = authCheck.payload.userId ?? authCheck.payload.id;
     const family = await prisma.family.findUnique({ where: { id: familyId } });
     if (!family) return failure("Family not found", "Not Found", 404);
     if (family.headId !== reviewerId)
       return failure("Only family head can review invites", "Forbidden", 403);
 
-    const invite = await prisma.memberInvite.findUnique({ where: { id: inviteId } });
+    const invite = await prisma.memberInvite.findUnique({
+      where: { id: inviteId },
+    });
     if (!invite) return failure("Invite not found", "Not Found", 404);
-    if (invite.status !== "PENDING") return failure("Invite already reviewed", "Conflict", 409);
+    if (invite.status !== "PENDING")
+      return failure("Invite already reviewed", "Conflict", 409);
 
     const body = await req.json().catch(() => null);
     const remarks = body?.remarks ?? null;
@@ -186,7 +182,10 @@ export async function handleReviewInvite(req: any, familyId: string, inviteId: s
           invitedUserId = newUser.id;
 
           // persist invitedUserId onto invite
-          await tx.memberInvite.update({ where: { id: inviteId }, data: { invitedUserId } });
+          await tx.memberInvite.update({
+            where: { id: inviteId },
+            data: { invitedUserId },
+          });
         }
 
         // create FamilyMember
