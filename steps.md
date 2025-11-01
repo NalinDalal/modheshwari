@@ -13,7 +13,7 @@
 
 ## 3. Why This Specific Schema?
 
-- **User vs Profile:**
+- **User & Profile:**
   - `User` holds authentication and core account info (email, password, role).
   - `Profile` holds extended, often optional, user details (phone, address, profession, gotra, etc.).
   - This separation allows for privacy, easier updates, and future extensibility.
@@ -61,5 +61,8 @@ once it is done, we take care of higher level auth
 /me endpoint loaded
 
 added endpoint to fetch all family members, now
+their authentication and all bullshit done
+
+logic to update status of any member also done
 
 move ahead to higher level authentications now

@@ -14,6 +14,11 @@ import prisma from "@modheshwari/db";
 import { hashPassword } from "@modheshwari/utils/hash";
 import { success, failure } from "@modheshwari/utils/response";
 
+/**
+ * Performs handle family member signup operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleFMSignup(req: Request) {
   try {
     console.log("signup endpoint for family-member");
