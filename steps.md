@@ -60,4 +60,6 @@ once it is done, we take care of higher level auth
 [authentication for family-head, family-members done](./auth.md)
 /me endpoint loaded
 
+added endpoint to fetch all family members, now
+
 move ahead to higher level authentications now

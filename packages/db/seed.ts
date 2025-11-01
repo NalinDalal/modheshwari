@@ -1,17 +1,20 @@
-import "dotenv/config";
+import { config } from "dotenv";
+import { join } from "path";
+
+// ✅ Load root .env (2 levels up from /packages/db)
+config({ path: join(process.cwd(), "../../.env") });
+
 import { PrismaClient, Role, RelationType, EventStatus } from "@prisma/client";
-import { hashPassword } from "@modheshwari/utils/hash";
+import { hashPassword } from "../utils/hash.ts";
 
 const prisma = new PrismaClient();
 
-/**
- * Auto-generated documentation for main
- * @function main
- * @param TODO: describe parameters
- * @returns TODO: describe return value
- */
 async function main() {
-  console.log("🌱  Seeding database...");
+  console.log("🌱 Seeding database...");
+
+  if (!process.env.DATABASE_URL) {
+    throw new Error("❌ DATABASE_URL not found in environment variables!");
+  }
 
   // ----- Core Admin Roles -----
   const [communityHead, communitySubHead, gotraHead] = await Promise.all([
@@ -44,6 +47,8 @@ async function main() {
     }),
   ]);
 
+  console.log("✅ Created core admin users");
+
   // ----- Families -----
   const families = await Promise.all([
     prisma.family.create({
@@ -55,162 +60,159 @@ async function main() {
     }),
   ]);
 
-  // Helper to build a family with head + spouse + child
-  async function makeFamily(
-    fam: any,
-    headName: string,
-    spouseName: string,
-    childName: string,
-  ) {
+  console.log("✅ Created base families");
+
+  // ----- Helper to build family with members -----
+  async function makeFamily(fam: any, names: Record<string, string>) {
     const head = await prisma.user.create({
       data: {
-        name: headName,
-        email: `${headName.toLowerCase().split(" ")[0]}@demo.com`,
+        name: names.head,
+        email: `${names.head.split(" ")[0].toLowerCase()}@demo.com`,
         password: await hashPassword("123"),
         role: Role.FAMILY_HEAD,
         status: true,
       },
     });
-    const spouse = await prisma.user.create({
-      data: {
-        name: spouseName,
-        email: `${spouseName.toLowerCase().split(" ")[0]}@demo.com`,
-        password: await hashPassword("123"),
-        role: Role.MEMBER,
-        status: true,
-      },
-    });
-    const child = await prisma.user.create({
-      data: {
-        name: childName,
-        email: `${childName.toLowerCase().split(" ")[0]}@demo.com`,
-        password: await hashPassword("123"),
-        role: Role.MEMBER,
-        status: true,
-      },
-    });
 
-    // link members to family
-    await prisma.familyMember.createMany({
+    await prisma.user.createMany({
       data: [
-        { familyId: fam.id, userId: head.id, role: Role.FAMILY_HEAD },
-        { familyId: fam.id, userId: spouse.id, role: Role.MEMBER },
-        { familyId: fam.id, userId: child.id, role: Role.MEMBER },
+        {
+          name: names.spouse,
+          email: `${names.spouse.split(" ")[0].toLowerCase()}@demo.com`,
+          password: await hashPassword("123"),
+          role: Role.MEMBER,
+          status: true,
+        },
+        {
+          name: names.child1,
+          email: `${names.child1.split(" ")[0].toLowerCase()}@demo.com`,
+          password: await hashPassword("123"),
+          role: Role.MEMBER,
+          status: true,
+        },
+        {
+          name: names.child2,
+          email: `${names.child2.split(" ")[0].toLowerCase()}@demo.com`,
+          password: await hashPassword("123"),
+          role: Role.MEMBER,
+          status: true,
+        },
+        {
+          name: names.grandparent,
+          email: `${names.grandparent.split(" ")[0].toLowerCase()}@demo.com`,
+          password: await hashPassword("123"),
+          role: Role.MEMBER,
+          status: true,
+        },
       ],
     });
 
-    // mark head of family
+    // Fetch members created
+    const users = await prisma.user.findMany({
+      where: {
+        email: {
+          in: [
+            `${names.spouse.split(" ")[0].toLowerCase()}@demo.com`,
+            `${names.child1.split(" ")[0].toLowerCase()}@demo.com`,
+            `${names.child2.split(" ")[0].toLowerCase()}@demo.com`,
+            `${names.grandparent.split(" ")[0].toLowerCase()}@demo.com`,
+          ],
+        },
+      },
+    });
+
+    // Link to family
+    await prisma.familyMember.createMany({
+      data: [
+        { familyId: fam.id, userId: head.id, role: Role.FAMILY_HEAD },
+        ...users.map((u) => ({
+          familyId: fam.id,
+          userId: u.id,
+          role: Role.MEMBER,
+        })),
+      ],
+    });
+
+    // Update head
     await prisma.family.update({
       where: { id: fam.id },
       data: { headId: head.id },
     });
 
-    // create relation (spouse)
-    await prisma.userRelation.create({
-      data: {
-        fromUserId: head.id,
-        toUserId: spouse.id,
-        type: RelationType.SPOUSE,
-      },
-    });
+    // Relations
+    const spouse = users.find((u) => u.name === names.spouse);
+    const grandparent = users.find((u) => u.name === names.grandparent);
 
-    return { head, spouse, child };
+    if (spouse && grandparent) {
+      await prisma.userRelation.createMany({
+        data: [
+          {
+            fromUserId: head.id,
+            toUserId: spouse.id,
+            type: RelationType.SPOUSE,
+          },
+          {
+            fromUserId: head.id,
+            toUserId: grandparent.id,
+            type: RelationType.CHILD,
+          },
+        ],
+      });
+    }
+
+    console.log(`👨‍👩‍👧‍👦 Created ${fam.name}`);
+    return { head, users };
   }
 
-  const fam1 = await makeFamily(
-    families[0],
-    "Nalin Mehta",
-    "Riya Mehta",
-    "Anya Mehta",
-  );
-  const fam2 = await makeFamily(
-    families[1],
-    "Vikram Shah",
-    "Kavya Shah",
-    "Ira Shah",
-  );
-  const fam3 = await makeFamily(
-    families[2],
-    "Arjun Patel",
-    "Mira Patel",
-    "Rey Patel",
-  );
-
-  // ----- Events -----
-  const pendingEvent = await prisma.event.create({
-    data: {
-      name: "Diwali Celebration 2025",
-      description: "Community-wide festival gathering with dinner and games.",
-      date: new Date("2025-11-10T18:00:00Z"),
-      venue: "Community Hall A",
-      createdById: fam1.head.id,
-      status: EventStatus.PENDING,
-    },
+  await makeFamily(families[0], {
+    head: "Nalin Mehta",
+    spouse: "Riya Mehta",
+    child1: "Anya Mehta",
+    child2: "Ayaan Mehta",
+    grandparent: "Manish Mehta",
   });
 
-  const doneEvent = await prisma.event.create({
-    data: {
-      name: "Navratri Night 2025",
-      description: "Dance and Garba event for all families.",
-      date: new Date("2025-10-05T18:00:00Z"),
-      venue: "Main Ground",
-      createdById: fam2.head.id,
-      status: EventStatus.APPROVED,
-    },
+  await makeFamily(families[1], {
+    head: "Vikram Shah",
+    spouse: "Kavya Shah",
+    child1: "Ira Shah",
+    child2: "Rohit Shah",
+    grandparent: "Suresh Shah",
   });
 
-  // ----- Event Approvals (Pending Event) -----
-  const approvers = [communityHead, communitySubHead, gotraHead];
-  await Promise.all(
-    approvers.map((approver) =>
-      prisma.eventApproval.create({
-        data: {
-          eventId: pendingEvent.id,
-          approverId: approver.id,
-          approverName: approver.name,
-          role: approver.role,
-          status: "pending",
-        },
-      }),
-    ),
-  );
-
-  // ----- Registrations -----
-  await prisma.eventRegistration.createMany({
-    data: [
-      { eventId: doneEvent.id, userId: fam2.head.id },
-      { eventId: doneEvent.id, userId: fam2.spouse.id },
-      { eventId: doneEvent.id, userId: fam2.child.id },
-    ],
+  await makeFamily(families[2], {
+    head: "Arjun Patel",
+    spouse: "Mira Patel",
+    child1: "Rey Patel",
+    child2: "Nina Patel",
+    grandparent: "Kiran Patel",
   });
 
-  // ----- Notifications -----
-  await prisma.notification.createMany({
-    data: [
-      {
-        userId: fam1.head.id,
-        type: "event_submission",
-        message: "Your event 'Diwali Celebration 2025' is pending approval.",
+  // Example event
+  const head = await prisma.user.findFirst({
+    where: { role: Role.FAMILY_HEAD },
+  });
+
+  if (head) {
+    await prisma.event.create({
+      data: {
+        name: "Diwali Celebration 2025",
+        description: "Community-wide celebration.",
+        date: new Date("2025-11-10T18:00:00Z"),
+        venue: "Community Hall A",
+        createdById: head.id,
+        status: EventStatus.PENDING,
       },
-      ...approvers.map((a) => ({
-        userId: a.id,
-        type: "event_review",
-        message: `New event 'Diwali Celebration 2025' requires your approval.`,
-      })),
-      {
-        userId: fam2.head.id,
-        type: "event_status",
-        message: "Your event 'Navratri Night 2025' has been approved.",
-      },
-    ],
-  });
+    });
+    console.log("🎉 Created example event");
+  }
 
-  console.log("✅  Seed completed successfully.");
+  console.log("✅ Seed completed successfully.");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("❌ Seeding failed:", e);
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());

@@ -39,26 +39,6 @@ The Community Management Platform is a comprehensive solution for managing Hindu
 
 ## 2. Technical Architecture
 
-### 2.1 Technology Stack
-
-| Layer              | Technology                  | Purpose                          |
-| ------------------ | --------------------------- | -------------------------------- |
-| **Frontend**       | Next.js, React              | SSR/SSG, component architecture  |
-| **Styling**        | Tailwind CSS                | Responsive, utility-first design |
-| **Backend**        | Node.js, AWS Lambda         | Serverless API, business logic   |
-| **ORM**            | Prisma                      | Database abstraction             |
-| **Database**       | PostgreSQL                  | Primary data store               |
-| **Cache**          | Redis                       | Session/query caching            |
-| **Search**         | ElasticSearch               | Full-text search indexing        |
-| **Authentication** | NextAuth.js, OAuth 2.0      | SSO, JWT tokens                  |
-| **Authorization**  | RBAC                        | Role-based permissions           |
-| **Storage**        | AWS S3                      | Document/media storage           |
-| **DNS**            | AWS Route 53                | Domain management                |
-| **CI/CD**          | GitHub Actions              | Automated deployment             |
-| **Monitoring**     | Prometheus, Grafana         | Metrics and logging              |
-| **Email**          | SendGrid                    | Transactional emails             |
-| **Payments**       | Payment Gateway Integration | Event registration fees          |
-
 ### 2.2 Architecture Diagram
 
 ```mermaid
@@ -128,7 +108,7 @@ graph TB
 
 ### 3.1 Functional Requirements
 
-#### FR1: User Management
+#### FR1: User Management - done
 
 - User registration, login, and logout
 - Profile creation and updates
@@ -136,7 +116,7 @@ graph TB
 - Role-based access control
 - User preferences and settings
 
-#### FR2: Family Management
+#### FR2: Family Management - done
 
 - Family creation with unique family ID
 - Member invitation and onboarding
@@ -203,33 +183,6 @@ graph TB
 - Automated backups (daily)
 - Disaster recovery plan
 - Error handling and graceful degradation
-
-#### NFR4: Security
-
-- HTTPS for all communications
-- JWT token-based authentication
-- Password hashing (bcrypt)
-- SQL injection prevention
-- XSS protection
-- CSRF tokens
-- Rate limiting on APIs
-- Audit logging for sensitive operations
-
-#### NFR5: Usability
-
-- Responsive design (mobile, tablet, desktop)
-- Intuitive navigation
-- Accessibility compliance (WCAG 2.1)
-- Multilingual support
-- Onboarding tutorials and tooltips
-
-#### NFR6: Maintainability
-
-- Modular codebase
-- Comprehensive documentation
-- Code review process
-- Automated testing (unit, integration)
-- CI/CD pipeline
 
 ---
 
@@ -1057,27 +1010,7 @@ flowchart LR
 - **SSR**: Server-Side Rendering
 - **SSG**: Static Site Generation
 
-### B. Future Enhancements
-
-- Mobile applications (iOS, Android)
-- Real-time chat functionality
-- Video conferencing for virtual events
-- AI-powered member matching
-- Advanced analytics dashboard
-- Multi-language support (Hindi, Gujarati, etc.)
-- Integration with third-party calendar apps
-- Donation management system
-- Volunteer coordination module
-
-### C. References
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Prisma ORM Guide](https://www.prisma.io/docs)
-- [AWS Best Practices](https://aws.amazon.com/architecture/well-architected/)
-- [OAuth 2.0 Specification](https://oauth.net/2/)
-
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** October 2025  
-**Status:** Draft for Review
+**Last Updated:** October 2025

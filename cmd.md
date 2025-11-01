@@ -134,3 +134,104 @@ curl -s -X GET http://localhost:3001/api/me \
   "timestamp": "2025-11-01T09:23:48.293Z"
 }
 ```
+
+```sh
+# 8) to get your Family Details
+curl -s -X GET http://localhost:3001/api/family/members \
+                  -H "Authorization: Bearer $FH_TOKEN" | jq
+
+{
+  "status": "success",
+  "message": "Family members fetched",
+  "data": {
+    "family": {
+      "id": "1b3b483c-0ec9-483b-b52b-2882e4793c51",
+      "name": "Mehta Family",
+      "uniqueId": "FAM001",
+      "headId": "824afc96-5524-4450-98a5-49027698a373",
+      "createdAt": "2025-11-01T09:53:07.355Z"
+    },
+    "members": [
+      {
+        "id": "59c2e944-1613-4562-8202-f203ad24b678",
+        "familyId": "1b3b483c-0ec9-483b-b52b-2882e4793c51",
+        "userId": "824afc96-5524-4450-98a5-49027698a373",
+        "role": "FAMILY_HEAD",
+        "joinedAt": "2025-11-01T09:53:08.474Z",
+        "user": {
+          "id": "824afc96-5524-4450-98a5-49027698a373",
+          "name": "Nalin Mehta",
+          "email": "nalin@demo.com",
+          "status": true,
+          "profile": null
+        }
+      },
+      {
+        "id": "3eca33e9-8910-4678-84de-3776121d088b",
+        "familyId": "1b3b483c-0ec9-483b-b52b-2882e4793c51",
+        "userId": "d61a2e24-a9ee-47c7-970f-7163e3daefab",
+        "role": "MEMBER",
+        "joinedAt": "2025-11-01T09:53:08.474Z",
+        "user": {
+          "id": "d61a2e24-a9ee-47c7-970f-7163e3daefab",
+          "name": "Riya Mehta",
+          "email": "riya@demo.com",
+          "status": true,
+          "profile": null
+        }
+      },
+      {
+        "id": "5eb00d77-512d-423c-b9d1-bb3d84f86ce6",
+        "familyId": "1b3b483c-0ec9-483b-b52b-2882e4793c51",
+        "userId": "3440b45a-30a0-4fd2-9cb8-0056de19e28c",
+        "role": "MEMBER",
+        "joinedAt": "2025-11-01T09:53:08.474Z",
+        "user": {
+          "id": "3440b45a-30a0-4fd2-9cb8-0056de19e28c",
+          "name": "Anya Mehta",
+          "email": "anya@demo.com",
+          "status": true,
+          "profile": null
+        }
+      },
+      {
+        "id": "495c9a21-95be-4cd3-8201-a7e534a82ab6",
+        "familyId": "1b3b483c-0ec9-483b-b52b-2882e4793c51",
+        "userId": "72a1e6ea-1e7e-4073-9e15-8342a93f6a4b",
+        "role": "MEMBER",
+        "joinedAt": "2025-11-01T09:53:08.474Z",
+        "user": {
+          "id": "72a1e6ea-1e7e-4073-9e15-8342a93f6a4b",
+          "name": "Ayaan Mehta",
+          "email": "ayaan@demo.com",
+          "status": true,
+          "profile": null
+        }
+      },
+      {
+        "id": "ea1a1934-5f51-4f3c-afa9-8857d391695f",
+        "familyId": "1b3b483c-0ec9-483b-b52b-2882e4793c51",
+        "userId": "1325c175-eb36-4149-adc7-48f11cbdfe0c",
+        "role": "MEMBER",
+        "joinedAt": "2025-11-01T09:53:08.474Z",
+        "user": {
+          "id": "1325c175-eb36-4149-adc7-48f11cbdfe0c",
+          "name": "Manish Mehta",
+          "email": "manish@demo.com",
+          "status": true,
+          "profile": null
+        }
+      }
+    ]
+  },
+  "error": null,
+  "timestamp": "2025-11-01T10:05:59.218Z"
+}
+```
+
+fetch all family members(including dead one):
+
+```sh
+curl -s -X GET "http://localhost:3001/api/family/members?all=true" \
+  -H "Authorization: Bearer $FH_TOKEN" | jq
+```

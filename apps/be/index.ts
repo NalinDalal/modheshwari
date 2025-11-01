@@ -24,7 +24,8 @@ import {
   handleReviewInvite,
 } from "./routes/families";
 import { handleGetMe } from "./routes/me";
-
+import { handleUpdateMemberStatus } from "./routes/family-member-status";
+import { handleGetFamilyMembers } from "./routes/family-members";
 // --- Lightweight routing layer using Bun's native server ---
 const server = serve({
   port: 3001,
@@ -101,6 +102,20 @@ const server = serve({
       // --- Profile ---
       if (url.pathname === "/api/me" && method === "GET")
         return handleGetMe(req);
+
+      // --- Update member status (family head only) ---
+      if (
+        url.pathname.startsWith("/api/family/members") &&
+        url.pathname.endsWith("/status") &&
+        method === "PATCH"
+      ) {
+        return handleUpdateMemberStatus(req);
+      }
+
+      // --- Get family members ---
+      if (url.pathname.startsWith("/api/family/members") && method === "GET") {
+        return handleGetFamilyMembers(req);
+      }
 
       // --- Default 404 handler ---
       return new Response(JSON.stringify({ error: "Endpoint not found" }), {
