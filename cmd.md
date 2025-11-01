@@ -95,3 +95,42 @@ Notes
 - If any command returns an "Internal server error", check `dev-be.log` for the stacktrace (Prisma errors commonly indicate a schema/db mismatch). Run `bun x prisma generate` + migrate/db push and restart the backend.
 - If you get 401 responses, ensure `JWT_SECRET` in `.env` / exported in the shell matches the server environment.
 - These steps assume seed users/passwords are the ones in `packages/db/seed.ts` (passwords are "123" for seeded users).
+
+you need bearer token after Authorization:
+
+```sh
+set TOKEN (echo $MEM_RESP | jq -r '.data.token')
+    echo $TOKEN
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyZDZiNGExZi0wYmY3LTQ0ZTYtYWY1NC1kNmJjMTcwZjYzMGUiLCJyb2xlIjoiTUVNQkVSIiwiaWF0IjoxNzYxOTg4OTUxLCJleHAiOjE3NjI1OTM3NTF9.lEHbX2tqnZAoGpF2u3A4ddBbodfb5PUBVuS0qb19ujg
+```
+
+```sh
+# 7) To get your own details
+curl -s -X GET http://localhost:3001/api/me \
+          -H "Authorization: Bearer $TOKEN" \
+          -H "Content-Type: application/json" | jq
+
+{
+  "status": "success",
+  "message": "Fetched profile",
+  "data": {
+    "id": "2d6b4a1f-0bf7-44e6-af54-d6bc170f630e",
+    "name": "Riya Mehta",
+    "email": "riya@demo.com",
+    "role": "MEMBER",
+    "families": [
+      {
+        "id": "af61d58a-df83-44ea-8037-b95c4bc318e9",
+        "name": "Mehta Family",
+        "uniqueId": "FAM001",
+        "role": "MEMBER"
+      }
+    ],
+    "createdAt": "2025-11-01T07:46:23.005Z",
+    "updatedAt": "2025-11-01T07:46:23.005Z"
+  },
+  "error": null,
+  "timestamp": "2025-11-01T09:23:48.293Z"
+}
+```
