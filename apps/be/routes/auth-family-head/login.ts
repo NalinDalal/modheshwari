@@ -28,7 +28,7 @@ import { signJWT } from "@modheshwari/utils/jwt";
  *   "user": { "id": 1, "name": "John Doe", "role": "FAMILY_HEAD" }
  * }
  */
-export async function handleLogin(
+export async function handleFHLogin(
   req: Request,
   expectedRole: string,
 ): Promise<Response> {

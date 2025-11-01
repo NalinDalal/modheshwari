@@ -46,3 +46,25 @@ export function createResponse<T>({
     headers: { "Content-Type": "application/json" },
   });
 }
+
+/**
+ * Shortcut for success response.
+ */
+export function success<T>(
+  message: string,
+  data?: T,
+  statusCode = 200,
+): Response {
+  return createResponse({ status: "success", message, data, statusCode });
+}
+
+/**
+ * Shortcut for failure/error response.
+ */
+export function failure(
+  message: string,
+  error: string | null = null,
+  statusCode = 400,
+): Response {
+  return createResponse({ status: "error", message, error, statusCode });
+}

@@ -5,7 +5,6 @@
 // if true then log logged in else log you are not a family head
 // index.ts lightweight (only routing, not logic).
 
-
 import { serve } from "bun";
 import { config } from "dotenv";
 import { join } from "path";
@@ -14,8 +13,8 @@ import { join } from "path";
 // (so utils like jwt.ts can access process.env.JWT_SECRET)
 config({ path: join(process.cwd(), "../../.env") });
 
-import { handleLogin } from "./routes/auth-family-head/login";
-import { handleSignup } from "./routes/auth-family-head/signup";
+import { handleFHLogin } from "./routes/auth-family-head/login";
+import { handleFHSignup } from "./routes/auth-family-head/signup";
 
 // --- Lightweight routing layer using Bun's native server ---
 const server = serve({
@@ -27,12 +26,12 @@ const server = serve({
 
       // --- Signup for Family Head ---
       if (url.pathname === "/api/signup/familyhead" && method === "POST") {
-        return handleSignup(req, "FAMILY_HEAD");
+        return handleFHSignup(req, "FAMILY_HEAD");
       }
 
       // --- Login for Family Head ---
       if (url.pathname === "/api/login/familyhead" && method === "POST") {
-        return handleLogin(req, "FAMILY_HEAD");
+        return handleFHLogin(req, "FAMILY_HEAD");
       }
 
       // --- Default 404 handler ---

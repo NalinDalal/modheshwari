@@ -33,7 +33,7 @@ import { success, failure } from "@modheshwari/utils/response";
  * @param {string} role - The user role ("FAMILY_HEAD").
  * @returns {Promise<Response>} HTTP JSON response.
  */
-export async function handleSignup(req: Request, role: string) {
+export async function handleFHSignup(req: Request, role: string) {
   try {
     console.log("signup endpoint for family-head");
 

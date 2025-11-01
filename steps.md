@@ -32,10 +32,10 @@
 
 ## 4. Steps for Application Development
 
-1. **Initialize monorepo** with Bun, TurboRepo, and workspaces for apps and packages.
-2. **Set up UI library** and add basic test cases.
-3. **Configure CI/CD** with GitHub Actions for build, test, and deploy.
-4. **Design and document database schema** using Prisma, based on design doc.
+1. **Initialize monorepo** with Bun, TurboRepo, and workspaces for apps and packages. - done
+2. **Set up UI library** and add basic test cases. - done
+3. **Configure CI/CD** with GitHub Actions for build, test, and deploy. - done
+4. **Design and document database schema** using Prisma, based on design doc. - done
 5. **Implement backend services** (APIs, authentication, business logic) using Node.js and Prisma.
 6. **Develop frontend apps** (web, admin, etc.) using Next.js and shared UI components.
 7. **Write comprehensive tests** for all features (unit, integration, e2e).
@@ -54,3 +54,7 @@ family head signup done
 
 to do next: signin for family head, then same thing for family members
 once it is done, we take care of higher level auth
+
+01.11.2025
+authentication for family-head is done
+move to family members now
