@@ -1,13 +1,13 @@
 /**
- * @description Handles Family Member signup flow.
+ * @description Handles FamilyHead signup flow.
  * Steps:
  *   1. Validate request body.
- *   2. Ensure family exists.
- *   3. Ensure email is unique.
- *   4. Hash password securely.
- *   5. Create User with role = MEMBER.
- *   6. Link user to the specified Family as FamilyMember.
- *   7. Return JWT and joined Family info.
+ *   2. Ensure email is unique.
+ *   3. Hash password securely.
+ *   4. Create a User with role = FAMILY_HEAD.
+ *   5. Create an associated Family entry.
+ *   6. Link the FamilyHead as a FamilyMember.
+ *   7. Return JWT and created records.
  */
 
 import prisma from "@modheshwari/db";
@@ -16,101 +16,84 @@ import { signJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 
 /**
- * @typedef {Object} MemberSignupBody
- * @property {string} name - Full name of the member.
+ * @typedef {Object} SignupBody
+ * @property {string} name - Full name of the Family Head.
  * @property {string} email - Email address (must be unique).
  * @property {string} password - Raw password to hash.
- * @property {string} familyId - The Family uniqueId or ID they wish to join.
+ * @property {string} familyName - Name of the new family to be created.
  */
 
 /**
- * Handles signup for Family Member users.
+ * Handles signup for FamilyHead users.
  *
  * @async
- * @function handleMemberSignup
- * @route POST /api/signup/member
+ * @function handleSignup
+ * @route POST /api/signup/familyhead
  * @param {Request} req - The HTTP request object.
+ * @param {string} role - The user role ("FAMILY_HEAD").
  * @returns {Promise<Response>} HTTP JSON response.
  */
-export async function handleMemberSignup(req: Request) {
+export async function handleFHSignup(req: Request, role: string) {
   try {
-    console.log("signup endpoint for family-member");
+    console.log("signup endpoint for family-head");
 
     const body = await req.json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
-    const { name, email, password, familyId } = body;
+    const { name, email, password, familyName } = body;
 
     // --- Step 1: Input validation ---
-    if (!name || !email || !password || !familyId)
+    if (!name || !email || !password || !familyName)
       return failure("Missing required fields", "Validation Error", 400);
 
-    // --- Step 2: Ensure family exists ---
-    const family =
-      (await prisma.family.findUnique({ where: { id: familyId } })) ||
-      (await prisma.family.findUnique({ where: { uniqueId: familyId } }));
-
-    if (!family)
-      return failure(
-        "Invalid Family ID — family does not exist",
-        "Not Found",
-        404,
-      );
-
-    // --- Step 3: Ensure email is unique ---
-    //  `User.email` is not marked @unique in the Prisma schema, use findFirst
-    // to avoid runtime validation errors. Consider adding @unique to the
-    // schema and running a migration if you want DB-level enforcement.
+    // --- Step 2: Check if email already exists ---
+    // `User.email` is not marked @unique in the Prisma schema; use findFirst
     const existingUser = await prisma.user.findFirst({ where: { email } });
     if (existingUser) {
       return failure("Email already registered", "Duplicate Entry", 409);
     }
 
-    // --- Step 4: Hash password securely ---
+    // --- Step 3: Hash password securely ---
     const hashedPassword = await hashPassword(password);
 
-    // --- Step 5: Create the Member user ---
+    // --- Step 4: Create Family Head user ---
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "MEMBER",
+        role,
         status: true,
       },
     });
 
-    // --- Step 6: Create a pending MemberInvite instead of immediate membership ---
-    const invite = await prisma.memberInvite.create({
+    // --- Step 5: Create Family entry ---
+    const family = await prisma.family.create({
       data: {
-        familyId: family.id,
-        invitedUserId: user.id,
-        inviteEmail: user.email,
-        status: "PENDING",
+        name: familyName,
+        uniqueId: `FAM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+        headId: user.id,
       },
     });
 
-    // Notify family head about pending invite (if head exists)
-    if (family.headId) {
-      await prisma.notification.create({
-        data: {
-          userId: family.headId,
-          type: "family_invite",
-          message: `New join request from ${user.name} for family ${family.name}`,
-        },
-      });
-    }
+    // --- Step 6: Link Family Head as FamilyMember ---
+    await prisma.familyMember.create({
+      data: {
+        familyId: family.id,
+        userId: user.id,
+        role,
+      },
+    });
 
-    // --- Step 7: Generate JWT token  (user can still login but is not yet a family member) ---
+    // --- Step 7: Generate JWT token ---
     const token = signJWT({ userId: user.id, role: user.role });
 
-    // --- Step 8: Return structured success response (invite pending) ---
+    // --- Step 8: Return structured success response ---
     console.log(
-      `Member signup requested: ${user.name} requested to join family ${family.name}`,
+      `Signup successful: ${user.name} (${user.email}) — Family: ${family.name} (${family.id})`,
     );
-
     return success(
-      "Signup successful, pending family approval",
+      "Signup successful",
       {
         user: {
           id: user.id,
@@ -118,21 +101,17 @@ export async function handleMemberSignup(req: Request) {
           email: user.email,
           role: user.role,
         },
-        invite: {
-          id: invite.id,
-          status: invite.status,
-          family: {
-            id: family.id,
-            name: family.name,
-            uniqueId: family.uniqueId,
-          },
+        family: {
+          id: family.id,
+          name: family.name,
+          uniqueId: family.uniqueId,
         },
         token,
       },
       201,
     );
   } catch (err) {
-    console.error("Member Signup Error:", err);
+    console.error("Signup Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
