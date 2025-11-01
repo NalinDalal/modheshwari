@@ -1,99 +1,84 @@
 /**
- * @description Handles FamilyHead signup flow.
+ * @description Handles Family Member signup (join request flow).
  * Steps:
  *   1. Validate request body.
  *   2. Ensure email is unique.
  *   3. Hash password securely.
- *   4. Create a User with role = FAMILY_HEAD.
- *   5. Create an associated Family entry.
- *   6. Link the FamilyHead as a FamilyMember.
- *   7. Return JWT and created records.
+ *   4. Create a User with role = MEMBER.
+ *   5. Create a FamilyJoinRequest entry.
+ *   6. Notify the Family Head.
+ *   7. Return success (no JWT yet — pending approval).
  */
 
 import prisma from "@modheshwari/db";
 import { hashPassword } from "@modheshwari/utils/hash";
-import { signJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 
-/**
- * @typedef {Object} SignupBody
- * @property {string} name - Full name of the Family Head.
- * @property {string} email - Email address (must be unique).
- * @property {string} password - Raw password to hash.
- * @property {string} familyName - Name of the new family to be created.
- */
-
-/**
- * Handles signup for FamilyHead users.
- *
- * @async
- * @function handleSignup
- * @route POST /api/signup/familyhead
- * @param {Request} req - The HTTP request object.
- * @param {string} role - The user role ("FAMILY_HEAD").
- * @returns {Promise<Response>} HTTP JSON response.
- */
-export async function handleFHSignup(req: Request, role: string) {
+export async function handleFMSignup(req: Request) {
   try {
-    console.log("signup endpoint for family-head");
+    console.log("signup endpoint for family-member");
 
     const body = await req.json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
-    const { name, email, password, familyName } = body;
+    const { name, email, password, familyId, relationWithFamilyHead } = body;
 
     // --- Step 1: Input validation ---
-    if (!name || !email || !password || !familyName)
+    if (!name || !email || !password || !familyId)
       return failure("Missing required fields", "Validation Error", 400);
 
     // --- Step 2: Check if email already exists ---
-    // `User.email` is not marked @unique in the Prisma schema; use findFirst
     const existingUser = await prisma.user.findFirst({ where: { email } });
-    if (existingUser) {
+    if (existingUser)
       return failure("Email already registered", "Duplicate Entry", 409);
-    }
 
     // --- Step 3: Hash password securely ---
     const hashedPassword = await hashPassword(password);
 
-    // --- Step 4: Create Family Head user ---
+    // --- Step 4: Create the User (role = MEMBER) ---
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role,
+        role: "MEMBER",
         status: true,
       },
     });
 
-    // --- Step 5: Create Family entry ---
-    const family = await prisma.family.create({
+    // --- Step 5: Create Family Join Request (Pending approval) ---
+    const joinRequest = await prisma.familyJoinRequest.create({
       data: {
-        name: familyName,
-        uniqueId: `FAM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-        headId: user.id,
-      },
-    });
-
-    // --- Step 6: Link Family Head as FamilyMember ---
-    await prisma.familyMember.create({
-      data: {
-        familyId: family.id,
         userId: user.id,
-        role,
+        familyId,
+        relation: relationWithFamilyHead || "UNKNOWN",
+        status: "PENDING",
       },
     });
 
-    // --- Step 7: Generate JWT token ---
-    const token = signJWT({ userId: user.id, role: user.role });
+    // --- Step 6: Notify the Family Head ---
+    const family = await prisma.family.findUnique({
+      where: { id: familyId },
+      select: { id: true, name: true, headId: true },
+    });
 
-    // --- Step 8: Return structured success response ---
+    if (family?.headId) {
+      await prisma.notification.create({
+        data: {
+          userId: family.headId,
+          type: "family_join_request",
+          message: `${user.name} has requested to join your family (${family.name}).`,
+        },
+      });
+    }
+
+    // --- Step 7: Return success response (no login yet) ---
     console.log(
-      `Signup successful: ${user.name} (${user.email}) — Family: ${family.name} (${family.id})`,
+      `Signup request submitted: ${user.name} (${user.email}) — Family: ${family?.name}`,
     );
+
     return success(
-      "Signup successful",
+      "Signup successful — pending approval from family head.",
       {
         user: {
           id: user.id,
@@ -101,17 +86,17 @@ export async function handleFHSignup(req: Request, role: string) {
           email: user.email,
           role: user.role,
         },
-        family: {
-          id: family.id,
-          name: family.name,
-          uniqueId: family.uniqueId,
+        joinRequest: {
+          id: joinRequest.id,
+          familyId: joinRequest.familyId,
+          status: joinRequest.status,
+          relation: joinRequest.relation,
         },
-        token,
       },
       201,
     );
   } catch (err) {
-    console.error("Signup Error:", err);
+    console.error("Family Member Signup Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
