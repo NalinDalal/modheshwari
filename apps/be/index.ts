@@ -23,6 +23,7 @@ import {
   handleListInvites,
   handleReviewInvite,
 } from "./routes/families";
+import { handleGetMe } from "./routes/me";
 
 // --- Lightweight routing layer using Bun's native server ---
 const server = serve({
@@ -96,6 +97,10 @@ const server = serve({
         const action = parts[5] || "";
         return handleReviewInvite(req, familyId, inviteId, action);
       }
+
+      // --- Profile ---
+      if (url.pathname === "/api/me" && method === "GET")
+        return handleGetMe(req);
 
       // --- Default 404 handler ---
       return new Response(JSON.stringify({ error: "Endpoint not found" }), {
