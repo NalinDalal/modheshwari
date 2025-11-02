@@ -26,6 +26,8 @@ import {
 import { handleGetMe } from "./routes/me";
 import { handleUpdateMemberStatus } from "./routes/family-member-status";
 import { handleGetFamilyMembers } from "./routes/family-members";
+import { handleCors, withCorsHeaders } from "./utils/cors";
+
 // --- Lightweight routing layer using Bun's native server ---
 const server = serve({
   port: 3001,
@@ -34,33 +36,39 @@ const server = serve({
       const url = new URL(req.url);
       const method = req.method.toUpperCase();
 
+      // --- Handle CORS preflight ---
+      const corsRes = handleCors(req);
+      if (corsRes) return corsRes;
+
+      let res: Response;
+
       // --- Signup for Family Head ---
       if (url.pathname === "/api/signup/familyhead" && method === "POST") {
-        return handleFHSignup(req, "FAMILY_HEAD");
+        res = await handleFHSignup(req, "FAMILY_HEAD");
       }
 
       // --- Login for Family Head ---
-      if (url.pathname === "/api/login/familyhead" && method === "POST") {
-        return handleFHLogin(req, "FAMILY_HEAD");
+      else if (url.pathname === "/api/login/familyhead" && method === "POST") {
+        res = await handleFHLogin(req, "FAMILY_HEAD");
       }
 
       // --- Signup for Family Member ---
-      if (url.pathname === "/api/signup/member" && method === "POST") {
-        return handleFMSignup(req);
+      else if (url.pathname === "/api/signup/member" && method === "POST") {
+        res = await handleMemberSignup(req);
       }
 
       // --- Login for Family Member ---
-      if (url.pathname === "/api/login/member" && method === "POST") {
-        return handleMemberLogin(req);
+      else if (url.pathname === "/api/login/member" && method === "POST") {
+        res = await handleMemberLogin(req);
       }
 
       // --- Create family (authenticated user becomes head) ---
-      if (url.pathname === "/api/families" && method === "POST") {
-        return handleCreateFamily(req);
+      else if (url.pathname === "/api/families" && method === "POST") {
+        res = await handleCreateFamily(req);
       }
 
       // --- Add member to family ---
-      if (
+      else if (
         url.pathname.startsWith("/api/families/") &&
         url.pathname.endsWith("/members") &&
         method === "POST"
@@ -69,19 +77,19 @@ const server = serve({
         const parts = url.pathname.split("/").filter(Boolean);
         // parts -> ["api","families",":id","members"]
         const familyId = parts[2];
-        return handleAddMember(req, familyId);
+        return await handleAddMember(req, familyId);
       }
 
       // --- List invites for family (family head) ---
-      if (
+      else if (
         url.pathname.startsWith("/api/families/") &&
         url.pathname.endsWith("/invites") &&
-        method === "GET"
+        method === "PATCH"
       ) {
         const parts = url.pathname.split("/").filter(Boolean);
         // parts -> ["api","families",":id","invites"]
         const familyId = parts[2];
-        return handleListInvites(req, familyId);
+        return await handleListInvites(req, familyId);
       }
 
       // --- Review invite (approve/reject) ---
@@ -96,12 +104,12 @@ const server = serve({
         const familyId = parts[2];
         const inviteId = parts[4];
         const action = parts[5] || "";
-        return handleReviewInvite(req, familyId, inviteId, action);
+        return await handleReviewInvite(req, familyId, inviteId, action);
       }
 
       // --- Profile ---
       if (url.pathname === "/api/me" && method === "GET")
-        return handleGetMe(req);
+        return await handleGetMe(req);
 
       // --- Update member status (family head only) ---
       if (
@@ -109,25 +117,34 @@ const server = serve({
         url.pathname.endsWith("/status") &&
         method === "PATCH"
       ) {
-        return handleUpdateMemberStatus(req);
+        return await handleUpdateMemberStatus(req);
       }
 
       // --- Get family members ---
       if (url.pathname.startsWith("/api/family/members") && method === "GET") {
-        return handleGetFamilyMembers(req);
+        return await handleGetFamilyMembers(req);
       }
 
       // --- Default 404 handler ---
-      return new Response(JSON.stringify({ error: "Endpoint not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      else {
+        res = new Response(JSON.stringify({ error: "Endpoint not found" }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      //  wrap all responses with CORS
+      return withCorsHeaders(res);
     } catch (err) {
       console.error(" Unhandled Error:", err);
-      return new Response(JSON.stringify({ error: "Internal server error" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      const res = new Response(
+        JSON.stringify({ error: "Internal server error" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+      return withCorsHeaders(res);
     }
   },
 });

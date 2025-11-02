@@ -19,7 +19,7 @@ import { success, failure } from "@modheshwari/utils/response";
  * @param {Request} req - Description of req
  * @returns {Promise<Response>} Description of return value
  */
-export async function handleFMSignup(req: Request) {
+export async function handleMemberSignup(req: Request) {
   try {
     console.log("signup endpoint for family-member");
 
