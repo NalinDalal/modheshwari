@@ -2,6 +2,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+/**
+ * Performs  signup page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function SignupPage() {
   const router = useRouter();
   const [form, setForm] = useState({

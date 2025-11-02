@@ -2,6 +2,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+/**
+ * Performs use auth operation.
+ * @returns {{ token: string; loading: boolean; }} Description of return value
+ */
 export function useAuth() {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);

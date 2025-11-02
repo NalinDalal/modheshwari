@@ -6,6 +6,11 @@ interface Member {
   user: { id: string; name: string; email: string; status: boolean };
 }
 
+/**
+ * Performs  family page operation.
+ * @param {any} { searchParams } - Description of { searchParams }
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function FamilyPage({ searchParams }: any) {
   const token = searchParams.token;
   const [members, setMembers] = useState<Member[]>([]);

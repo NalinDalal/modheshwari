@@ -12,7 +12,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Modheswari",
+  title: "Modheshwari",
   description: "next app to test all apis",
 };
 

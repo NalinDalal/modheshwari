@@ -36,35 +36,35 @@ const server = serve({
       const url = new URL(req.url);
       const method = req.method.toUpperCase();
 
+      console.log(method, url.pathname);
+
       // --- Handle CORS preflight ---
       const corsRes = handleCors(req);
       if (corsRes) return corsRes;
 
-      let res: Response;
-
       // --- Signup for Family Head ---
       if (url.pathname === "/api/signup/familyhead" && method === "POST") {
-        res = await handleFHSignup(req, "FAMILY_HEAD");
+        return withCorsHeaders(await handleFHSignup(req, "FAMILY_HEAD"));
       }
 
       // --- Login for Family Head ---
       else if (url.pathname === "/api/login/familyhead" && method === "POST") {
-        res = await handleFHLogin(req, "FAMILY_HEAD");
+        return withCorsHeaders(await handleFHLogin(req, "FAMILY_HEAD"));
       }
 
       // --- Signup for Family Member ---
       else if (url.pathname === "/api/signup/member" && method === "POST") {
-        res = await handleMemberSignup(req);
+        return withCorsHeaders(await handleMemberSignup(req));
       }
 
       // --- Login for Family Member ---
       else if (url.pathname === "/api/login/member" && method === "POST") {
-        res = await handleMemberLogin(req);
+        return withCorsHeaders(await handleMemberLogin(req));
       }
 
       // --- Create family (authenticated user becomes head) ---
       else if (url.pathname === "/api/families" && method === "POST") {
-        res = await handleCreateFamily(req);
+        return withCorsHeaders(await handleCreateFamily(req));
       }
 
       // --- Add member to family ---
@@ -77,7 +77,7 @@ const server = serve({
         const parts = url.pathname.split("/").filter(Boolean);
         // parts -> ["api","families",":id","members"]
         const familyId = parts[2];
-        return await handleAddMember(req, familyId);
+        return withCorsHeaders(await handleAddMember(req, familyId));
       }
 
       // --- List invites for family (family head) ---
@@ -89,7 +89,7 @@ const server = serve({
         const parts = url.pathname.split("/").filter(Boolean);
         // parts -> ["api","families",":id","invites"]
         const familyId = parts[2];
-        return await handleListInvites(req, familyId);
+        return withCorsHeaders(await handleListInvites(req, familyId));
       }
 
       // --- Review invite (approve/reject) ---
@@ -104,12 +104,14 @@ const server = serve({
         const familyId = parts[2];
         const inviteId = parts[4];
         const action = parts[5] || "";
-        return await handleReviewInvite(req, familyId, inviteId, action);
+        return withCorsHeaders(
+          await handleReviewInvite(req, familyId, inviteId, action),
+        );
       }
 
       // --- Profile ---
       if (url.pathname === "/api/me" && method === "GET")
-        return await handleGetMe(req);
+        return withCorsHeaders(await handleGetMe(req));
 
       // --- Update member status (family head only) ---
       if (
@@ -117,34 +119,29 @@ const server = serve({
         url.pathname.endsWith("/status") &&
         method === "PATCH"
       ) {
-        return await handleUpdateMemberStatus(req);
+        return withCorsHeaders(await handleUpdateMemberStatus(req));
       }
 
       // --- Get family members ---
       if (url.pathname.startsWith("/api/family/members") && method === "GET") {
-        return await handleGetFamilyMembers(req);
+        return withCorsHeaders(await handleGetFamilyMembers(req));
       }
 
       // --- Default 404 handler ---
-      else {
-        res = new Response(JSON.stringify({ error: "Endpoint not found" }), {
+      return withCorsHeaders(
+        new Response(JSON.stringify({ error: "Endpoint not found" }), {
           status: 404,
           headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      //  wrap all responses with CORS
-      return withCorsHeaders(res);
+        }),
+      );
     } catch (err) {
       console.error(" Unhandled Error:", err);
-      const res = new Response(
-        JSON.stringify({ error: "Internal server error" }),
-        {
+      return withCorsHeaders(
+        new Response(JSON.stringify({ error: "Internal server error" }), {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        },
+        }),
       );
-      return withCorsHeaders(res);
     }
   },
 });

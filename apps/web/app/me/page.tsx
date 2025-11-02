@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+/**
+ * Performs  me page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function MePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);

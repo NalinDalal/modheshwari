@@ -1,3 +1,8 @@
+/**
+ * Performs handle cors operation.
+ * @param {Request} req - Description of req
+ * @returns {Response} Description of return value
+ */
 export function handleCors(req: Request): Response | null {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -14,6 +19,11 @@ export function handleCors(req: Request): Response | null {
   return null;
 }
 
+/**
+ * Performs with cors headers operation.
+ * @param {Response} res - Description of res
+ * @returns {Response} Description of return value
+ */
 export function withCorsHeaders(res: Response): Response {
   const headers = new Headers(res.headers);
   headers.set("Access-Control-Allow-Origin", "http://localhost:3000");

@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+/**
+ * Performs  signin page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function SigninPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -15,7 +19,7 @@ export default function SigninPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/login/familyhead`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001"}/api/login/familyhead`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
