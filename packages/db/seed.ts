@@ -14,14 +14,14 @@ const prisma = new PrismaClient();
  * @returns {Promise<void>} Description of return value
  */
 async function main() {
-  console.log("🌱 Seeding database...");
+  console.log(" Seeding database...");
 
   if (!process.env.DATABASE_URL) {
-    throw new Error("❌ DATABASE_URL not found in environment variables!");
+    throw new Error(" DATABASE_URL not found in environment variables!");
   }
 
   // ----- Core Admin Roles -----
-  const [communityHead, communitySubHead, gotraHead] = await Promise.all([
+  await Promise.all([
     prisma.user.create({
       data: {
         name: "Aarav Mehta",
@@ -64,10 +64,10 @@ async function main() {
     }),
   ]);
 
-  console.log("✅ Created base families");
+  console.log(" Created base families");
 
   // ----- Helper to build family with members -----
-  async function makeFamily(fam: any, names: Record<string, string>) {
+  async function makeFamily(fam: { id: string; name?: string }, names: Record<string, string>) {
     const head = await prisma.user.create({
       data: {
         name: names.head,
@@ -208,15 +208,15 @@ async function main() {
         status: EventStatus.PENDING,
       },
     });
-    console.log("🎉 Created example event");
+    console.log(" Created example event");
   }
 
-  console.log("✅ Seed completed successfully.");
+  console.log(" Seed completed successfully.");
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Seeding failed:", e);
+    console.error(" Seeding failed:", e);
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());

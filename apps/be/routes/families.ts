@@ -1,6 +1,7 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import { hashPassword } from "@modheshwari/utils/hash";
+
 import { requireAuth } from "./auth-middleware";
 
 /**

@@ -1,4 +1,5 @@
-
+/* eslint-env node */
+/* eslint-disable no-undef */
 /**
  * Jest Configuration for Web Application
  * 

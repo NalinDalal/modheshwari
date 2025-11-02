@@ -1,5 +1,11 @@
 import path from "path";
-import { Project, SyntaxKind } from "ts-morph";
+import {
+  Project,
+  SyntaxKind,
+  FunctionDeclaration,
+  ArrowFunction,
+  ParameterDeclaration,
+} from "ts-morph";
 
 const ROOT = process.cwd();
 
@@ -22,8 +28,12 @@ const files = project.getSourceFiles();
 /**
  * Generates inferred JSDoc for a given function-like declaration.
  */
-function generateDocs(entity: any, name: string, isArrow = false) {
-  const params = entity.getParameters().map((p: any) => ({
+function generateDocs(
+  entity: FunctionDeclaration | ArrowFunction,
+  name: string,
+  isArrow = false
+) {
+  const params = entity.getParameters().map((p: ParameterDeclaration) => ({
     name: p.getName(),
     type: p.getType().getText(),
   }));
@@ -36,7 +46,7 @@ function generateDocs(entity: any, name: string, isArrow = false) {
   entity.addJsDoc({
     description,
     tags: [
-      ...params.map((param: any) => ({
+      ...params.map((param: { name: string; type: string }) => ({
         tagName: "param",
         text: `{${param.type}} ${param.name} - Description of ${param.name}`,
       })),
@@ -66,10 +76,10 @@ for (const file of files) {
 
     const name = variable.getName();
 
-    const existingDocs = initializer.getJsDocs();
+    const existingDocs = (initializer as ArrowFunction).getJsDocs();
     if (existingDocs.length > 0) continue;
 
-    generateDocs(initializer, name, true);
+    generateDocs(initializer as ArrowFunction, name, true);
   }
 }
 

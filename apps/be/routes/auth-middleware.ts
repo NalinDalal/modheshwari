@@ -73,6 +73,7 @@ export function getAuthPayload(req: Request) {
     const decoded = verifyJWT(token);
     return decoded as any;
   } catch (err) {
+    console.error("Get Auth Payload Error:", err);
     return null;
   }
 }
