@@ -27,7 +27,7 @@ import { handleGetMe } from "./routes/me";
 import { handleUpdateMemberStatus } from "./routes/family-member-status";
 import { handleGetFamilyMembers } from "./routes/family-members";
 import { handleCors, withCorsHeaders } from "./utils/cors";
-
+import { handleSearch } from "./routes/search";
 // --- Lightweight routing layer using Bun's native server ---
 const server = serve({
   port: 3001,
@@ -125,6 +125,11 @@ const server = serve({
       // --- Get family members ---
       if (url.pathname.startsWith("/api/family/members") && method === "GET") {
         return withCorsHeaders(await handleGetFamilyMembers(req));
+      }
+
+      // --- Search Users ---
+      if (url.pathname.startsWith("/api/search") && method === "GET") {
+        return await handleSearch(req);
       }
 
       // --- Default 404 handler ---
