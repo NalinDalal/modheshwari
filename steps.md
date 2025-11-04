@@ -87,6 +87,7 @@ got thru tailwind
 
 04.11.2025
 search endpoint implemented on ui side
+notifications added, routes added to request resources
 
 move ahead to higher level authentications now
 authentication for community head, sub community head, community subhead stc
