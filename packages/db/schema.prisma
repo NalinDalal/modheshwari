@@ -64,6 +64,9 @@ model User {
   // New reverse relation for EventApproval
   eventApprovalsReviewed EventApproval[] @relation("UserEventApprovals")
 
+  // Reverse relation for resource request approval steps
+  resourceRequestApprovals ResourceRequestApproval[] @relation("UserResourceRequestApprovals")
+
   // Member invites relations
   memberInvitesReceived MemberInvite[] @relation("InvitedUser")
   memberInvitesReviewed MemberInvite[] @relation("InviteReviewedBy")
@@ -191,6 +194,7 @@ model Event {
   payments      Payment[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
+  Notification  Notification[]
 }
 
 //
@@ -211,17 +215,17 @@ enum EventStatus {
 //
 
 model EventApproval {
-  id           String    @id @default(uuid())
-  event        Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id           String         @id @default(uuid())
+  event        Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId      String
-  approver     User      @relation("UserEventApprovals", fields: [approverId], references: [id])
+  approver     User           @relation("UserEventApprovals", fields: [approverId], references: [id])
   approverId   String
   approverName String
   role         Role
-  status       String
+  status       ApprovalStatus
   remarks      String?
   reviewedAt   DateTime?
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime       @default(now())
 
   @@unique([eventId, approverId])
 }
@@ -246,14 +250,15 @@ model EventRegistration {
 //
 
 model Payment {
-  id        String   @id @default(uuid())
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId   String
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  amount    Float
-  status    String
-  createdAt DateTime @default(now())
+  id           String         @id @default(uuid())
+  event        Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId      String
+  user         User           @relation(fields: [userId], references: [id])
+  userId       String
+  amount       Float
+  status       String
+  createdAt    DateTime       @default(now())
+  Notification Notification[]
 }
 
 //
@@ -262,16 +267,36 @@ model Payment {
 //
 
 model ResourceRequest {
-  id           String   @id @default(uuid())
-  user         User     @relation("RequestedBy", fields: [userId], references: [id])
+  id           String                    @id @default(uuid())
+  user         User                      @relation("RequestedBy", fields: [userId], references: [id])
   userId       String
   resource     String
-  status       String // "pending", "approved", "rejected"
-  approver     User?    @relation("ApprovedBy", fields: [approverId], references: [id])
+  status       ApprovalStatus // request's overall status
+  // keep optional last-approver snapshot for quick access
+  approver     User?                     @relation("ApprovedBy", fields: [approverId], references: [id])
   approverId   String?
   approverName String? // cached name of approver for quick access
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  // Detailed approval steps (hierarchical)
+  approvals    ResourceRequestApproval[]
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  Notification Notification[]
+}
+
+model ResourceRequestApproval {
+  id           String          @id @default(uuid())
+  request      ResourceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId    String
+  approver     User            @relation("UserResourceRequestApprovals", fields: [approverId], references: [id])
+  approverId   String
+  approverName String
+  role         Role
+  status       ApprovalStatus
+  remarks      String?
+  reviewedAt   DateTime?
+  createdAt    DateTime        @default(now())
+
+  @@unique([requestId, approverId])
 }
 
 //
@@ -280,13 +305,44 @@ model ResourceRequest {
 //
 
 model Notification {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
+  id        String              @id @default(uuid())
+  user      User                @relation(fields: [userId], references: [id])
   userId    String
-  type      String // e.g. "event_approval", "resource_request"
+  type      NotificationType // e.g. EVENT_APPROVAL, RESOURCE_REQUEST
+  channel   NotificationChannel @default(IN_APP)
   message   String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  read      Boolean             @default(false)
+  createdAt DateTime            @default(now())
+
+  // Optional links to related entities
+  event             Event?           @relation(fields: [eventId], references: [id])
+  eventId           String?
+  resourceRequest   ResourceRequest? @relation(fields: [resourceRequestId], references: [id])
+  resourceRequestId String?
+  payment           Payment?         @relation(fields: [paymentId], references: [id])
+  paymentId         String?
+}
+
+// Centralized enums for approval lifecycle and notifications
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CHANGES_REQUESTED
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+  PUSH
+}
+
+enum NotificationType {
+  EVENT_APPROVAL
+  EVENT_REGISTRATION
+  RESOURCE_REQUEST
+  PAYMENT_RECEIPT
+  GENERIC
 }
 
 // -------------------- MEMBER INVITE --------------------

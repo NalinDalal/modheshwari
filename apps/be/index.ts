@@ -28,6 +28,16 @@ import { handleUpdateMemberStatus } from "./routes/family-member-status";
 import { handleGetFamilyMembers } from "./routes/family-members";
 import { handleCors, withCorsHeaders } from "./utils/cors";
 import { handleSearch } from "./routes/search";
+import {
+  handleCreateResourceRequest,
+  handleListResourceRequests,
+  handleGetResourceRequest,
+  handleReviewResourceRequest,
+  handleListNotifications,
+} from "./routes/resource-request";
+
+import { handleCreateNotification } from "./routes/notifications";
+
 // --- Lightweight routing layer using Bun's native server ---
 const server = serve({
   port: 3001,
@@ -130,6 +140,47 @@ const server = serve({
       // --- Search Users ---
       if (url.pathname.startsWith("/api/search") && method === "GET") {
         return await handleSearch(req);
+      }
+
+      // --- Resource Requests ---
+      if (url.pathname === "/api/resource-requests" && method === "POST") {
+        return withCorsHeaders(await handleCreateResourceRequest(req));
+      }
+
+      if (url.pathname === "/api/resource-requests" && method === "GET") {
+        return withCorsHeaders(await handleListResourceRequests(req));
+      }
+
+      if (
+        url.pathname.startsWith("/api/resource-requests/") &&
+        method === "GET"
+      ) {
+        // /api/resource-requests/:id
+        const parts = url.pathname.split("/").filter(Boolean);
+        const id = parts[1];
+        return withCorsHeaders(await handleGetResourceRequest(req, id));
+      }
+
+      if (
+        url.pathname.startsWith("/api/resource-requests/") &&
+        url.pathname.endsWith("/review") &&
+        method === "POST"
+      ) {
+        // /api/resource-requests/:id/review
+        const parts = url.pathname.split("/").filter(Boolean);
+        const id = parts[1];
+        return withCorsHeaders(await handleReviewResourceRequest(req, id));
+      }
+
+      // --- Notifications ---
+      if (url.pathname === "/api/notifications" && method === "GET") {
+        return withCorsHeaders(await handleListNotifications(req));
+      }
+
+      // --- Notifications from Admins ---
+      // ping all of users
+      if (url.pathname === "/api/notifications" && method === "POST") {
+        return withCorsHeaders(await handleCreateNotification(req));
       }
 
       // --- Default 404 handler ---
