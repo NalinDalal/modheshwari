@@ -3,12 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
+    "build": "bunx turbo run build",
+    "dev": "bunx turbo run dev",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types",
+    "check-types": "bunx turbo run check-types",
     "docs:gen": "bun run packages/scripts/generate-docs.ts",
     "db:seed": "tsx packages/db/seed.ts"
   },

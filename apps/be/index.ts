@@ -12,7 +12,7 @@ import { join } from "path";
 //  Load .env from project root before anything else
 // (so utils like jwt.ts can access process.env.JWT_SECRET)
 config({ path: join(process.cwd(), "../../.env") });
-
+import { handleAdminLogin, handleAdminSignup } from "./routes/auth-admin";
 import { handleFHLogin } from "./routes/auth-family-head/login";
 import { handleFHSignup } from "./routes/auth-family-head/signup";
 import { handleMemberLogin } from "./routes/auth-family-mem/login";
@@ -35,8 +35,8 @@ import {
   handleReviewResourceRequest,
   handleListNotifications,
 } from "./routes/resource-request";
-
 import { handleCreateNotification } from "./routes/notifications";
+import { handleListAllRequests, handleUpdateEventStatus } from "./routes/admin";
 
 // --- Lightweight routing layer using Bun's native server ---
 const server = serve({
@@ -51,6 +51,37 @@ const server = serve({
       // --- Handle CORS preflight ---
       const corsRes = handleCors(req);
       if (corsRes) return corsRes;
+
+      // --- Signup for Community / Admin roles ---
+      if (url.pathname === "/api/signup/communityhead" && method === "POST") {
+        return withCorsHeaders(await handleAdminSignup(req, "COMMUNITY_HEAD"));
+      } else if (
+        url.pathname === "/api/signup/communitysubhead" &&
+        method === "POST"
+      ) {
+        return withCorsHeaders(
+          await handleAdminSignup(req, "COMMUNITY_SUBHEAD"),
+        );
+      } else if (
+        url.pathname === "/api/signup/gotrahead" &&
+        method === "POST"
+      ) {
+        return withCorsHeaders(await handleAdminSignup(req, "GOTRA_HEAD"));
+      }
+
+      // --- Login for Community / Admin roles ---
+      if (url.pathname === "/api/login/communityhead" && method === "POST") {
+        return withCorsHeaders(await handleAdminLogin(req, "COMMUNITY_HEAD"));
+      } else if (
+        url.pathname === "/api/login/communitysubhead" &&
+        method === "POST"
+      ) {
+        return withCorsHeaders(
+          await handleAdminLogin(req, "COMMUNITY_SUBHEAD"),
+        );
+      } else if (url.pathname === "/api/login/gotrahead" && method === "POST") {
+        return withCorsHeaders(await handleAdminLogin(req, "GOTRA_HEAD"));
+      }
 
       // --- Signup for Family Head ---
       if (url.pathname === "/api/signup/familyhead" && method === "POST") {
@@ -170,6 +201,23 @@ const server = serve({
         const parts = url.pathname.split("/").filter(Boolean);
         const id = parts[1];
         return withCorsHeaders(await handleReviewResourceRequest(req, id));
+      }
+
+      // --- Admin endpoints ---
+      // basically list all of request, admin can approve/reject/request-changes
+      if (url.pathname === "/api/admin/requests" && method === "GET") {
+        return withCorsHeaders(await handleListAllRequests(req));
+      }
+
+      if (
+        url.pathname.startsWith("/api/admin/event/") &&
+        url.pathname.endsWith("/status") &&
+        method === "POST"
+      ) {
+        const parts = url.pathname.split("/").filter(Boolean);
+        // parts -> ["api","admin","event",":id","status"]
+        const id = parts[3];
+        return withCorsHeaders(await handleUpdateEventStatus(req, id));
       }
 
       // --- Notifications ---
