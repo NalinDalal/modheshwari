@@ -2,12 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LoaderFour } from "@repo/ui/loading";
 
-/**
- * Performs  me page operation.
- * @returns {React.JSX.Element} Description of return value
- * Me page — shows current user profile information.
- */
 export default function MePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -33,7 +29,6 @@ export default function MePage() {
         if (data.status === "success") {
           setUser(data.data);
         } else {
-          // token invalid or expired
           alert("Auth expired, please log in again");
           localStorage.removeItem("token");
           router.push("/signin");
@@ -51,10 +46,14 @@ export default function MePage() {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center mt-20">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-t-transparent border-gray-300" />
-          <p className="text-sm text-gray-600">Loading your profile…</p>
+      <div className="flex h-screen flex-col items-center justify-center bg-gradient-to-b from-neutral-50 via-amber-50 to-rose-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-900">
+        <div className="relative flex flex-col items-center">
+          <div className="mb-6 scale-110">
+            <LoaderFour text="Loading your profile..." />
+          </div>
+
+          {/* subtle pulsing orb background */}
+          <div className="absolute -z-10 h-64 w-64 animate-pulse rounded-full bg-gradient-to-r from-amber-300/30 via-rose-300/30 to-purple-400/30 blur-3xl dark:from-amber-500/20 dark:via-rose-500/20 dark:to-purple-500/20" />
         </div>
       </div>
     );
@@ -67,42 +66,57 @@ export default function MePage() {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
   const familyName = user.families?.[0]?.family?.name || user.familyName || "—";
 
   return (
     <main className="max-w-3xl mx-auto mt-16 px-4">
-      <section className="bg-white shadow-md rounded-lg p-6 flex flex-col md:flex-row gap-6 items-center">
-        <div className="flex-shrink-0 flex items-center justify-center h-28 w-28 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-2xl font-bold">
+      <section className="bg-white/80 dark:bg-neutral-900/80 shadow-xl backdrop-blur-sm rounded-2xl p-8 flex flex-col md:flex-row gap-6 items-center border border-amber-100/40 dark:border-neutral-700/40 transition-all duration-300 hover:shadow-2xl">
+        <div className="flex-shrink-0 flex items-center justify-center h-28 w-28 rounded-full bg-gradient-to-br from-amber-500 to-rose-600 text-white text-2xl font-bold shadow-md">
           {initials || "U"}
         </div>
 
         <div className="flex-1 w-full">
-          <h1 className="text-2xl font-semibold">{user.name}</h1>
-          <p className="text-sm text-gray-500 mt-1">{user.email}</p>
+          <h1 className="text-3xl font-semibold text-amber-900 dark:text-white">
+            {user.name}
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {user.email}
+          </p>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-xs text-gray-400">Role</div>
-              <div className="font-medium">{user.role}</div>
+            <div className="p-3 bg-gradient-to-br from-white to-amber-50/40 dark:from-neutral-800 dark:to-neutral-900 rounded-lg border border-amber-100/40 dark:border-neutral-700/40">
+              <div className="text-xs text-gray-400 dark:text-gray-500">
+                Role
+              </div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">
+                {user.role}
+              </div>
             </div>
 
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-xs text-gray-400">Status</div>
-              <div className="font-medium">
+            <div className="p-3 bg-gradient-to-br from-white to-amber-50/40 dark:from-neutral-800 dark:to-neutral-900 rounded-lg border border-amber-100/40 dark:border-neutral-700/40">
+              <div className="text-xs text-gray-400 dark:text-gray-500">
+                Status
+              </div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">
                 {user.status ? "Active" : "Inactive"}
               </div>
             </div>
 
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-xs text-gray-400">Family</div>
-              <div className="font-medium">{familyName}</div>
+            <div className="p-3 bg-gradient-to-br from-white to-amber-50/40 dark:from-neutral-800 dark:to-neutral-900 rounded-lg border border-amber-100/40 dark:border-neutral-700/40">
+              <div className="text-xs text-gray-400 dark:text-gray-500">
+                Family
+              </div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">
+                {familyName}
+              </div>
             </div>
           </div>
 
           <div className="mt-5 flex gap-3">
             <button
               onClick={() => router.push("/me/edit")}
-              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-rose-600 text-white rounded-full font-medium shadow-md hover:from-amber-700 hover:to-rose-700 transition-all duration-300"
             >
               Edit Profile
             </button>
@@ -112,7 +126,7 @@ export default function MePage() {
                 localStorage.removeItem("token");
                 router.push("/signin");
               }}
-              className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50"
+              className="px-5 py-2.5 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all duration-300"
             >
               Log out
             </button>
@@ -120,15 +134,20 @@ export default function MePage() {
         </div>
       </section>
 
-      <section className="mt-6">
-        <div className="bg-white shadow-sm rounded p-4">
-          <h2 className="text-lg font-medium mb-2">About</h2>
-          <p className="text-sm text-gray-600">
+      <section className="mt-8">
+        <div className="bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm shadow-md rounded-2xl p-6 border border-amber-100/40 dark:border-neutral-700/40">
+          <h2 className="text-lg font-semibold mb-2 text-amber-900 dark:text-white">
+            About
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
             Private profile information and family details are shown here. You
             can update these by editing your profile.
           </p>
         </div>
       </section>
+
+      {/* --- Section to list shit from the user --- */}
+      <section className="mt-10 flex flex-col items-center justify-center gap-y-4 md:flex-row md:gap-x-4"></section>
     </main>
   );
 }
