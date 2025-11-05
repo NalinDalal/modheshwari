@@ -11,11 +11,19 @@ type Req = {
   userId?: string;
 };
 
+/**
+ * Performs get token operation.
+ * @returns {string} Description of return value
+ */
 function getToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("token");
 }
 
+/**
+ * Performs  resource requests page operation.
+ * @returns {any} Description of return value
+ */
 export default function ResourceRequestsPage() {
   const [resource, setResource] = useState("");
   const [requests, setRequests] = useState<Req[]>([]);

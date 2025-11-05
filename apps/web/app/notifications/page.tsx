@@ -2,11 +2,19 @@
 
 import React, { useEffect, useState } from "react";
 
+/**
+ * Performs get token operation.
+ * @returns {string} Description of return value
+ */
 function getToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("token");
 }
 
+/**
+ * Performs  notifications page operation.
+ * @returns {any} Description of return value
+ */
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [message, setMessage] = useState("");
