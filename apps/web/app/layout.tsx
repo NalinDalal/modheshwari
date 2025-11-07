@@ -13,7 +13,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Modheshwari",
-  description: "next app to test all apis",
+  description: "next app to take everything online",
 };
 
 /**

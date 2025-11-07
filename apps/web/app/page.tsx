@@ -35,13 +35,13 @@ export default function Home() {
   return (
     <div className="relative min-h-screen flex flex-col bg-gradient-to-b from-amber-100 via-orange-50 to-rose-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 overflow-hidden">
       {/* Mandala / Glow Background */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[url('/mandala.svg')] bg-center bg-no-repeat bg-contain opacity-[0.08]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-amber-300/20 via-transparent to-transparent blur-3xl" />
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/mandala.svg')] bg-center bg-no-repeat bg-contain opacity-[0.08] scale-125 animate-slow-pan" />
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-300/30 via-transparent to-transparent blur-3xl" />
       </div>
 
       {/* Hero Section */}
-      <main className="flex flex-col justify-center items-center flex-grow text-center px-4 py-16 sm:py-24">
+      <main className="flex flex-col justify-center items-center min-h-screen text-center px-4 py-16 sm:py-24">
         <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-amber-600 via-rose-600 to-red-600 bg-clip-text text-transparent mb-6 drop-shadow-sm">
           Welcome to Modheshwari
         </h1>
@@ -103,7 +103,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r from-amber-100/70 via-orange-100/70 to-rose-100/70 dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 border-t border-amber-200/40 dark:border-gray-700 mt-auto py-6 text-center">
+      <footer className="bg-gradient-to-r from-amber-100/70 via-orange-100/70 to-rose-100/70 dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 border-t border-amber-200/40 dark:border-gray-700 py-6 text-center">
         <small className="block text-amber-900 dark:text-gray-400 mb-2">
           Made with ❤️ — © {new Date().getFullYear()} Modheshwari
         </small>

@@ -50,10 +50,9 @@
 4. **Design and document database schema** using Prisma, based on design doc. - done
 5. **Implement backend services** (APIs, authentication, business logic) using Node.js and Prisma.
    Authentication implemented for family, need to see for admin routes
-6. **Develop frontend apps** (web, admin, etc.) using Next.js and shared UI components.
-7. **Write comprehensive tests** for all features (unit, integration, e2e).
-8. **Deploy to production** using CI/CD pipeline and cloud infrastructure.
-9. **Monitor, document, and iterate** based on feedback and analytics.
+6. **Develop frontend apps** (web, admin, etc.) using Next.js and shared UI components. - family one done
+7. **Deploy to production** using CI/CD pipeline and cloud infrastructure.
+8. **Monitor, document, and iterate** based on feedback and analytics.
 
 ---
 
@@ -93,3 +92,5 @@ move ahead to higher level authentications now
 authentication for community head, sub community head, community subhead stc
 05.11.2025
 higher level auth and request approval/changes/rejected done
+feat: ui init and works for family mem and family head, signin-signup done, me endpoint also done
+feat: admin auth routes spined up
