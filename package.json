@@ -10,7 +10,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "bunx turbo run check-types",
     "docs:gen": "bun run packages/scripts/generate-docs.ts",
-    "db:seed": "tsx packages/db/seed.ts"
+    "db:seed": "tsx packages/db/seed.ts",
+    "stress-test": "bash ./scripts/run-stress-test.sh"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

@@ -1,0 +1,67 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Starter dashboard for k6 metrics (http_reqs, http_req_duration, error rate)",
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 162343,
+  "panels": [
+    {
+      "datasource": "K6_INFLUX",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "query": "SELECT mean(\"value\") FROM \"http_reqs\" WHERE $timeFilter GROUP BY time($__interval), * fill(null)",
+          "refId": "A"
+        }
+      ],
+      "title": "Requests per second (http_reqs)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "K6_INFLUX",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": { "legend": { "displayMode": "list" } },
+      "targets": [
+        {
+          "query": "SELECT percentile(\"value\",95) FROM \"http_req_duration\" WHERE $timeFilter GROUP BY time($__interval), * fill(null)",
+          "refId": "A"
+        }
+      ],
+      "title": "p95 http_req_duration (ms)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "K6_INFLUX",
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 8 },
+      "id": 3,
+      "options": {},
+      "targets": [
+        {
+          "query": "SELECT mean(\"rate\") FROM \"errors\" WHERE $timeFilter GROUP BY time($__interval), * fill(null)",
+          "refId": "A"
+        }
+      ],
+      "title": "Error rate",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": ["k6"],
+  "templating": { "list": [] },
+  "time": { "from": "now-5m", "to": "now" },
+  "timepicker": {},
+  "title": "k6 Starter Dashboard",
+  "uid": null,
+  "version": 1
+}

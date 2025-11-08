@@ -11,7 +11,9 @@ This project is a full-stack platform for managing local community operations, i
 - Role-based access and privacy controls
 
 ## Quick Start
+
 1. **Copy over environement variables:**
+
    ```bash
    cp .env.example .env
    ```
@@ -31,12 +33,15 @@ This project is a full-stack platform for managing local community operations, i
    npx ts-node packages/db/seed.ts
    ```
 5. **Generate JWT Secret:**
+
    ```bash
    bunx node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
+
    put it into `.env`
 
 6. **Run the app:**
+
    ```bash
    bun run dev
    ```
@@ -68,3 +73,11 @@ This project is a full-stack platform for managing local community operations, i
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## Stress Testing
+
+[to do stress-testing](./stress-testing.md)
+
+## Case Study
+
+[Case Study](./case.md)

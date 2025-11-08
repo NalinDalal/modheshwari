@@ -119,6 +119,7 @@ Let's say there is a delete button
 Now don't use ai, create your own custom button. Rectangular, small curved corners, put a sorta dustbin, then text
 Upon hover dustbin must animate
 Button color shift to white, and text to red
+done for delete, sign-out etc
 
 Do work on things like this
 
@@ -128,5 +129,5 @@ Do caching for modheswari, don't do in memory
 
 ---
 
-Do stress testing of your APIs
+Do stress testing of your APIs - done
 [Benchmark them](./stress-testing.md)
