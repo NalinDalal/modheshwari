@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@repo/ui/button";
 
 /**
  * Signup Page Component — Handles registration flow for the Family Head role.
@@ -168,13 +169,14 @@ export default function SignupPage() {
             </div>
 
             {/* Submit Button */}
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full mt-6 px-5 py-3 bg-gradient-to-r from-amber-600 to-rose-600 text-white rounded-full font-medium shadow-md hover:from-amber-700 hover:to-rose-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="primary"
+              className="w-full mt-6"
             >
               {loading ? "Creating Account..." : "Sign Up"}
-            </button>
+            </Button>
           </form>
 
           {/* --- Footer section --- */}

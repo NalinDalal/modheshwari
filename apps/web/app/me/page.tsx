@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
+import { DeleteButton } from "@repo/ui/delete-button";
 import { Button } from "@repo/ui/button";
-
 export default function MePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -119,42 +119,14 @@ export default function MePage() {
               Edit Profile
             </Button>
 
-            <Button
+            <DeleteButton
               onClick={() => {
                 localStorage.removeItem("token");
                 router.push("/signin");
               }}
-              variant="danger"
-              className="rounded-md px-3 py-1.5"
             >
-              {/* simple sign-out icon + label; icon will animate if variant uses group-hover */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                className="w-4 h-4 transform transition-transform duration-150 group-hover:-translate-y-0.5"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 3h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-4"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M10 17l5-5-5-5"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 12H3"
-                />
-              </svg>
-              <span>Sign out</span>
-            </Button>
+              Sign out
+            </DeleteButton>
           </div>
         </div>
       </section>

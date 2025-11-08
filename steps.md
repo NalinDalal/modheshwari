@@ -90,7 +90,43 @@ notifications added, routes added to request resources
 
 move ahead to higher level authentications now
 authentication for community head, sub community head, community subhead stc
+
 05.11.2025
 higher level auth and request approval/changes/rejected done
+
 feat: ui init and works for family mem and family head, signin-signup done, me endpoint also done
 feat: admin auth routes spined up
+
+06.11.2025
+had a ppt so didn't coded
+
+07.11.2025
+added contact pages, about pages
+
+---
+
+todo:
+work on ui more
+
+Check the ui resources in notion doc
+Try to first create a great landing page from it
+
+U have monorepo so make sure to create reusable ui like buttons text fields etc
+
+Use the notion doc, try for buttons till u are not satisfied
+
+Let's say there is a delete button
+Now don't use ai, create your own custom button. Rectangular, small curved corners, put a sorta dustbin, then text
+Upon hover dustbin must animate
+Button color shift to white, and text to red
+
+Do work on things like this
+
+---
+
+Do caching for modheswari, don't do in memory
+
+---
+
+Do stress testing of your APIs
+[Benchmark them](./stress-testing.md)
