@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
+import { Button } from "@repo/ui/button";
 
 export default function MePage() {
   const router = useRouter();
@@ -114,22 +115,46 @@ export default function MePage() {
           </div>
 
           <div className="mt-5 flex gap-3">
-            <button
-              onClick={() => router.push("/me/edit")}
-              className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-rose-600 text-white rounded-full font-medium shadow-md hover:from-amber-700 hover:to-rose-700 transition-all duration-300"
-            >
+            <Button onClick={() => router.push("/me/edit")} variant="primary">
               Edit Profile
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => {
                 localStorage.removeItem("token");
                 router.push("/signin");
               }}
-              className="px-5 py-2.5 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all duration-300"
+              variant="danger"
+              className="rounded-md px-3 py-1.5"
             >
-              Log out
-            </button>
+              {/* simple sign-out icon + label; icon will animate if variant uses group-hover */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                className="w-4 h-4 transform transition-transform duration-150 group-hover:-translate-y-0.5"
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 3h4a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-4"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10 17l5-5-5-5"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 12H3"
+                />
+              </svg>
+              <span>Sign out</span>
+            </Button>
           </div>
         </div>
       </section>
