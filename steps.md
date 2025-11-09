@@ -123,6 +123,14 @@ done for delete, sign-out etc
 
 Do work on things like this
 
+For dark mode black bg, White text
+Normal mode white bg, dark text
+
+Buttons can be blue bg, White text
+Red bg White text
+
+Upon hover transition to vice versa
+
 ---
 
 Do caching for modheswari, don't do in memory

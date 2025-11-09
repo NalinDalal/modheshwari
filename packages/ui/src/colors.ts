@@ -4,16 +4,17 @@
 // styling mechanism in the repo, but tokens make it easier to keep colors
 // consistent across components.
 
-export const colors = {
-  // Dominant (60%) - neutral background / surface
-  neutral100: "#FAFAFB",
-  neutral900: "#0F1724",
+const colors = {
+  // Dominant (60%) - Neutral base
+  neutral100: "#F9FAFB",
+  neutral900: "#0B0F19",
 
-  // Secondary (30%) - brand / key areas
-  brand500: "#F59E0B", // amber-500
-  brand700: "#D97706", // amber-700
+  // Brand (30%)
+  brand500: "#3B82F6", // blue-500
+  brand600: "#2563EB", // blue-600
+  brand700: "#1D4ED8", // blue-700
 
-  // Accent (10%) - CTAs, destructive
+  // Accent / Danger (10%) - CTAs, destructive
   danger500: "#DC2626", // red-600
   danger600: "#B91C1C", // red-700
 
