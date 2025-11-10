@@ -46,105 +46,132 @@ const server = serve({
       const url = new URL(req.url);
       const method = req.method.toUpperCase();
 
-      console.log(method, url.pathname);
+      // Slightly improved request logging
+      console.log(`[${method}] ${url.pathname}`);
 
       // --- Handle CORS preflight ---
       const corsRes = handleCors(req);
       if (corsRes) return corsRes;
 
-      // --- Signup for Community / Admin roles ---
-      if (url.pathname === "/api/signup/communityhead" && method === "POST") {
-        return withCorsHeaders(await handleAdminSignup(req, "COMMUNITY_HEAD"));
-      } else if (
-        url.pathname === "/api/signup/communitysubhead" &&
-        method === "POST"
-      ) {
+      // Lightweight healthcheck
+      if (url.pathname === "/api/health" && method === "GET") {
         return withCorsHeaders(
-          await handleAdminSignup(req, "COMMUNITY_SUBHEAD"),
+          Response.json({ status: "ok" }, { status: 200 }),
         );
-      } else if (
-        url.pathname === "/api/signup/gotrahead" &&
-        method === "POST"
-      ) {
-        return withCorsHeaders(await handleAdminSignup(req, "GOTRA_HEAD"));
       }
 
-      // --- Login for Community / Admin roles ---
-      if (url.pathname === "/api/login/communityhead" && method === "POST") {
-        return withCorsHeaders(await handleAdminLogin(req, "COMMUNITY_HEAD"));
-      } else if (
-        url.pathname === "/api/login/communitysubhead" &&
-        method === "POST"
-      ) {
-        return withCorsHeaders(
-          await handleAdminLogin(req, "COMMUNITY_SUBHEAD"),
-        );
-      } else if (url.pathname === "/api/login/gotrahead" && method === "POST") {
-        return withCorsHeaders(await handleAdminLogin(req, "GOTRA_HEAD"));
+      // --- Centralized auth/signup/login route table ---
+      const authRouteTable = [
+        {
+          path: "/api/signup/communityhead",
+          method: "POST",
+          handler: (r: Request) => handleAdminSignup(r, "COMMUNITY_HEAD"),
+        },
+        {
+          path: "/api/signup/communitysubhead",
+          method: "POST",
+          handler: (r: Request) => handleAdminSignup(r, "COMMUNITY_SUBHEAD"),
+        },
+        {
+          path: "/api/signup/gotrahead",
+          method: "POST",
+          handler: (r: Request) => handleAdminSignup(r, "GOTRA_HEAD"),
+        },
+        {
+          path: "/api/signup/familyhead",
+          method: "POST",
+          handler: (r: Request) => handleFHSignup(r, "FAMILY_HEAD"),
+        },
+        {
+          path: "/api/signup/member",
+          method: "POST",
+          handler: (r: Request) => handleMemberSignup(r),
+        },
+
+        {
+          path: "/api/login/communityhead",
+          method: "POST",
+          handler: (r: Request) => handleAdminLogin(r, "COMMUNITY_HEAD"),
+        },
+        {
+          path: "/api/login/communitysubhead",
+          method: "POST",
+          handler: (r: Request) => handleAdminLogin(r, "COMMUNITY_SUBHEAD"),
+        },
+        {
+          path: "/api/login/gotrahead",
+          method: "POST",
+          handler: (r: Request) => handleAdminLogin(r, "GOTRA_HEAD"),
+        },
+        {
+          path: "/api/login/familyhead",
+          method: "POST",
+          handler: (r: Request) => handleFHLogin(r, "FAMILY_HEAD"),
+        },
+        {
+          path: "/api/login/member",
+          method: "POST",
+          handler: (r: Request) => handleMemberLogin(r),
+        },
+      ];
+
+      const matchedAuth = authRouteTable.find(
+        (entry) => entry.path === url.pathname && entry.method === method,
+      );
+
+      if (matchedAuth) {
+        return withCorsHeaders(await matchedAuth.handler(req));
       }
 
-      // --- Signup for Family Head ---
-      if (url.pathname === "/api/signup/familyhead" && method === "POST") {
-        return withCorsHeaders(await handleFHSignup(req, "FAMILY_HEAD"));
-      }
-
-      // --- Login for Family Head ---
-      else if (url.pathname === "/api/login/familyhead" && method === "POST") {
-        return withCorsHeaders(await handleFHLogin(req, "FAMILY_HEAD"));
-      }
-
-      // --- Signup for Family Member ---
-      else if (url.pathname === "/api/signup/member" && method === "POST") {
-        return withCorsHeaders(await handleMemberSignup(req));
-      }
-
-      // --- Login for Family Member ---
-      else if (url.pathname === "/api/login/member" && method === "POST") {
-        return withCorsHeaders(await handleMemberLogin(req));
+      // Small path pattern matcher to extract params like :familyId
+      function match(path: string, pattern: string) {
+        const keys: string[] = [];
+        const regexStr =
+          "^" +
+          pattern.replace(/:[^/]+/g, (m) => {
+            keys.push(m.slice(1));
+            return "([^/]+)";
+          }) +
+          "$";
+        const m = path.match(new RegExp(regexStr));
+        if (!m) return null;
+        const params: Record<string, string> = {};
+        keys.forEach((k, i) => (params[k] = m[i + 1] ?? ""));
+        return params;
       }
 
       // --- Create family (authenticated user becomes head) ---
-      else if (url.pathname === "/api/families" && method === "POST") {
+      if (url.pathname === "/api/families" && method === "POST") {
         return withCorsHeaders(await handleCreateFamily(req));
       }
 
       // --- Add member to family ---
-      else if (
-        url.pathname.startsWith("/api/families/") &&
-        url.pathname.endsWith("/members") &&
-        method === "POST"
-      ) {
-        // extract familyId from path: /api/families/:id/members
-        const parts = url.pathname.split("/").filter(Boolean);
-        // parts -> ["api","families",":id","members"]
-        const familyId = parts[2];
-        return withCorsHeaders(await handleAddMember(req, familyId));
+      const mAddMember = match(url.pathname, "/api/families/:familyId/members");
+      if (mAddMember && method === "POST") {
+        return withCorsHeaders(await handleAddMember(req, mAddMember.familyId));
       }
 
       // --- List invites for family (family head) ---
-      else if (
-        url.pathname.startsWith("/api/families/") &&
-        url.pathname.endsWith("/invites") &&
-        method === "PATCH"
-      ) {
-        const parts = url.pathname.split("/").filter(Boolean);
-        // parts -> ["api","families",":id","invites"]
-        const familyId = parts[2];
-        return withCorsHeaders(await handleListInvites(req, familyId));
+      const mListInvites = match(
+        url.pathname,
+        "/api/families/:familyId/invites",
+      );
+      if (mListInvites && method === "PATCH") {
+        return withCorsHeaders(
+          await handleListInvites(req, mListInvites.familyId),
+        );
       }
 
       // --- Review invite (approve/reject) ---
-      if (
-        url.pathname.startsWith("/api/families/") &&
-        url.pathname.includes("/invites/") &&
-        method === "PATCH"
-      ) {
-        // path example: /api/families/:id/invites/:inviteId/approve
-        const parts = url.pathname.split("/").filter(Boolean);
-        // parts -> ["api","families",":id","invites",":inviteId",":action"]
-        const familyId = parts[2];
-        const inviteId = parts[4];
-        const action = parts[5] || "";
+      const mReviewInvite =
+        match(
+          url.pathname,
+          "/api/families/:familyId/invites/:inviteId/:action",
+        ) || match(url.pathname, "/api/families/:familyId/invites/:inviteId");
+      if (mReviewInvite && method === "PATCH") {
+        const familyId = (mReviewInvite as any).familyId;
+        const inviteId = (mReviewInvite as any).inviteId;
+        const action = (mReviewInvite as any).action || "";
         return withCorsHeaders(
           await handleReviewInvite(req, familyId, inviteId, action),
         );
@@ -182,25 +209,21 @@ const server = serve({
         return withCorsHeaders(await handleListResourceRequests(req));
       }
 
-      if (
-        url.pathname.startsWith("/api/resource-requests/") &&
-        method === "GET"
-      ) {
-        // /api/resource-requests/:id
-        const parts = url.pathname.split("/").filter(Boolean);
-        const id = parts[1];
-        return withCorsHeaders(await handleGetResourceRequest(req, id));
+      const mGetResource = match(url.pathname, "/api/resource-requests/:id");
+      if (mGetResource && method === "GET") {
+        return withCorsHeaders(
+          await handleGetResourceRequest(req, (mGetResource as any).id),
+        );
       }
 
-      if (
-        url.pathname.startsWith("/api/resource-requests/") &&
-        url.pathname.endsWith("/review") &&
-        method === "POST"
-      ) {
-        // /api/resource-requests/:id/review
-        const parts = url.pathname.split("/").filter(Boolean);
-        const id = parts[1];
-        return withCorsHeaders(await handleReviewResourceRequest(req, id));
+      const mReviewResource = match(
+        url.pathname,
+        "/api/resource-requests/:id/review",
+      );
+      if (mReviewResource && method === "POST") {
+        return withCorsHeaders(
+          await handleReviewResourceRequest(req, (mReviewResource as any).id),
+        );
       }
 
       // --- Admin endpoints ---
@@ -209,15 +232,11 @@ const server = serve({
         return withCorsHeaders(await handleListAllRequests(req));
       }
 
-      if (
-        url.pathname.startsWith("/api/admin/event/") &&
-        url.pathname.endsWith("/status") &&
-        method === "POST"
-      ) {
-        const parts = url.pathname.split("/").filter(Boolean);
-        // parts -> ["api","admin","event",":id","status"]
-        const id = parts[3];
-        return withCorsHeaders(await handleUpdateEventStatus(req, id));
+      const mAdminEvent = match(url.pathname, "/api/admin/event/:id/status");
+      if (mAdminEvent && method === "POST") {
+        return withCorsHeaders(
+          await handleUpdateEventStatus(req, (mAdminEvent as any).id),
+        );
       }
 
       // --- Notifications ---

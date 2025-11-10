@@ -62,8 +62,8 @@ export async function handleFHLogin(
     }
 
     // --- Generate JWT token ---
-    // Standardize token payload to { id, role }
-    const token = signJWT({ id: user.id, role: user.role });
+    // Standardize token payload to { userId, role }
+    const token = signJWT({ userId: user.id, role: user.role });
 
     // --- Success response ---
     return success(

@@ -24,19 +24,24 @@
 
 ```json
 {
+  "status": "success",
   "message": "Signup successful",
-  "user": {
-    "id": "73ebfd8a-a73f-4ed9-882f-d2da8c321971",
-    "name": "Test Head",
-    "email": "head@example.com",
-    "role": "FAMILY_HEAD"
+  "data": {
+    "user": {
+      "id": "73ebfd8a-a73f-4ed9-882f-d2da8c321971",
+      "name": "Test Head",
+      "email": "head@example.com",
+      "role": "FAMILY_HEAD"
+    },
+    "family": {
+      "id": "28b429fe-0b06-43d7-ade5-ad788d881026",
+      "name": "DalalFamily",
+      "uniqueId": "FAM-PYJWB1"
+    },
+    "token": "eyJhbGciOi..."
   },
-  "family": {
-    "id": "28b429fe-0b06-43d7-ade5-ad788d881026",
-    "name": "DalalFamily",
-    "uniqueId": "FAM-PYJWB1"
-  },
-  "token": "eyJhbGciOi..."
+  "error": null,
+  "timestamp": "2025-11-01T03:13:07.133Z"
 }
 ```
 
@@ -94,7 +99,6 @@
 ```json
 {
   "email": "riya@demo.com",
-  "familyUniqueId": "FAM001",
   "password": "123"
 }
 ```
@@ -126,7 +130,11 @@
 }
 ```
 
-**Error Example (if missing familyUniqueId):**
+**Notes:**
+
+- The member login only requires `email` and `password`. The API will return the list of families associated with the account in the response `data`.
+
+**Error Example (invalid credentials):**
 
 ```json
 {
@@ -140,11 +148,11 @@
 
 ### 🔒 Auth Behavior Summary
 
-| Role                                          | Signup                                        | Login                                           | Notes                            |
-| --------------------------------------------- | --------------------------------------------- | ----------------------------------------------- | -------------------------------- |
-| **Family Head**                               | ✅ Creates new family with unique ID          | ✅ Login with email/password                    | Email is unique per user         |
-| **Family Member**                             | ✅ Joins existing family via `familyUniqueId` | ✅ Login with email + familyUniqueId + password | Email can repeat across families |
-| **Admin (Community Head/Subhead/Gotra Head)** | 🚧 (Next)                                     | 🚧 (Next)                                       | Will share same JWT logic        |
+| Role                                          | Signup                                        | Login                                           | Notes                                              |
+| --------------------------------------------- | --------------------------------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| **Family Head**                               | ✅ Creates new family with unique ID          | ✅ Login with email/password                    | Email should be unique; code expects unique emails |
+| **Family Member**                             | ✅ Joins existing family via `familyUniqueId` | ✅ Login with email + familyUniqueId + password | Email can repeat across families                   |
+| **Admin (Community Head/Subhead/Gotra Head)** | 🚧 (Next)                                     | 🚧 (Next)                                       | Will share same JWT logic                          |
 
 ---
 

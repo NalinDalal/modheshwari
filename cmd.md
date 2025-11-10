@@ -61,20 +61,22 @@ set FH_RESP (curl -s -X POST http://localhost:3001/api/login/familyhead \
 set FH_TOKEN (echo $FH_RESP | jq -r '.data.token')
 echo "FH_TOKEN=$FH_TOKEN"
 
-# 3) New member signup (creates pending invite) — use printf to inject family unique id
+# 3) New member signup (creates pending invite) — use printf to inject family unique uuid
+# Note: pass the family *UUID* (`$FAMILY_ID`) as `familyId` — the API expects the family ID.
 set MSR (curl -s -X POST http://localhost:3001/api/signup/member \
   -H 'Content-Type: application/json' \
   -d (printf '{"name":"TM","email":"tm@example.test","password":"pw","familyId":"%s"}' $FAMILY_UNIQUEID))
 
 echo "Member signup response:"; echo $MSR | jq
-set INVITE_ID (echo $MSR | jq -r '.data.invite.id')
+set INVITE_ID (echo $MSR | jq -r '.data.joinRequest.id')
 echo "INVITE_ID=$INVITE_ID"
 
-# 4) Family Head: list invites
+# 4) Family Head: list invites (the server currently expects PATCH for this action)
 echo "Invites for family:";
-curl -s -X GET "http://localhost:3001/api/families/$FAMILY_ID/invites" \
+curl -s -X PATCH "http://localhost:3001/api/families/$FAMILY_ID/invites" \
   -H "Authorization: Bearer $FH_TOKEN" \
-  -H "Accept: application/json" | jq
+  -H "Accept: application/json" \
+    -d '{}'| jq
 
 # 5) Family Head: approve invite
 echo "Approving invite...";

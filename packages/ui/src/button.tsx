@@ -21,11 +21,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantClasses: Record<ButtonVariant, string> = {
       primary: `
-        bg-[${colors.brand600}] text-white
-        hover:bg-[${colors.brand700}]
+        bg-[${colors.brand600}] text-white border border-[${colors.brand700}]
         focus:ring-[${colors.brand500}]
         shadow-md hover:shadow-lg
-        border border-[${colors.brand700}]
+        transition-all duration-300 ease-in-out
+        hover:bg-blue-600
+        hover:scale-[1.03]
+        [&>span]:transition-transform [&>span]:duration-300 [&>span]:ease-in-out
+        hover:[&>span]:scale-[1.1]
       `,
       secondary: `
         border border-gray-300 dark:border-gray-700
@@ -51,7 +54,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const disabledClasses = disabled
-      ? "opacity-60 cursor-not-allowed pointer-events-none"
+      ? "opacity-60 cursor-not-allowed pointer-events-none hover:scale-100 hover:bg-[${colors.brand600}] hover:[&>span]:scale-100"
       : "";
 
     return (
