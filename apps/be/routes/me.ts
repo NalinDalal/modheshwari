@@ -9,7 +9,7 @@ import { success, failure } from "@modheshwari/utils/response";
  * GET /api/me
  * Returns the authenticated user's details and the families they belong to.
  */
-export async function handleGetMe(req: Request) {
+export async function handleGetMe(req: Request): Promise<Response> {
   try {
     // --- Step 1: Extract and validate JWT ---
     const authHeader = req.headers.get("authorization") || "";
@@ -60,7 +60,7 @@ export async function handleGetMe(req: Request) {
       name: user.name,
       email: user.email,
       role: user.role,
-      families: user.families.map((f) => ({
+      families: user.families.map((f: any) => ({
         id: f.family.id,
         name: f.family.name,
         uniqueId: f.family.uniqueId,

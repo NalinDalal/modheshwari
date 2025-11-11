@@ -9,14 +9,14 @@ import { requireAuth } from "./auth-middleware";
  * POST /api/families
  * Body: { name: string, uniqueId?: string }
  */
-export async function handleCreateFamily(req: any) {
+export async function handleCreateFamily(req: any): Promise<Response> {
   try {
     // Require authentication (any role)
     const authCheck = requireAuth(req as Request);
-    if (!authCheck.ok) return authCheck.response;
+    if (!authCheck.ok) return authCheck.response as Response;
     const userId = authCheck.payload.userId ?? authCheck.payload.id;
 
-    const body = await req.json().catch(() => null);
+    const body: any = await (req as Request).json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
     const { name, uniqueId } = body;
     if (!name) return failure("Missing family name", "Validation Error", 400);
@@ -52,10 +52,13 @@ export async function handleCreateFamily(req: any) {
  * POST /api/families/:id/members
  * Body: { userId?: string, email?: string, role?: string }
  */
-export async function handleAddMember(req: any, familyId: string) {
+export async function handleAddMember(
+  req: any,
+  familyId: string,
+): Promise<Response> {
   try {
     const authCheck = requireAuth(req as Request);
-    if (!authCheck.ok) return authCheck.response;
+    if (!authCheck.ok) return authCheck.response as Response;
     const requesterId = authCheck.payload.userId ?? authCheck.payload.id;
 
     // Verify requester is head of the family
@@ -64,7 +67,7 @@ export async function handleAddMember(req: any, familyId: string) {
     if (family.headId !== requesterId)
       return failure("Only family head can add members", "Forbidden", 403);
 
-    const body = await req.json().catch(() => null);
+    const body: any = await (req as Request).json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
     const { userId, email, role } = body;
@@ -111,10 +114,13 @@ export async function handleAddMember(req: any, familyId: string) {
  * @param {string} familyId - Description of familyId
  * @returns {Promise<Response>} Description of return value
  */
-export async function handleListInvites(req: any, familyId: string) {
+export async function handleListInvites(
+  req: any,
+  familyId: string,
+): Promise<Response> {
   try {
     const authCheck = requireAuth(req as Request);
-    if (!authCheck.ok) return authCheck.response;
+    if (!authCheck.ok) return authCheck.response as Response;
     const requesterId = authCheck.payload.userId ?? authCheck.payload.id;
     const family = await prisma.family.findUnique({ where: { id: familyId } });
     if (!family) return failure("Family not found", "Not Found", 404);
@@ -147,10 +153,10 @@ export async function handleReviewInvite(
   familyId: string,
   inviteId: string,
   action: string,
-) {
+): Promise<Response> {
   try {
     const authCheck = requireAuth(req as Request, ["FAMILY_HEAD"]);
-    if (!authCheck.ok) return authCheck.response;
+    if (!authCheck.ok) return authCheck.response as Response;
     const reviewerId = authCheck.payload.userId ?? authCheck.payload.id;
     const family = await prisma.family.findUnique({ where: { id: familyId } });
     if (!family) return failure("Family not found", "Not Found", 404);
@@ -164,7 +170,7 @@ export async function handleReviewInvite(
     if (invite.status !== "PENDING")
       return failure("Invite already reviewed", "Conflict", 409);
 
-    const body = await req.json().catch(() => null);
+    const body: any = await (req as Request).json().catch(() => null);
     const remarks = body?.remarks ?? null;
 
     if (action === "approve") {
@@ -178,7 +184,7 @@ export async function handleReviewInvite(
       }
 
       // Use a transaction to ensure atomicity: create user (if needed) + familyMember + update invite + notify
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         let invitedUserId = invite.invitedUserId;
 
         // If invite was created for an email (no user exists yet), create a placeholder user
@@ -187,8 +193,8 @@ export async function handleReviewInvite(
           const hashed = await hashPassword(pw);
           const newUser = await tx.user.create({
             data: {
-              name: invite.inviteEmail.split("@")[0],
-              email: invite.inviteEmail,
+              name: (invite.inviteEmail as string).split("@")[0],
+              email: invite.inviteEmail as string,
               password: hashed,
               role: "MEMBER",
               status: true,
@@ -227,7 +233,7 @@ export async function handleReviewInvite(
         await tx.notification.create({
           data: {
             userId: invitedUserId!,
-            type: "invite_approved",
+            type: "invite_approved" as any,
             message: `Your request to join ${family.name} has been approved.`,
           },
         });
@@ -251,7 +257,7 @@ export async function handleReviewInvite(
         await prisma.notification.create({
           data: {
             userId: invite.invitedUserId,
-            type: "invite_rejected",
+            type: "invite_rejected" as any,
             message: `Your request to join ${family.name} has been rejected.`,
           },
         });

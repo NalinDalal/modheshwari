@@ -7,31 +7,50 @@ import prisma from "@modheshwari/db";
 import { hashPassword, comparePassword } from "@modheshwari/utils/hash";
 import { signJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
+import type { Role as PrismaRole } from "@prisma/client";
 
-const ALLOWED_ROLES = ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"];
+const ALLOWED_ROLES = [
+  "COMMUNITY_HEAD",
+  "COMMUNITY_SUBHEAD",
+  "GOTRA_HEAD",
+] as const;
+type AdminRole = (typeof ALLOWED_ROLES)[number];
 
+function normalizeRole(raw?: string): AdminRole | undefined {
+  if (!raw) return undefined;
+  const up = raw.toUpperCase();
+  return ALLOWED_ROLES.includes(up as AdminRole)
+    ? (up as AdminRole)
+    : undefined;
+}
 /**
  * Signup handler for community/admin roles.
  * POST /api/signup/:role
  */
-export async function handleAdminSignup(req: Request, role: string) {
+export async function handleAdminSignup(
+  req: Request,
+  role: string,
+): Promise<Response> {
   try {
-    const r = role?.toUpperCase();
-    if (!ALLOWED_ROLES.includes(r))
+    const r = normalizeRole(role);
+    if (!r)
       return failure(
         "Invalid role for this signup endpoint",
         "Bad Request",
         400,
       );
 
-    const body = await req.json().catch(() => null);
+    // keep a stable, typed prismaRole before any awaits so narrowing isn't lost
+    const prismaRole: PrismaRole = r as unknown as PrismaRole;
+
+    const body: any = await (req as Request).json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
     const { name, email, password, gotra } = body;
     if (!name || !email || !password)
       return failure("Missing required fields", "Validation Error", 400);
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findFirst({ where: { email } });
     if (existing) return failure("Email already registered", "Conflict", 409);
 
     const hashed = await hashPassword(password);
@@ -41,7 +60,7 @@ export async function handleAdminSignup(req: Request, role: string) {
         name,
         email,
         password: hashed,
-        role: ALLOWED_ROLES.includes(r) ? r : null,
+        role: prismaRole,
         status: true,
       },
     });
@@ -82,23 +101,27 @@ export async function handleAdminSignup(req: Request, role: string) {
  * Login handler for community/admin roles.
  * POST /api/login/:role
  */
-export async function handleAdminLogin(req: Request, expectedRole: string) {
+export async function handleAdminLogin(
+  req: Request,
+  expectedRole: string,
+): Promise<Response> {
   try {
-    const r = expectedRole?.toUpperCase();
-    if (!ALLOWED_ROLES.includes(r))
-      return failure(
-        "Invalid role for this login endpoint",
-        "Bad Request",
-        400,
-      );
+    const r = normalizeRole(expectedRole);
+    if (!r)
+      return failure("Invalid role for this login endpoint", "Forbidden", 403);
 
-    const body = await req.json().catch(() => null);
+    // keep typed value before any await so TypeScript knows it's present
+    const prismaRole: PrismaRole = r as unknown as PrismaRole;
+
+    const body: any = await (req as Request).json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
     const { email, password } = body;
     if (!email || !password)
       return failure("Missing credentials", "Validation Error", 400);
 
-    const user = await prisma.user.findFirst({ where: { email, role: r } });
+    const user = await prisma.user.findFirst({
+      where: { email, role: prismaRole },
+    });
     if (!user)
       return failure("User not found or role mismatch", "Unauthorized", 401);
 

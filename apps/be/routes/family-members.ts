@@ -8,7 +8,7 @@ import { success, failure } from "@modheshwari/utils/response";
  * Returns all (or only alive) members of the family the head belongs to
  * Add `?all=true` to include dead members.
  */
-export async function handleGetFamilyMembers(req: Request) {
+export async function handleGetFamilyMembers(req: Request): Promise<Response> {
   try {
     const auth = req.headers.get("authorization") || "";
     const token = auth.replace("Bearer ", "").trim();
@@ -46,7 +46,7 @@ export async function handleGetFamilyMembers(req: Request) {
     });
 
     // Filter out null users (dead ones when all=false)
-    const filteredMembers = members.filter((m) => m.user !== null);
+    const filteredMembers = members.filter((m: any) => m.user !== null);
 
     return success(
       includeAll

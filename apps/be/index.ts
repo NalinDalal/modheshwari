@@ -148,7 +148,9 @@ const server = serve({
       // --- Add member to family ---
       const mAddMember = match(url.pathname, "/api/families/:familyId/members");
       if (mAddMember && method === "POST") {
-        return withCorsHeaders(await handleAddMember(req, mAddMember.familyId));
+        return withCorsHeaders(
+          await handleAddMember(req, mAddMember.familyId!),
+        );
       }
 
       // --- List invites for family (family head) ---
@@ -157,9 +159,27 @@ const server = serve({
         "/api/families/:familyId/invites",
       );
       if (mListInvites && method === "PATCH") {
-        return withCorsHeaders(
-          await handleListInvites(req, mListInvites.familyId),
-        );
+        // defensive runtime guard: ensure familyId exists before declaring variable
+        const rawFamilyId = (mListInvites as Record<string, string>).familyId;
+        if (!rawFamilyId) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "familyId missing" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+
+        const familyId = rawFamilyId;
+        const maybeRes = await handleListInvites(req, familyId);
+        const res =
+          maybeRes ??
+          new Response(JSON.stringify({ error: "Internal server error" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+
+        return withCorsHeaders(res);
       }
 
       // --- Review invite (approve/reject) ---
@@ -211,9 +231,8 @@ const server = serve({
 
       const mGetResource = match(url.pathname, "/api/resource-requests/:id");
       if (mGetResource && method === "GET") {
-        return withCorsHeaders(
-          await handleGetResourceRequest(req, (mGetResource as any).id),
-        );
+        const id = (mGetResource as Record<string, string>).id!;
+        return withCorsHeaders(await handleGetResourceRequest(req, id));
       }
 
       const mReviewResource = match(
@@ -221,9 +240,8 @@ const server = serve({
         "/api/resource-requests/:id/review",
       );
       if (mReviewResource && method === "POST") {
-        return withCorsHeaders(
-          await handleReviewResourceRequest(req, (mReviewResource as any).id),
-        );
+        const id = (mReviewResource as Record<string, string>).id!;
+        return withCorsHeaders(await handleReviewResourceRequest(req, id));
       }
 
       // --- Admin endpoints ---
@@ -234,9 +252,8 @@ const server = serve({
 
       const mAdminEvent = match(url.pathname, "/api/admin/event/:id/status");
       if (mAdminEvent && method === "POST") {
-        return withCorsHeaders(
-          await handleUpdateEventStatus(req, (mAdminEvent as any).id),
-        );
+        const id = (mAdminEvent as Record<string, string>).id!;
+        return withCorsHeaders(await handleUpdateEventStatus(req, id));
       }
 
       // --- Notifications ---

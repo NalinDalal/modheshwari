@@ -23,7 +23,7 @@ export async function handleMemberSignup(req: Request) {
   try {
     console.log("signup endpoint for family-member");
 
-    const body = await req.json().catch(() => null);
+    const body: any = await (req as Request).json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
     const { name, email, password, familyId, relationWithFamilyHead } = body;
@@ -52,7 +52,7 @@ export async function handleMemberSignup(req: Request) {
     });
 
     // --- Step 5: Create Family Join Request (Pending approval) ---
-    const joinRequest = await prisma.familyJoinRequest.create({
+    const joinRequest = await (prisma as any).familyJoinRequest.create({
       data: {
         userId: user.id,
         familyId,
@@ -71,7 +71,7 @@ export async function handleMemberSignup(req: Request) {
       await prisma.notification.create({
         data: {
           userId: family.headId,
-          type: "family_join_request",
+          type: "family_join_request" as any,
           message: `${user.name} has requested to join your family (${family.name}).`,
         },
       });

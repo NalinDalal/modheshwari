@@ -34,7 +34,8 @@ export async function handleFHLogin(
   expectedRole: string,
 ): Promise<Response> {
   try {
-    const { email, password } = await req.json();
+    const body: any = await (req as Request).json().catch(() => null);
+    const { email, password } = body;
 
     // --- Basic input validation ---
     if (!email || !password) {

@@ -26,7 +26,7 @@ const hits: Map<string, number[]> = new Map();
 function getClientIp(req: Request) {
   const header =
     req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip");
-  if (header) return header.split(",")[0].trim();
+  if (header) return header.split(",")[0]!.trim();
   try {
     // Bun exposes a `conn` on the Request in some environments, but it's not standard.
     // Fallback to unknown so limiter groups them together.

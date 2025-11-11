@@ -4,7 +4,7 @@ type ResponseStatus = "success" | "error";
 interface ApiResponseOptions<T> {
   status?: ResponseStatus;
   message?: string;
-  data?: T;
+  data?: T | null;
   error?: string | null;
   statusCode?: number;
 }

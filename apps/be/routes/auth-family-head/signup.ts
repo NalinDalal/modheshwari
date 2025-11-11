@@ -14,6 +14,7 @@ import prisma from "@modheshwari/db";
 import { hashPassword } from "@modheshwari/utils/hash";
 import { signJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
+import type { Role as PrismaRole } from "@prisma/client";
 
 /**
  * @typedef {Object} SignupBody
@@ -33,11 +34,24 @@ import { success, failure } from "@modheshwari/utils/response";
  * @param {string} role - The user role ("FAMILY_HEAD").
  * @returns {Promise<Response>} HTTP JSON response.
  */
-export async function handleFHSignup(req: Request, role: string) {
+export async function handleFHSignup(
+  req: Request,
+  role: string,
+): Promise<Response> {
   try {
     console.log("signup endpoint for family-head");
+    // Validate role early and create a typed prismaRole before any await
+    const rawRole = role && role.toUpperCase();
+    if (rawRole !== "FAMILY_HEAD") {
+      return failure(
+        "Invalid role for this signup endpoint",
+        "Bad Request",
+        400,
+      );
+    }
+    const prismaRole: PrismaRole = "FAMILY_HEAD" as unknown as PrismaRole;
 
-    const body = await req.json().catch(() => null);
+    const body: any = await req.json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
     const { name, email, password, familyName } = body;
@@ -47,7 +61,7 @@ export async function handleFHSignup(req: Request, role: string) {
       return failure("Missing required fields", "Validation Error", 400);
 
     // --- Step 2: Check if email already exists ---
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findFirst({ where: { email } });
     if (existingUser) {
       return failure("Email already registered", "Duplicate Entry", 409);
     }
@@ -61,7 +75,7 @@ export async function handleFHSignup(req: Request, role: string) {
         name,
         email,
         password: hashedPassword,
-        role,
+        role: prismaRole,
         status: true,
       },
     });
@@ -80,7 +94,7 @@ export async function handleFHSignup(req: Request, role: string) {
       data: {
         familyId: family.id,
         userId: user.id,
-        role,
+        role: prismaRole,
       },
     });
 

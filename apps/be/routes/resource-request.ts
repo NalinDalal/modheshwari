@@ -8,13 +8,15 @@ import { requireAuth } from "./auth-middleware";
  * POST /api/resource-requests
  * Body: { resource: string, details?: string }
  */
-export async function handleCreateResourceRequest(req: string) {
+export async function handleCreateResourceRequest(
+  req: Request,
+): Promise<Response> {
   try {
     const auth = requireAuth(req as Request);
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) return auth.response as Response;
     const userId = auth.payload.userId ?? auth.payload.id;
 
-    const body = await req.json().catch(() => null);
+    const body: any = await (req as Request).json().catch(() => null);
     if (!body || !body.resource)
       return failure("Missing resource field", "Validation Error", 400);
 
@@ -104,10 +106,10 @@ export async function handleCreateResourceRequest(req: string) {
  * GET /api/resource-requests
  * Query: status (optional)
  */
-export async function handleListResourceRequests(req: any) {
+export async function handleListResourceRequests(req: any): Promise<Response> {
   try {
     const auth = requireAuth(req as Request);
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) return auth.response as Response;
     const payload = auth.payload;
 
     const url = new URL(req.url);
@@ -139,10 +141,13 @@ export async function handleListResourceRequests(req: any) {
  * Get a single resource request with approvals
  * GET /api/resource-requests/:id
  */
-export async function handleGetResourceRequest(req: any, id: string) {
+export async function handleGetResourceRequest(
+  req: any,
+  id: string,
+): Promise<Response> {
   try {
     const auth = requireAuth(req as Request);
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) return auth.response as Response;
 
     const r = await prisma.resourceRequest.findUnique({
       where: { id },
@@ -170,17 +175,20 @@ export async function handleGetResourceRequest(req: any, id: string) {
  * POST /api/resource-requests/:id/review
  * Body: { action: "approve" | "reject" | "changes", remarks?: string }
  */
-export async function handleReviewResourceRequest(req: any, id: string) {
+export async function handleReviewResourceRequest(
+  req: any,
+  id: string,
+): Promise<Response> {
   try {
     const auth = requireAuth(req as Request, [
       "COMMUNITY_HEAD",
       "COMMUNITY_SUBHEAD",
       "GOTRA_HEAD",
     ]);
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) return auth.response as Response;
     const reviewerId = auth.payload.userId ?? auth.payload.id;
 
-    const body = await req.json().catch(() => null);
+    const body: any = await (req as Request).json().catch(() => null);
     if (!body || !body.action)
       return failure("Missing action", "Validation Error", 400);
 
@@ -208,9 +216,10 @@ export async function handleReviewResourceRequest(req: any, id: string) {
     });
 
     // Recompute overall request status
-    const approvals = await prisma.resourceRequestApproval.findMany({
-      where: { requestId: id },
-    });
+    const approvals: Array<{ status: string }> =
+      (await prisma.resourceRequestApproval.findMany({
+        where: { requestId: id },
+      })) as any;
 
     let overall: any = "PENDING";
     if (approvals.some((a) => a.status === "REJECTED")) overall = "REJECTED";
@@ -247,10 +256,10 @@ export async function handleReviewResourceRequest(req: any, id: string) {
  * List current user's notifications
  * GET /api/notifications
  */
-export async function handleListNotifications(req: any) {
+export async function handleListNotifications(req: any): Promise<Response> {
   try {
     const auth = requireAuth(req as Request);
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) return auth.response as Response;
     const userId = auth.payload.userId ?? auth.payload.id;
 
     const list = await prisma.notification.findMany({

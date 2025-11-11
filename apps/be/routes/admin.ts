@@ -8,10 +8,10 @@ const ADMIN_ROLES = ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"];
  * GET /api/admin/requests
  * Lists all user-generated requests (resource requests and events).
  */
-export async function handleListAllRequests(req: any) {
+export async function handleListAllRequests(req: any): Promise<Response> {
   try {
     const auth = requireAuth(req as Request, ADMIN_ROLES);
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) return auth.response as Response;
 
     // Resource requests (include approvals and requester)
     const resourceRequests = await prisma.resourceRequest.findMany({
@@ -36,12 +36,15 @@ export async function handleListAllRequests(req: any) {
  * POST /api/admin/events/:id/status
  * Body: { status: "APPROVED" | "REJECTED" | "CANCELLED" }
  */
-export async function handleUpdateEventStatus(req: any, id: string) {
+export async function handleUpdateEventStatus(
+  req: any,
+  id: string,
+): Promise<Response> {
   try {
     const auth = requireAuth(req as Request, ADMIN_ROLES);
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) return auth.response as Response;
 
-    const body = await req.json().catch(() => null);
+    const body: any = await (req as Request).json().catch(() => null);
     if (!body || !body.status)
       return failure("Missing status", "Validation Error", 400);
 
@@ -62,7 +65,7 @@ export async function handleUpdateEventStatus(req: any, id: string) {
     await prisma.notification.create({
       data: {
         userId: ev.createdById,
-        type: "EVENT_APPROVAL",
+        type: "EVENT_APPROVAL" as any,
         message: `Your event '${ev.name}' status changed to ${status}`,
       },
     });

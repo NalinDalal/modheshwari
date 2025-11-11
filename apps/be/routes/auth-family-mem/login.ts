@@ -32,7 +32,7 @@ export async function handleMemberLogin(req: Request) {
   try {
     console.log("login endpoint for family-member");
 
-    const body = await req.json().catch(() => null);
+    const body: any = await (req as Request).json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
     const { email, password } = body;
@@ -62,7 +62,7 @@ export async function handleMemberLogin(req: Request) {
       return failure("Invalid credentials", "Authentication Error", 401);
 
     // --- Step 4: Fetch family info (if any) ---
-    const familyLinks = user.families.map((f) => ({
+    const familyLinks = user.families.map((f: any) => ({
       id: f.family.id,
       name: f.family.name,
       uniqueId: f.family.uniqueId,

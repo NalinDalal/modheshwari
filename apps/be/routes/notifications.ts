@@ -8,16 +8,16 @@ import { requireAuth } from "./auth-middleware";
  * POST /api/notifications
  * Body: { message: string, type?: string, channel?: string, targetRole?: string }
  */
-export async function handleCreateNotification(req: any) {
+export async function handleCreateNotification(req: any): Promise<Response> {
   try {
     const auth = requireAuth(req as Request, [
       "COMMUNITY_HEAD",
       "COMMUNITY_SUBHEAD",
       "GOTRA_HEAD",
     ]);
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) return auth.response as Response;
 
-    const body = await req.json().catch(() => null);
+    const body: any = await (req as Request).json().catch(() => null);
     if (!body || !body.message)
       return failure("Missing message", "Validation Error", 400);
 
@@ -31,7 +31,12 @@ export async function handleCreateNotification(req: any) {
     if (!users.length)
       return failure("No users found for the target filter", "Not Found", 404);
 
-    const data = users.map((u) => ({ userId: u.id, message, type, channel }));
+    const data = users.map((u: any) => ({
+      userId: u.id,
+      message,
+      type,
+      channel,
+    }));
 
     // createMany for performance
     await prisma.notification.createMany({ data });
