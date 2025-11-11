@@ -1,42 +1,81 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { Button } from "@repo/ui/button";
+import { LoaderThree } from "@repo/ui/loading";
 
-type Req = {
+/**
+ * Represents a single resource request.
+ */
+interface ResourceRequest {
   id: string;
   resource: string;
   status: string;
   createdAt: string;
-  approvals?: any[];
+  approvals?: Approval[];
   userId?: string;
-};
+}
 
 /**
- * Performs get token operation.
- * @returns {string} Description of return value
+ * Represents a single approval entry for a resource request.
  */
-function getToken() {
+interface Approval {
+  id: string;
+  approverId: string;
+  approverName: string;
+  status: string;
+  remarks?: string;
+  reviewedAt?: string;
+}
+
+/**
+ * Represents the currently authenticated user.
+ */
+interface Me {
+  id: string;
+  name: string;
+  role:
+    | "MEMBER"
+    | "COMMUNITY_HEAD"
+    | "COMMUNITY_SUBHEAD"
+    | "GOTRA_HEAD"
+    | string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * Retrieves the stored auth token from localStorage.
+ * @returns {string | null} The token if found, otherwise null.
+ */
+function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("token");
 }
 
 /**
- * Performs  resource requests page operation.
- * @returns {any} Description of return value
+ * Resource Requests page component.
+ * - Displays a form for creating resource requests.
+ * - Lists existing requests.
+ * - Allows privileged roles to review (approve/reject/change) requests.
+ *
+ * @returns {JSX.Element} The rendered component.
  */
-export default function ResourceRequestsPage() {
+export default function ResourceRequestsPage(): React.JSX.Element {
   const [resource, setResource] = useState("");
-  const [requests, setRequests] = useState<Req[]>([]);
+  const [requests, setRequests] = useState<ResourceRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [me, setMe] = useState<any>(null);
+  const [me, setMe] = useState<Me | null>(null);
 
   useEffect(() => {
-    fetchMe();
-    fetchRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    void fetchMe();
+    void fetchRequests();
   }, []);
 
-  async function fetchMe() {
+  /**
+   * Fetches current user info from /api/me.
+   */
+  async function fetchMe(): Promise<void> {
     try {
       const token = getToken();
       const res = await fetch("http://localhost:3001/api/me", {
@@ -45,12 +84,15 @@ export default function ResourceRequestsPage() {
       if (!res.ok) return;
       const json = await res.json();
       setMe(json.data || null);
-    } catch (err) {
-      // ignore
+    } catch {
+      // ignore network errors silently
     }
   }
 
-  async function fetchRequests() {
+  /**
+   * Fetches all resource requests.
+   */
+  async function fetchRequests(): Promise<void> {
     setLoading(true);
     try {
       const token = getToken();
@@ -59,19 +101,24 @@ export default function ResourceRequestsPage() {
       });
       if (!res.ok) {
         setRequests([]);
-        setLoading(false);
         return;
       }
       const json = await res.json();
       setRequests(json.data?.requests || []);
-    } catch (err) {
+    } catch {
       setRequests([]);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  /**
+   * Handles creation of a new resource request.
+   * @param {React.FormEvent} e - The form submission event.
+   */
+  async function handleCreate(
+    e: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     e.preventDefault();
     const token = getToken();
     try {
@@ -85,20 +132,25 @@ export default function ResourceRequestsPage() {
       });
       if (res.ok) {
         setResource("");
-        fetchRequests();
+        void fetchRequests();
       } else {
         const js = await res.json();
         alert(js.message || "Failed to create");
       }
-    } catch (err) {
+    } catch {
       alert("Network error");
     }
   }
 
+  /**
+   * Allows an approver to review a resource request.
+   * @param id The request ID.
+   * @param action The review action.
+   */
   async function handleReview(
     id: string,
     action: "approve" | "reject" | "changes",
-  ) {
+  ): Promise<void> {
     const token = getToken();
     try {
       const res = await fetch(
@@ -112,12 +164,12 @@ export default function ResourceRequestsPage() {
           body: JSON.stringify({ action }),
         },
       );
-      if (res.ok) fetchRequests();
+      if (res.ok) void fetchRequests();
       else {
         const js = await res.json();
         alert(js.message || "Failed");
       }
-    } catch (err) {
+    } catch {
       alert("Network error");
     }
   }
@@ -131,7 +183,7 @@ export default function ResourceRequestsPage() {
       <h1>Resource Requests</h1>
 
       <section style={{ marginBottom: 24 }}>
-        <h2>Create request</h2>
+        <h2>Create Request</h2>
         <form onSubmit={handleCreate}>
           <input
             value={resource}
@@ -146,7 +198,9 @@ export default function ResourceRequestsPage() {
       <section>
         <h2>Requests</h2>
         {loading ? (
-          <div>Loading...</div>
+          <div className="flex items-center gap-2">
+            <LoaderThree /> <span>Loading...</span>
+          </div>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
@@ -191,23 +245,25 @@ export default function ResourceRequestsPage() {
                   </td>
                   <td style={{ padding: 8, borderBottom: "1px solid #f0f0f0" }}>
                     {isAdmin ? (
-                      <>
-                        <button onClick={() => handleReview(r.id, "approve")}>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => void handleReview(r.id, "approve")}
+                        >
                           Approve
-                        </button>
-                        <button
-                          onClick={() => handleReview(r.id, "reject")}
-                          style={{ marginLeft: 8 }}
+                        </Button>
+                        <Button
+                          variant="danger"
+                          onClick={() => void handleReview(r.id, "reject")}
                         >
                           Reject
-                        </button>
-                        <button
-                          onClick={() => handleReview(r.id, "changes")}
-                          style={{ marginLeft: 8 }}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => void handleReview(r.id, "changes")}
                         >
                           Request Changes
-                        </button>
-                      </>
+                        </Button>
+                      </div>
                     ) : (
                       <em>—</em>
                     )}

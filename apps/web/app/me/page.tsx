@@ -5,9 +5,25 @@ import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
 import { DeleteButton } from "@repo/ui/delete-button";
 import { Button } from "@repo/ui/button";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: boolean;
+  families?: {
+    family: {
+      id: string;
+      name: string;
+    };
+  }[];
+  familyName?: string;
+}
+
 export default function MePage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

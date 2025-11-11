@@ -1,32 +1,49 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import type { Family } from "@prisma/client";
+
+interface Notification {
+  id: string;
+  type: string;
+  message: string;
+  createdAt: string;
+}
+
+interface Me {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  families?: Family; // You can replace this later with Family[] if you have the type
+}
 
 /**
- * Performs get token operation.
- * @returns {string} Description of return value
+ * Retrieves stored JWT token from localStorage (client only).
+ * @returns {string | null} JWT token string or null if unavailable.
  */
-function getToken() {
+function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("token");
 }
 
 /**
- * Performs  notifications page operation.
- * @returns {any} Description of return value
+ * Notifications Page
+ * - Fetches `/me` and `/notifications` from backend.
+ * - Allows privileged roles to broadcast system-wide notifications.
  */
-export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<any[]>([]);
+export default function NotificationsPage(): React.ReactElement {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [message, setMessage] = useState("");
   const [targetRole, setTargetRole] = useState("ALL");
-  const [me, setMe] = useState<any>(null);
+  const [me, setMe] = useState<Me | null>(null);
 
   useEffect(() => {
-    fetchMe();
-    fetchNotifications();
+    void fetchMe();
+    void fetchNotifications();
   }, []);
 
-  async function fetchMe() {
+  async function fetchMe(): Promise<void> {
     const token = getToken();
     if (!token) return;
     try {
@@ -36,10 +53,12 @@ export default function NotificationsPage() {
       if (!res.ok) return;
       const js = await res.json();
       setMe(js.data || null);
-    } catch (err) {}
+    } catch (err) {
+      console.error("Failed to fetch user info", err);
+    }
   }
 
-  async function fetchNotifications() {
+  async function fetchNotifications(): Promise<void> {
     const token = getToken();
     if (!token) return;
     try {
@@ -49,16 +68,19 @@ export default function NotificationsPage() {
       if (!res.ok) return;
       const js = await res.json();
       setNotifications(js.data?.notifications || []);
-    } catch (err) {}
+    } catch (err) {
+      console.error("Failed to fetch notifications", err);
+    }
   }
 
-  async function handleBroadcast(e: React.FormEvent) {
+  async function handleBroadcast(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     const token = getToken();
     if (!token) return alert("Login as admin to broadcast");
     try {
-      const body: any = { message };
+      const body: Record<string, string> = { message };
       if (targetRole !== "ALL") body.targetRole = targetRole;
+
       const res = await fetch("http://localhost:3001/api/notifications", {
         method: "POST",
         headers: {
@@ -67,15 +89,17 @@ export default function NotificationsPage() {
         },
         body: JSON.stringify(body),
       });
+
       if (res.ok) {
         setMessage("");
-        fetchNotifications();
+        await fetchNotifications();
         alert("Broadcast sent");
       } else {
         const js = await res.json();
         alert(js.message || "Failed to broadcast");
       }
     } catch (err) {
+      console.error("Network error", err);
       alert("Network error");
     }
   }

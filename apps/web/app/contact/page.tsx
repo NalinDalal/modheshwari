@@ -152,7 +152,7 @@ export default function ContactPage() {
           <div className="text-center mb-16 space-y-6">
             <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100/80 dark:bg-amber-900/30 border border-amber-300/50 dark:border-amber-700/50 backdrop-blur-sm">
               <span className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                We're here to help
+                We&apos;re here to help
               </span>
             </div>
 
@@ -206,7 +206,7 @@ export default function ContactPage() {
                   Message Sent!
                 </h2>
                 <p className="text-lg text-gray-700 dark:text-gray-400">
-                  Thanks for reaching out. I'll get back to you soon!
+                  Thanks for reaching out. I&apos;ll get back to you soon!
                 </p>
               </div>
             ) : (
@@ -396,6 +396,7 @@ export default function ContactPage() {
         </div>
       </footer>
 
+      {/* eslint-disable-next-line react/no-unknown-property */}
       <style jsx>{`
         @keyframes float {
           0%,

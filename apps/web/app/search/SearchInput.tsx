@@ -1,29 +1,34 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 
 /**
- * Performs  search input operation.
- * @param {{ placeholder?: string; }} {
- *   placeholder = "Search...",
- * } - Description of {
- *   placeholder = "Search...",
- * }
- * @returns {React.JSX.Element} Description of return value
+ * Represents a single search result item.
+ */
+interface SearchResult {
+  id?: string;
+  name?: string;
+  title?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * A debounced search input component that queries `/api/search`.
+ * @param {{ placeholder?: string }} props - Optional placeholder text.
+ * @returns {React.JSX.Element} The rendered search input with results.
  */
 export default function SearchInput({
   placeholder = "Search...",
 }: {
   placeholder?: string;
-}) {
+}): React.JSX.Element {
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 350);
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const cacheRef = useRef<Map<string, any[]>>(new Map());
+  const cacheRef = useRef<Map<string, SearchResult[]>>(new Map());
 
   useEffect(() => {
     const query = (debouncedQ || "").trim();
@@ -48,19 +53,18 @@ export default function SearchInput({
       `${
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"
       }/search?q=${encodeURIComponent(query)}`,
-      {
-        signal: controller.signal,
-      },
+      { signal: controller.signal },
     )
       .then(async (res) => {
         if (!res.ok) throw new Error("Search failed");
         const body = await res.json();
-        const items = body?.data?.data || body?.data || body?.results || [];
+        const items: SearchResult[] =
+          body?.data?.data || body?.data || body?.results || [];
         cacheRef.current.set(query, items);
         setResults(items);
       })
-      .catch((err) => {
-        if ((err as any).name === "AbortError") return;
+      .catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
         console.error("Search error", err);
       })
       .finally(() => setLoading(false));
