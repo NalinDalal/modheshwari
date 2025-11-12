@@ -53,6 +53,8 @@ function getToken(): string | null {
   return localStorage.getItem("token");
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+
 /**
  * Resource Requests page component.
  * - Displays a form for creating resource requests.
@@ -78,13 +80,17 @@ export default function ResourceRequestsPage(): React.JSX.Element {
   async function fetchMe(): Promise<void> {
     try {
       const token = getToken();
-      const res = await fetch("http://localhost:3001/api/me", {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const res = await fetch(
+        `${API_BASE}/api/resource-requests` || "http://localhost:3001/api/me",
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
       if (!res.ok) return;
       const json = await res.json();
       setMe(json.data || null);
     } catch {
+      console.error("Failed to fetch details, please try again.");
       // ignore network errors silently
     }
   }
@@ -238,8 +244,11 @@ export default function ResourceRequestsPage(): React.JSX.Element {
                   </td>
                   <td style={{ padding: 8, borderBottom: "1px solid #f0f0f0" }}>
                     {r.approvals?.map((a) => (
-                      <div key={a.id}>
-                        {a.approverName}: {a.status}
+                      <div
+                        key={a.id}
+                        className="text-sm text-gray-600 dark:text-gray-300"
+                      >
+                        <strong> {a.approverName}</strong>: {a.status}
                       </div>
                     ))}
                   </td>

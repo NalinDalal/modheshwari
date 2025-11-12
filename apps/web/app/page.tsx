@@ -6,6 +6,9 @@ import { BackgroundRippleEffect } from "@repo/ui/background-ripple-effect";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
+export const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+
 export default function Home() {
   const router = useRouter();
   return (

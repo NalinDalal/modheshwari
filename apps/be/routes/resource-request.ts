@@ -68,25 +68,27 @@ export async function handleCreateResourceRequest(
     }
 
     // create approval rows and notify approvers
-    for (const a of approvers) {
-      await prisma.resourceRequestApproval.create({
-        data: {
-          requestId: rr.id,
-          approverId: a.id,
-          approverName: a.name,
-          role: a.role as any,
-          status: "PENDING",
-        },
-      });
+    await Promise.all(
+      approvers.map(async (a) => {
+        await prisma.resourceRequestApproval.create({
+          data: {
+            requestId: rr.id,
+            approverId: a.id,
+            approverName: a.name,
+            role: a.role as any,
+            status: "PENDING",
+          },
+        });
 
-      await prisma.notification.create({
-        data: {
-          userId: a.id,
-          type: "RESOURCE_REQUEST",
-          message: `New resource request from ${auth.payload.name ?? "a user"}: ${body.resource}`,
-        },
-      });
-    }
+        await prisma.notification.create({
+          data: {
+            userId: a.id,
+            type: "RESOURCE_REQUEST",
+            message: `New resource request from ${auth.payload.name ?? "a user"}: ${body.resource}`,
+          },
+        });
+      }),
+    );
 
     // return created request with approvals
     const created = await prisma.resourceRequest.findUnique({
