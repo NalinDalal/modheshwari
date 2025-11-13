@@ -74,6 +74,13 @@ model User {
   // User relations
   relationsFrom UserRelation[] @relation("FromUser")
   relationsTo   UserRelation[] @relation("ToUser")
+
+  // Reverse relations for StatusUpdateRequest
+  statusUpdateRequestsMade   StatusUpdateRequest[] @relation("StatusUpdateRequestedBy")
+  statusUpdateRequestsTarget StatusUpdateRequest[] @relation("TargetUser")
+
+  // Reverse relation for StatusUpdateApproval
+  statusUpdateApprovals StatusUpdateApproval[] @relation("UserStatusUpdateApprovals")
 }
 
 //
@@ -321,6 +328,9 @@ model Notification {
   resourceRequestId String?
   payment           Payment?         @relation(fields: [paymentId], references: [id])
   paymentId         String?
+
+  statusUpdateRequest   StatusUpdateRequest? @relation("StatusUpdateRequestNotifications", fields: [statusUpdateRequestId], references: [id])
+  statusUpdateRequestId String?
 }
 
 // Centralized enums for approval lifecycle and notifications
@@ -343,6 +353,7 @@ enum NotificationType {
   RESOURCE_REQUEST
   PAYMENT_RECEIPT
   GENERIC
+  STATUS_UPDATE_REQUEST
 }
 
 // -------------------- MEMBER INVITE --------------------
@@ -372,4 +383,46 @@ enum InviteStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+//
+// -------------------- STATUS UPDATE REQUEST --------------------
+// Handles marking a user as "deceased" (or similar lifecycle updates).
+//
+
+model StatusUpdateRequest {
+  id            String                 @id @default(uuid())
+  targetUser    User                   @relation("TargetUser", fields: [targetUserId], references: [id])
+  targetUserId  String // The user whose profile status is being changed
+  requestedBy   User                   @relation("StatusUpdateRequestedBy", fields: [requestedById], references: [id])
+  requestedById String // Who initiated the request (family member or family head)
+  reason        String? // Optional reason/note
+  finalStatus   String? // e.g. "deceased"
+  status        ApprovalStatus         @default(PENDING)
+  approvals     StatusUpdateApproval[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  reviewedAt    DateTime?
+  Notification  Notification[]         @relation("StatusUpdateRequestNotifications")
+}
+
+//
+// -------------------- STATUS UPDATE APPROVAL --------------------
+// Each approval row represents a role-based reviewer (e.g. GOTRA_HEAD, COMMUNITY_SUBHEAD).
+//
+
+model StatusUpdateApproval {
+  id           String              @id @default(uuid())
+  request      StatusUpdateRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId    String
+  approver     User                @relation("UserStatusUpdateApprovals", fields: [approverId], references: [id])
+  approverId   String
+  approverName String
+  role         Role // Only COMMUNITY_SUBHEAD or GOTRA_HEAD expected
+  status       ApprovalStatus      @default(PENDING)
+  remarks      String?
+  reviewedAt   DateTime?
+  createdAt    DateTime            @default(now())
+
+  @@unique([requestId, approverId])
 }

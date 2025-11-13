@@ -1,18 +1,24 @@
 //auth continuation — managing session identity after login.
 import { config } from "dotenv";
 import jwt from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
 import { join } from "path";
-
 
 // Load .env from monorepo root if not already loaded
 config({ path: join(process.cwd(), "../../.env") });
 
 // Check for secret *after* loading .env
 if (!process.env.JWT_SECRET) {
-  throw new Error("❌ Missing JWT_SECRET in environment variables");
+  throw new Error("Missing JWT_SECRET in environment variables");
 }
 
 const JWT_SECRET = process.env.JWT_SECRET!;
+
+export interface AuthPayload {
+  id: string;
+  email?: string;
+  role?: string;
+}
 
 /**
  * Signs a JWT token for the given payload.
@@ -30,8 +36,23 @@ export function signJWT(payload: any) {
  */
 export function verifyJWT(token: string) {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    return decoded as AuthPayload;
   } catch {
     return null;
   }
+}
+
+/**
+ * Verifies Authorization header and returns decoded user payload, or null.
+ */
+export async function verifyAuth(req: Request) {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const token = authHeader.split(" ")[1];
+
+  if (!token) return null;
+
+  const decoded = verifyJWT(token);
+  return decoded || null;
 }

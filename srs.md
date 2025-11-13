@@ -484,13 +484,10 @@ enum InviteStatus { PENDING APPROVED REJECTED }
 ```
 
 Notes:
+
 - `invitedUserId` may be null when the invite targets an email that has not yet registered. When that email later registers, application logic can link the user to the pending invite (claim flow).
 - `token` supports email-based claim links where the recipient can accept without immediate login, or for verifying ownership of the invited email.
 - Keep `inviteEmail` indexed and prevent duplicate pending invites per (family, email).
-```
-
-**Notes**
-
 - Keep `type` as well-known values (`event_approval`, `event_created`, `resource_status` etc.). Consider storing a `payload JSON` in future to allow structured notification actions.
 
 ---

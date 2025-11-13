@@ -135,6 +135,105 @@ Upon hover transition to vice versa
 
 Do caching for modheswari, don't do in memory
 
+13.11.2025
+say if someone died, then family members can sendout request to set the profile as deceased, then community head and subcommunity head have to collectively approve to make it go through
+hence do the database update
+
+then put up with a endpoint basically to do this deeds, admins can approve the request,
+normal user can only asks
+
+feat: finally cleared all logic for authentications, Implemented and fixed:
+
+### **1. JWT Authentication Utilities**
+
+**File:** `packages/utils/jwt.ts`
+Implemented and fixed:
+
+- **`signJWT(payload)`** → Signs JWT with `JWT_SECRET`, valid for 7 days.
+- **`verifyJWT(token)`** → Verifies token, returns decoded user or `null` on error.
+- **`verifyAuth(req)`** → Extracts Bearer token from request headers, verifies, and returns user identity or `null`.
+
+Fixed type errors:
+
+- Switched to `import type { JwtPayload }` because of `"verbatimModuleSyntax": true` in tsconfig.
+
+### **2. Response Helpers**
+
+**File:** `packages/utils/response.ts`
+Created a consistent response layer:
+
+- `createResponse()` — unified builder for API responses (with timestamp + status).
+- `success()` / `failure()` — shortcuts for 200/400 style responses.
+- (Discussed deprecating `jsonResponse` since `success()` covers that use case).
+
+### **3. Status Update Request Module**
+
+**File:** `apps/be/routes/status-update-request.ts`
+This is your new **“Report Deceased / Update Status”** workflow.
+
+#### ** Endpoints implemented:**
+
+1. **`handleCreateStatusUpdateRequest(req)`**
+   - Authenticates user (via `verifyAuth`).
+   - Reads `targetUserId`, `reason` from body.
+   - Creates a new record in `statusUpdateRequest` table.
+   - Auto-creates **approval records** for:
+     - `COMMUNITY_SUBHEAD`
+     - `GOTRA_HEAD`
+
+   - Uses `findApprover(role)` helper to locate active approvers.
+
+2. **`handleListStatusUpdateRequests(req)`**
+   - Lists requests visible to current user:
+     - Either they _requested_ it, or they’re an _approver_.
+
+   - Includes full related data (`targetUser`, `approvals`).
+
+3. **`handleReviewStatusUpdateRequest(req, id)`**
+   - Allows an approver to **approve/reject** a request.
+   - If _all approvers approve_, automatically:
+     - Marks the request as `APPROVED`
+     - Updates target user’s `profile.status` to `"deceased"`.
+
+Fixed issues:
+
+- Declared `body` types properly to remove TS errors (`unknown` → defined interface).
+- Imported `type { Role }` from `@prisma/client` for stricter Prisma typings.
+
+### **4. Monorepo Config Fixes**
+
+**File:** `tsconfig.json`
+Added correct path mapping:
+
+```json
+"paths": {
+  "@modheshwari/db": ["packages/db/index.ts"],
+  "@modheshwari/utils/*": ["packages/utils/*"]
+}
+```
+
+This made cross-package imports work cleanly.
+
+## **Frontend (apps/web)**
+
+### **5. Medical Page Auth Check**
+
+**File:** `app/medical/page.tsx`
+Implemented:
+
+- Automatic redirect to `/signin` if no token.
+- Calls `/me` API to validate token and fetch user.
+- Handles expired token gracefully.
+- Sets `user` state + renders dashboard if authenticated.
+
+Fixed:
+
+- Missing `useRouter` import.
+- Missing component closing brace (`Expected '}', got <eof>` build error).
+- Added basic `loading` and `no-user` UI.
+
+---
+
 ---
 
 Do stress testing of your APIs - done

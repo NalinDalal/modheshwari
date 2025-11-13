@@ -13,10 +13,8 @@ import { join } from "path";
 // (so utils like jwt.ts can access process.env.JWT_SECRET)
 config({ path: join(process.cwd(), "../../.env") });
 import { handleAdminLogin, handleAdminSignup } from "./routes/auth-admin";
-import { handleFHLogin } from "./routes/auth-family-head/login";
-import { handleFHSignup } from "./routes/auth-family-head/signup";
-import { handleMemberLogin } from "./routes/auth-family-mem/login";
-import { handleMemberSignup } from "./routes/auth-family-mem/signup";
+import { handleFHLogin, handleFHSignup } from "./routes/auth-fh";
+import { handleMemberLogin, handleMemberSignup } from "./routes/auth-fm";
 import {
   handleCreateFamily,
   handleAddMember,
@@ -24,7 +22,6 @@ import {
   handleReviewInvite,
 } from "./routes/families";
 import { handleGetMe } from "./routes/me";
-import { handleUpdateMemberStatus } from "./routes/family-member-status";
 import { handleGetFamilyMembers } from "./routes/family-members";
 import { handleCors, withCorsHeaders } from "./utils/cors";
 import { handleSearch } from "./routes/search";
@@ -38,9 +35,17 @@ import {
 import { handleCreateNotification } from "./routes/notifications";
 import { handleListAllRequests, handleUpdateEventStatus } from "./routes/admin";
 
+import {
+  handleCreateStatusUpdateRequest,
+  handleListStatusUpdateRequests,
+  handleReviewStatusUpdateRequest,
+} from "./routes/status-update-request";
+import { UserRole, RequestStatus, ProfileStatus } from "@modheshwari/utils";
+
 // --- Lightweight routing layer using Bun's native server ---
+const PORT = process.env.PORT ?? 3001;
 const server = serve({
-  port: 3001,
+  port: PORT,
   async fetch(req) {
     try {
       const url = new URL(req.url);
@@ -201,15 +206,6 @@ const server = serve({
       if (url.pathname === "/api/me" && method === "GET")
         return withCorsHeaders(await handleGetMe(req));
 
-      // --- Update member status (family head only) ---
-      if (
-        url.pathname.startsWith("/api/family/members") &&
-        url.pathname.endsWith("/status") &&
-        method === "PATCH"
-      ) {
-        return withCorsHeaders(await handleUpdateMemberStatus(req));
-      }
-
       // --- Get family members ---
       if (url.pathname.startsWith("/api/family/members") && method === "GET") {
         return withCorsHeaders(await handleGetFamilyMembers(req));
@@ -265,6 +261,24 @@ const server = serve({
       // ping all of users
       if (url.pathname === "/api/notifications" && method === "POST") {
         return withCorsHeaders(await handleCreateNotification(req));
+      }
+
+      // --- Status Update Requests ---
+      if (url.pathname === "/api/status-update-requests" && method === "POST") {
+        return withCorsHeaders(await handleCreateStatusUpdateRequest(req));
+      }
+
+      if (url.pathname === "/api/status-update-requests" && method === "GET") {
+        return withCorsHeaders(await handleListStatusUpdateRequests(req));
+      }
+
+      const mReviewStatusUpdate = match(
+        url.pathname,
+        "/api/status-update-requests/:id/review",
+      );
+      if (mReviewStatusUpdate && method === "POST") {
+        const id = (mReviewStatusUpdate as Record<string, string>).id!;
+        return withCorsHeaders(await handleReviewStatusUpdateRequest(req, id));
       }
 
       // --- Default 404 handler ---

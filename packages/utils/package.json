@@ -1,5 +1,5 @@
 {
-  "name": "utils",
+  "name": "@modheshwari/utils",
   "module": "index.ts",
   "type": "module",
   "private": true,
@@ -8,5 +8,8 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
   }
 }
