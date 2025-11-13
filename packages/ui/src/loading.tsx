@@ -2,7 +2,13 @@
 import { motion, Transition } from "framer-motion";
 import React from "react";
 
-const createTransition = (
+const createTransition = /**
+ * Executes create transition operation.
+ * @param {number} delayMultiplier - Description of delayMultiplier
+ * @param {number} duration - Description of duration
+ * @returns {import("/Users/nalindalal/modheshwari/node_modules/motion-dom/dist/index").Transition} Description of return value
+ */
+(
   delayMultiplier: number,
   duration = 1,
 ): Transition => ({
@@ -13,7 +19,11 @@ const createTransition = (
   ease: "easeInOut",
 });
 
-export const LoaderOne = () => {
+export const LoaderOne = /**
+ * Executes  loader one operation.
+ * @returns {any} Description of return value
+ */
+() => {
   return (
     <div className="flex items-center gap-2">
       {[0, 1, 2].map((i) => (
@@ -29,7 +39,11 @@ export const LoaderOne = () => {
   );
 };
 
-export const LoaderTwo = () => {
+export const LoaderTwo = /**
+ * Executes  loader two operation.
+ * @returns {any} Description of return value
+ */
+() => {
   const transition = (x: number): Transition => ({
     duration: 2,
     repeat: Infinity,
@@ -62,7 +76,11 @@ export const LoaderTwo = () => {
   );
 };
 
-export const LoaderThree = () => {
+export const LoaderThree = /**
+ * Executes  loader three operation.
+ * @returns {any} Description of return value
+ */
+() => {
   return (
     <motion.svg
       xmlns="http://www.w3.org/2000/svg"
@@ -92,7 +110,12 @@ export const LoaderThree = () => {
   );
 };
 
-export const LoaderFour = ({ text = "Loading..." }: { text?: string }) => {
+export const LoaderFour = /**
+ * Executes  loader four operation.
+ * @param {{ text?: string; }} { text = "Loading..." } - Description of { text = "Loading..." }
+ * @returns {any} Description of return value
+ */
+({ text = "Loading..." }: { text?: string }) => {
   return (
     <div className="relative font-bold text-black [perspective:1000px] dark:text-white">
       <motion.span
@@ -150,7 +173,12 @@ export const LoaderFour = ({ text = "Loading..." }: { text?: string }) => {
   );
 };
 
-export const LoaderFive = ({ text }: { text: string }) => {
+export const LoaderFive = /**
+ * Executes  loader five operation.
+ * @param {{ text: string; }} { text } - Description of { text }
+ * @returns {any} Description of return value
+ */
+({ text }: { text: string }) => {
   return (
     <div className="font-sans font-bold [--shadow-color:var(--color-neutral-500)] dark:[--shadow-color:var(--color-neutral-100)]">
       {text.split("").map((char, i) => (

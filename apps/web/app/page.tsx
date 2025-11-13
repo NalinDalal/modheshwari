@@ -9,6 +9,10 @@ import { motion } from "framer-motion";
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
 
+/**
+ * Performs  home operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function Home() {
   const router = useRouter();
   return (

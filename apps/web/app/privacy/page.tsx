@@ -1,3 +1,7 @@
+/**
+ * Performs  privacy operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function Privacy() {
   return (
     <div>

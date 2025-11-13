@@ -14,6 +14,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * Performs  contact page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: "",

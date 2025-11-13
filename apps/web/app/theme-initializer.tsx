@@ -2,6 +2,10 @@
 
 import { useEffect } from "react";
 
+/**
+ * Performs  theme initializer operation.
+ * @returns {any} Description of return value
+ */
 export default function ThemeInitializer() {
   useEffect(() => {
     const updateTheme = () => {

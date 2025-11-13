@@ -13,6 +13,10 @@ const roles = [
   { label: "Community Subhead", value: "communitysubhead" },
 ];
 
+/**
+ * Performs  signin page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function SigninPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");

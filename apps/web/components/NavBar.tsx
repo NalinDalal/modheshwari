@@ -1,6 +1,10 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+/**
+ * Performs  nav bar operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function NavBar() {
   const router = useRouter();
 

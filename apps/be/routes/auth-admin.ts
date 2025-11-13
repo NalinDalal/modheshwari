@@ -16,6 +16,11 @@ const ALLOWED_ROLES = [
 ] as const;
 type AdminRole = (typeof ALLOWED_ROLES)[number];
 
+/**
+ * Performs normalize role operation.
+ * @param {string} raw - Description of raw
+ * @returns {"COMMUNITY_HEAD" | "COMMUNITY_SUBHEAD" | "GOTRA_HEAD"} Description of return value
+ */
 function normalizeRole(raw?: string): AdminRole | undefined {
   if (!raw) return undefined;
   const up = raw.toUpperCase();
