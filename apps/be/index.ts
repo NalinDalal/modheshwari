@@ -40,6 +40,11 @@ import {
   handleListStatusUpdateRequests,
   handleReviewStatusUpdateRequest,
 } from "./routes/status-update-request";
+
+import { handleUpdateMedical } from "./routes/medical";
+
+import { handleFamilyTransfer } from "./routes/family-transfer";
+
 import { UserRole, RequestStatus, ProfileStatus } from "@modheshwari/utils";
 
 // --- Lightweight routing layer using Bun's native server ---
@@ -263,7 +268,7 @@ const server = serve({
         return withCorsHeaders(await handleCreateNotification(req));
       }
 
-      // --- Status Update Requests ---
+      // --- Status Update Requests alive or dead ---
       if (url.pathname === "/api/status-update-requests" && method === "POST") {
         return withCorsHeaders(await handleCreateStatusUpdateRequest(req));
       }
@@ -279,6 +284,18 @@ const server = serve({
       if (mReviewStatusUpdate && method === "POST") {
         const id = (mReviewStatusUpdate as Record<string, string>).id!;
         return withCorsHeaders(await handleReviewStatusUpdateRequest(req, id));
+      }
+
+      // --- Medical History ---
+
+      if (url.pathname == "/api/profile/medical" && method === "PATCH") {
+        //updates medical info
+        return withCorsHeaders(await handleUpdateMedical(req));
+      }
+
+      if (url.pathname == "/api/family/transfer" && method === "POST") {
+        //handles marriage/family move
+        return withCorsHeaders(await handleFamilyTransfer(req));
       }
 
       // --- Default 404 handler ---

@@ -234,6 +234,23 @@ Fixed:
 
 ---
 
+14.11.2025
+
+status report, like routing for alive-deceased and family transfers taken care
+
+1. Alive / Deceased Status Updates
+
+- **GET** `/api/status-update-requests` → list all requests (user-created or assigned as approver)
+- **POST** `/api/status-update-requests` → create a new request
+- **POST** `/api/status-update-requests/:id/review` → approve/reject a request
+
+2. Family Transfers / Marriages
+
+- **POST** `/api/family/transfer` → transfer user to new family
+- Previous memberships are **not ended**; new `FamilyMember` row created
+
+3. routes to handle with medical status updates
+
 ---
 
 Do stress testing of your APIs - done

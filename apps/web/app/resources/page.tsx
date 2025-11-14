@@ -80,12 +80,13 @@ export default function ResourceRequestsPage(): React.JSX.Element {
   async function fetchMe(): Promise<void> {
     try {
       const token = getToken();
-      const res = await fetch(
-        `${API_BASE}/api/resource-requests` || "http://localhost:3001/api/me",
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        },
-      );
+      const url = API_BASE
+        ? `${API_BASE}/api/resource-requests`
+        : "http://localhost:3001/api/resource-requests";
+
+      const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (!res.ok) return;
       const json = await res.json();
       setMe(json.data || null);
