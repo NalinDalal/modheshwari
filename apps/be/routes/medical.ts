@@ -9,6 +9,11 @@ type MedicalBody = {
 };
 
 // ---------------- UPDATE MEDICAL INFO ----------------
+/**
+ * Performs handle update medical operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleUpdateMedical(req: Request) {
   const user = await verifyAuth(req);
   if (!user) return failure("Unauthorized", null, 401);
