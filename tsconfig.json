@@ -6,5 +6,6 @@
       "@modheshwari/utils/*": ["packages/utils/index.ts"],
     }
   },
-"include": ["packages", "apps"]
+
+    "include": ["packages", "apps"]
 }
