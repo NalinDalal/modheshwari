@@ -253,5 +253,10 @@ status report, like routing for alive-deceased and family transfers taken care
 
 ---
 
+15.11.2025
+feat(search): add keyboard shortcut, caching, and rate limiting; refactor endpoint and UI
+
+---
+
 Do stress testing of your APIs - done
 [Benchmark them](./stress-testing.md)
