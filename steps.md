@@ -258,5 +258,12 @@ feat(search): add keyboard shortcut, caching, and rate limiting; refactor endpoi
 
 ---
 
+16.11.2025
+feat: rate limiting added
+
+application is done
+
+---
+
 Do stress testing of your APIs - done
 [Benchmark them](./stress-testing.md)
