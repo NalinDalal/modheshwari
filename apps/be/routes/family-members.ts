@@ -30,10 +30,9 @@ export async function handleGetFamilyMembers(req: Request): Promise<Response> {
     const userFilter = includeAll ? {} : { status: true };
 
     const members = await prisma.familyMember.findMany({
-      where: { familyId: family.id },
+      where: { familyId: family.id, user: userFilter },
       include: {
         user: {
-          where: userFilter,
           select: {
             id: true,
             name: true,

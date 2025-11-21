@@ -72,6 +72,26 @@ export async function handleGetMe(req: Request): Promise<Response> {
 
     console.log(`✅ /me fetched for userId=${user.id}`);
 
+    if (
+      user.role === "COMMUNITY_HEAD" ||
+      user.role === "COMMUNITY_SUBHEAD" ||
+      user.role === "GOTRA_HEAD"
+    ) {
+      formatted.profile = await prisma.profile.findUnique({
+        where: { userId: user.id },
+        select: {
+          userId: true,
+          gotra: true,
+          user: {
+            select: { name: true },
+          },
+          role: true,
+        },
+      });
+
+      formatted.profile = profile;
+      formatter.usersCount = await prisma.user.count();
+    }
     // --- Step 4: Send success response ---
     return success("Fetched profile", formatted);
   } catch (err) {

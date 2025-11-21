@@ -265,5 +265,13 @@ application is done
 
 ---
 
+21.11.2025
+took care of not-authenticated endpoints
+then took care of family endpoint to show the ui and handle it
+
+added navbar
+
+---
+
 Do stress testing of your APIs - done
 [Benchmark them](./stress-testing.md)

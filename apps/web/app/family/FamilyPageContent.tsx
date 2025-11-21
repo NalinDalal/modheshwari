@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@repo/ui/button";
 import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/not-authenticated";
+import { DeleteButton } from "@repo/ui/delete-button";
+import { MemberCard } from "@repo/ui/member-card";
+//import { Button } from "@repo/ui/button";
 
 /**
  * Type for a single family member.
@@ -36,9 +39,21 @@ interface Member {
  * - Only non-sensitive family details are cached.
  * - Auth token is never stored locally.
  */
-export default function FamilyPage() {
+export default function FamilyPageContent() {
+  const router = useRouter();
   const params = useSearchParams();
-  const token = params.get("token");
+
+  const [hydrated, setHydrated] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    setHydrated(true);
+    setToken(localStorage.getItem("token")); // safe, client-only
+  }, []);
+
+  //const token =
+  //typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  // params.get("token");
 
   const [members, setMembers] = useState<Member[]>([]);
   const [familyName, setFamilyName] = useState("");
@@ -59,6 +74,10 @@ export default function FamilyPage() {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
+        if (res.status === 401) {
+          router.push(`/login?next=/family`);
+          return;
+        }
         const data = await res.json();
         setFamilyName(data.data.family.name);
         setMembers(data.data.members);
@@ -99,50 +118,40 @@ export default function FamilyPage() {
   };
 
   useEffect(() => {
-    fetchMembers(showAll);
-  }, [fetchMembers, showAll]);
+    if (token) fetchMembers(showAll);
+  }, [token, showAll, fetchMembers]);
 
+  // no token
   if (!token) return <NotAuthenticated />;
+
+  // Before hydration, render nothing (avoids SSR mismatch)
+  if (!hydrated) return null;
+
+  // loading
   if (loading) return <LoaderOne />;
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-4">{familyName}</h1>
+    <div className="min-h-screen px-6 py-10 bg-gradient-to-b from-black via-[#0b0f17] to-black text-white">
+      <h1 className="text-4xl font-bold mb-8 drop-shadow-[0_0_25px_rgba(0,150,255,0.5)]">
+        {familyName}
+      </h1>
 
-      <div className="flex justify-between mb-4">
-        <h2 className="text-xl font-semibold">Family Members</h2>
-        <label className="text-sm flex items-center gap-2">
+      <div className="flex justify-between mb-6">
+        <h2 className="text-2xl font-semibold">Family Members</h2>
+        <label className="text-sm flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={showAll}
             onChange={() => setShowAll(!showAll)}
+            className="accent-blue-500"
           />
-          Show all (incl. dead)
+          <span className="text-gray-300">Show all (incl. dead)</span>
         </label>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-5">
         {members.map((m) => (
-          <div
-            key={m.id}
-            className={`border p-3 rounded-lg transition-colors ${
-              m.user.status ? "bg-white" : "bg-gray-100 opacity-70"
-            }`}
-          >
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="font-medium text-lg">{m.user.name}</div>
-                <div className="text-sm text-gray-600">{m.user.email}</div>
-              </div>
-              <Button
-                variant={m.user.status ? "danger" : "primary"}
-                onClick={() => toggleStatus(m.user.id, m.user.status)}
-                className="text-sm"
-              >
-                Mark {m.user.status ? "Dead" : "Alive"}
-              </Button>
-            </div>
-          </div>
+          <MemberCard key={m.id} member={m} onToggle={toggleStatus} />
         ))}
       </div>
     </div>

@@ -1,3 +1,4 @@
+"use client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -17,7 +18,11 @@ export default function NavBar() {
         <Link href="/">Home</Link>
         <Link href="/about">About</Link>
         <Link href="/contact">Contact</Link>
-        <button onClick={() => router.push("/me")}>Me</button>
+
+        <Link href="/me">Profile</Link>
+        <Link href="/family">Family</Link>
+        <Link href="/resources">Resources</Link>
+        <Link href="/notifications">Notifications</Link>
       </div>
     </nav>
   );
