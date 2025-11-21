@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import ThemeInitializer from "./theme-initializer";
 import NavBar from "../components/NavBar";
 
-const geistSans = localFont({
-  src: "./fonts/geistvf.woff",
-  variable: "--font-geist-sans",
-});
-
-const geistMono = localFont({
-  src: "./fonts/geistmonovf.woff",
-  variable: "--font-geist-mono",
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -20,19 +15,18 @@ export const metadata: Metadata = {
 };
 
 /**
- * auto-generated documentation for rootlayout
- * @function rootlayout
- * @param todo: describe parameters
- * @returns todo: describe return value
+ * Root layout component
+ * @function RootLayout
+ * @param children - React child components
+ * @returns Root layout with theme and navbar
  */
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={inter.variable}>
       <body
         className="
           min-h-screen 
@@ -41,13 +35,12 @@ export default function RootLayout({
           dark:from-neutral-950 dark:to-neutral-900 
           text-neutral-900 dark:text-neutral-50 
           transition-colors duration-300
+          font-sans
         "
       >
         <ThemeInitializer />
-
         {/* Global Navbar */}
         <NavBar />
-
         <main className="max-w-5xl mx-auto px-6 py-8 pt-20">{children}</main>
       </body>
     </html>
