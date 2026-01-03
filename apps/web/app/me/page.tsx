@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
-import { DeleteButton } from "@repo/ui/delete-button";
-import { Button } from "@repo/ui/button";
 
 interface User {
   id: string;
@@ -18,13 +16,8 @@ interface User {
       name: string;
     };
   }[];
-  familyName?: string;
 }
 
-/**
- * Performs  me page operation.
- * @returns {React.JSX.Element} Description of return value
- */
 export default function MePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -72,8 +65,6 @@ export default function MePage() {
           <div className="mb-6 scale-110">
             <LoaderFour text="Loading your profile..." />
           </div>
-
-          {/* subtle pulsing orb background */}
           <div className="absolute -z-10 h-64 w-64 animate-pulse rounded-full bg-gradient-to-r from-amber-300/30 via-rose-300/30 to-purple-400/30 blur-3xl dark:from-amber-500/20 dark:via-rose-500/20 dark:to-purple-500/20" />
         </div>
       </div>
@@ -88,10 +79,12 @@ export default function MePage() {
     .join("")
     .toUpperCase();
 
-  const familyName = user.families?.[0]?.family?.name || user.familyName || "—";
+  const familyName = user.families?.[0]?.family?.name || "—";
 
   return (
-    <main className="max-w-3xl mx-auto mt-16 px-4">
+    // ✅ Removed mt-16 since layout already has pt-20 (80px padding)
+    // ✅ Added pb-12 for bottom spacing
+    <main className="max-w-3xl mx-auto px-4 pb-12">
       <section className="bg-white/80 dark:bg-neutral-900/80 shadow-xl backdrop-blur-sm rounded-2xl p-8 flex flex-col md:flex-row gap-6 items-center border border-amber-100/40 dark:border-neutral-700/40 transition-all duration-300 hover:shadow-2xl">
         <div className="flex-shrink-0 flex items-center justify-center h-28 w-28 rounded-full bg-gradient-to-br from-amber-500 to-rose-600 text-white text-2xl font-bold shadow-md">
           {initials || "U"}
@@ -135,18 +128,22 @@ export default function MePage() {
           </div>
 
           <div className="mt-5 flex gap-3">
-            <Button onClick={() => router.push("/me/edit")} variant="primary">
+            <button
+              onClick={() => router.push("/me/edit")}
+              className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-rose-600 text-white font-medium rounded-lg hover:from-amber-600 hover:to-rose-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
               Edit Profile
-            </Button>
+            </button>
 
-            <DeleteButton
+            <button
               onClick={() => {
                 localStorage.removeItem("token");
                 router.push("/signin");
               }}
+              className="px-6 py-2.5 bg-white dark:bg-neutral-800 text-gray-700 dark:text-gray-200 font-medium rounded-lg border-2 border-gray-200 dark:border-neutral-700 hover:border-gray-300 dark:hover:border-neutral-600 hover:bg-gray-50 dark:hover:bg-neutral-700 transition-all duration-200 shadow-sm hover:shadow transform hover:-translate-y-0.5"
             >
               Sign out
-            </DeleteButton>
+            </button>
           </div>
         </div>
       </section>
@@ -162,9 +159,6 @@ export default function MePage() {
           </p>
         </div>
       </section>
-
-      {/* --- Section to list shit from the user --- */}
-      <section className="mt-10 flex flex-col items-center justify-center gap-y-4 md:flex-row md:gap-x-4"></section>
     </main>
   );
 }

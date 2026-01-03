@@ -54,7 +54,7 @@ export async function handleGetFamilyMembers(req: Request): Promise<Response> {
       { family, members: filteredMembers },
     );
   } catch (err) {
-    console.error("❌ handleGetFamilyMembers error:", err);
+    console.error(" handleGetFamilyMembers error:", err);
     return failure("Internal Server Error", "Unexpected Error", 500);
   }
 }

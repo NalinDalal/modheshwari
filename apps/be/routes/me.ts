@@ -35,10 +35,14 @@ export async function handleGetMe(req: Request): Promise<Response> {
         name: true,
         email: true,
         role: true,
+        status: true,
         createdAt: true,
         updatedAt: true,
         families: {
           select: {
+            id: true,
+            familyId: true,
+            joinedAt: true,
             family: {
               select: {
                 id: true,
@@ -60,24 +64,30 @@ export async function handleGetMe(req: Request): Promise<Response> {
       name: user.name,
       email: user.email,
       role: user.role,
-      families: user.families.map((f: any) => ({
-        id: f.family.id,
-        name: f.family.name,
-        uniqueId: f.family.uniqueId,
-        role: f.role,
+      status: user.status,
+      families: user.families.map((fm: any) => ({
+        id: fm.id,
+        familyId: fm.familyId,
+        role: fm.role,
+        joinedAt: fm.joinedAt,
+        family: {
+          id: fm.family.id,
+          name: fm.family.name,
+          uniqueId: fm.family.uniqueId,
+        },
       })),
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
 
-    console.log(`✅ /me fetched for userId=${user.id}`);
+    console.log(` /me fetched for userId=${user.id}`);
 
     if (
       user.role === "COMMUNITY_HEAD" ||
       user.role === "COMMUNITY_SUBHEAD" ||
       user.role === "GOTRA_HEAD"
     ) {
-      formatted.profile = await prisma.profile.findUnique({
+      const profile = await prisma.profile.findUnique({
         where: { userId: user.id },
         select: {
           userId: true,
@@ -88,14 +98,15 @@ export async function handleGetMe(req: Request): Promise<Response> {
           role: true,
         },
       });
-
-      formatted.profile = profile;
-      formatter.usersCount = await prisma.user.count();
+      if (profile) {
+        formatted.profile = profile;
+      }
+      formatted.usersCount = await prisma.user.count();
     }
     // --- Step 4: Send success response ---
     return success("Fetched profile", formatted);
   } catch (err) {
-    console.error("❌ GetMe Error:", err);
+    console.error(" GetMe Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

@@ -7,7 +7,6 @@ import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/not-authenticated";
 import { DeleteButton } from "@repo/ui/delete-button";
 import { MemberCard } from "@repo/ui/member-card";
-//import { Button } from "@repo/ui/button";
 
 /**
  * Type for a single family member.
@@ -39,22 +38,13 @@ interface Member {
  * - Only non-sensitive family details are cached.
  * - Auth token is never stored locally.
  */
+
 export default function FamilyPageContent() {
   const router = useRouter();
   const params = useSearchParams();
 
   const [hydrated, setHydrated] = useState(false);
   const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    setHydrated(true);
-    setToken(localStorage.getItem("token")); // safe, client-only
-  }, []);
-
-  //const token =
-  //typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  // params.get("token");
-
   const [members, setMembers] = useState<Member[]>([]);
   const [familyName, setFamilyName] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -63,9 +53,18 @@ export default function FamilyPageContent() {
   const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
 
+  // Hydrate token from localStorage on client
+  useEffect(() => {
+    setHydrated(true);
+    const savedToken = localStorage.getItem("token");
+    setToken(savedToken);
+  }, []);
+
+  // Fetch members from API
   const fetchMembers = useCallback(
     async (all = false) => {
       if (!token) return;
+
       setLoading(true);
       try {
         const res = await fetch(
@@ -74,10 +73,14 @@ export default function FamilyPageContent() {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
+
         if (res.status === 401) {
           router.push(`/login?next=/family`);
           return;
         }
+
+        if (!res.ok) throw new Error("Failed to fetch members");
+
         const data = await res.json();
         setFamilyName(data.data.family.name);
         setMembers(data.data.members);
@@ -87,11 +90,13 @@ export default function FamilyPageContent() {
         setLoading(false);
       }
     },
-    [token, API_BASE],
+    [token, API_BASE, router],
   );
 
+  // Toggle member status
   const toggleStatus = async (userId: string, currentStatus: boolean) => {
     if (!token) return;
+
     try {
       const res = await fetch(`${API_BASE}/users/${userId}/status`, {
         method: "PATCH",
@@ -117,23 +122,26 @@ export default function FamilyPageContent() {
     }
   };
 
+  // Fetch members whenever token or showAll changes
   useEffect(() => {
     if (token) fetchMembers(showAll);
   }, [token, showAll, fetchMembers]);
 
-  // no token
-  if (!token) return <NotAuthenticated />;
+  // Render logic
 
-  // Before hydration, render nothing (avoids SSR mismatch)
+  // Not authenticated
+  if (hydrated && !token) return <NotAuthenticated />;
+
+  // Avoid SSR mismatch
   if (!hydrated) return null;
 
-  // loading
+  // Loading state
   if (loading) return <LoaderOne />;
 
   return (
     <div className="min-h-screen px-6 py-10 bg-gradient-to-b from-black via-[#0b0f17] to-black text-white">
       <h1 className="text-4xl font-bold mb-8 drop-shadow-[0_0_25px_rgba(0,150,255,0.5)]">
-        {familyName}
+        {familyName || "Family"}
       </h1>
 
       <div className="flex justify-between mb-6">
@@ -142,7 +150,7 @@ export default function FamilyPageContent() {
           <input
             type="checkbox"
             checked={showAll}
-            onChange={() => setShowAll(!showAll)}
+            onChange={() => setShowAll((prev) => !prev)}
             className="accent-blue-500"
           />
           <span className="text-gray-300">Show all (incl. dead)</span>
@@ -150,9 +158,13 @@ export default function FamilyPageContent() {
       </div>
 
       <div className="space-y-5">
-        {members.map((m) => (
-          <MemberCard key={m.id} member={m} onToggle={toggleStatus} />
-        ))}
+        {members.length > 0 ? (
+          members.map((m) => (
+            <MemberCard key={m.id} member={m} onToggle={toggleStatus} />
+          ))
+        ) : (
+          <p className="text-gray-400">No members to display.</p>
+        )}
       </div>
     </div>
   );
