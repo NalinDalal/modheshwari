@@ -139,31 +139,61 @@ export default function FamilyPageContent() {
   if (loading) return <LoaderOne />;
 
   return (
-    <div className="min-h-screen px-6 py-10 bg-gradient-to-b from-black via-[#0b0f17] to-black text-white">
-      <h1 className="text-4xl font-bold mb-8 drop-shadow-[0_0_25px_rgba(0,150,255,0.5)]">
-        {familyName || "Family"}
-      </h1>
-
-      <div className="flex justify-between mb-6">
-        <h2 className="text-2xl font-semibold">Family Members</h2>
-        <label className="text-sm flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showAll}
-            onChange={() => setShowAll((prev) => !prev)}
-            className="accent-blue-500"
-          />
-          <span className="text-gray-300">Show all (incl. dead)</span>
-        </label>
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white px-6 py-10">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">
+          {familyName || "Family"}
+        </h1>
+        <p className="text-sm text-gray-400 mt-1">
+          View and manage members linked to your family
+        </p>
       </div>
 
-      <div className="space-y-5">
-        {members.length > 0 ? (
-          members.map((m) => (
-            <MemberCard key={m.id} member={m} onToggle={toggleStatus} />
-          ))
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <h2 className="text-lg font-semibold text-gray-200">
+          Members
+          <span className="ml-2 text-xs text-gray-500">({members.length})</span>
+        </h2>
+
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-500">Filter:</span>
+          <button
+            onClick={() => setShowAll((prev) => !prev)}
+            className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all
+            ${
+              showAll
+                ? "bg-blue-600 text-white shadow-[0_0_12px_rgba(59,130,246,0.5)]"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            }`}
+          >
+            {showAll ? "All members" : "Alive only"}
+          </button>
+        </div>
+      </div>
+
+      {/* Members Container */}
+      <div className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl">
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <LoaderOne />
+          </div>
+        ) : members.length > 0 ? (
+          <div className="divide-y divide-white/5">
+            {members.map((m) => (
+              <div key={m.id} className="p-4 hover:bg-white/5 transition">
+                <MemberCard member={m} onToggle={toggleStatus} />
+              </div>
+            ))}
+          </div>
         ) : (
-          <p className="text-gray-400">No members to display.</p>
+          <div className="text-center py-12">
+            <p className="text-sm text-gray-500">No family members to show</p>
+            <p className="text-xs text-gray-600 mt-1">
+              Try changing the filter or adding new members
+            </p>
+          </div>
         )}
       </div>
     </div>

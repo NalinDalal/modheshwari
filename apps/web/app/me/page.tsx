@@ -82,57 +82,49 @@ export default function MePage() {
   const familyName = user.families?.[0]?.family?.name || "—";
 
   return (
-    // ✅ Removed mt-16 since layout already has pt-20 (80px padding)
-    // ✅ Added pb-12 for bottom spacing
     <main className="max-w-3xl mx-auto px-4 pb-12">
-      <section className="bg-white/80 dark:bg-neutral-900/80 shadow-xl backdrop-blur-sm rounded-2xl p-8 flex flex-col md:flex-row gap-6 items-center border border-amber-100/40 dark:border-neutral-700/40 transition-all duration-300 hover:shadow-2xl">
-        <div className="flex-shrink-0 flex items-center justify-center h-28 w-28 rounded-full bg-gradient-to-br from-amber-500 to-rose-600 text-white text-2xl font-bold shadow-md">
+      {/* Profile Card */}
+      <section className="bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/40 rounded-2xl p-8 flex flex-col md:flex-row gap-6 items-center transition-shadow hover:shadow-lg">
+        {/* Avatar */}
+        <div className="flex-shrink-0 flex items-center justify-center h-24 w-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xl font-semibold shadow">
           {initials || "U"}
         </div>
 
+        {/* Info */}
         <div className="flex-1 w-full">
-          <h1 className="text-3xl font-semibold text-amber-900 dark:text-white">
+          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white">
             {user.name}
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
             {user.email}
           </p>
 
+          {/* Meta */}
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-            <div className="p-3 bg-gradient-to-br from-white to-amber-50/40 dark:from-neutral-800 dark:to-neutral-900 rounded-lg border border-amber-100/40 dark:border-neutral-700/40">
-              <div className="text-xs text-gray-400 dark:text-gray-500">
-                Role
+            {[
+              { label: "Role", value: user.role },
+              { label: "Status", value: user.status ? "Active" : "Inactive" },
+              { label: "Family", value: familyName },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/40 dark:border-neutral-700/40"
+              >
+                <div className="text-xs text-neutral-400">{item.label}</div>
+                <div className="font-medium text-neutral-800 dark:text-neutral-200">
+                  {item.value}
+                </div>
               </div>
-              <div className="font-medium text-gray-800 dark:text-gray-200">
-                {user.role}
-              </div>
-            </div>
-
-            <div className="p-3 bg-gradient-to-br from-white to-amber-50/40 dark:from-neutral-800 dark:to-neutral-900 rounded-lg border border-amber-100/40 dark:border-neutral-700/40">
-              <div className="text-xs text-gray-400 dark:text-gray-500">
-                Status
-              </div>
-              <div className="font-medium text-gray-800 dark:text-gray-200">
-                {user.status ? "Active" : "Inactive"}
-              </div>
-            </div>
-
-            <div className="p-3 bg-gradient-to-br from-white to-amber-50/40 dark:from-neutral-800 dark:to-neutral-900 rounded-lg border border-amber-100/40 dark:border-neutral-700/40">
-              <div className="text-xs text-gray-400 dark:text-gray-500">
-                Family
-              </div>
-              <div className="font-medium text-gray-800 dark:text-gray-200">
-                {familyName}
-              </div>
-            </div>
+            ))}
           </div>
 
-          <div className="mt-5 flex gap-3">
+          {/* Actions */}
+          <div className="mt-6 flex gap-3">
             <button
               onClick={() => router.push("/me/edit")}
-              className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-rose-600 text-white font-medium rounded-lg hover:from-amber-600 hover:to-rose-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition shadow-sm"
             >
-              Edit Profile
+              Edit profile
             </button>
 
             <button
@@ -140,7 +132,7 @@ export default function MePage() {
                 localStorage.removeItem("token");
                 router.push("/signin");
               }}
-              className="px-6 py-2.5 bg-white dark:bg-neutral-800 text-gray-700 dark:text-gray-200 font-medium rounded-lg border-2 border-gray-200 dark:border-neutral-700 hover:border-gray-300 dark:hover:border-neutral-600 hover:bg-gray-50 dark:hover:bg-neutral-700 transition-all duration-200 shadow-sm hover:shadow transform hover:-translate-y-0.5"
+              className="px-5 py-2.5 bg-transparent border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 text-sm font-medium rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
             >
               Sign out
             </button>
@@ -148,14 +140,15 @@ export default function MePage() {
         </div>
       </section>
 
-      <section className="mt-8">
-        <div className="bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm shadow-md rounded-2xl p-6 border border-amber-100/40 dark:border-neutral-700/40">
-          <h2 className="text-lg font-semibold mb-2 text-amber-900 dark:text-white">
+      {/* About */}
+      <section className="mt-6">
+        <div className="bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/40 rounded-2xl p-6">
+          <h2 className="text-base font-semibold text-neutral-900 dark:text-white mb-1">
             About
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            Private profile information and family details are shown here. You
-            can update these by editing your profile.
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+            This page shows your personal and family-related information. You
+            can update these details anytime from the edit profile section.
           </p>
         </div>
       </section>

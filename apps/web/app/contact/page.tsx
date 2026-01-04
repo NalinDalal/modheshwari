@@ -42,11 +42,16 @@ export default function ContactPage() {
     [],
   );
 
-  const isFormValid = useMemo(() => {
-    return (
-      formData.name && formData.email && formData.subject && formData.message
-    );
-  }, [formData]);
+  const isFormValid = useMemo(
+    () =>
+      !!(
+        formData.name &&
+        formData.email &&
+        formData.subject &&
+        formData.message
+      ),
+    [formData],
+  );
 
   const handleSubmit = async () => {
     if (!isFormValid || isSubmitting) return;
@@ -62,126 +67,145 @@ export default function ContactPage() {
       value: "question" as const,
       label: "Question",
       icon: HelpCircle,
-      gradient: "from-blue-500 to-cyan-500",
+      accent: "from-blue-500 to-cyan-500",
     },
     {
       value: "bug" as const,
       label: "Bug",
       icon: Bug,
-      gradient: "from-red-500 to-rose-500",
+      accent: "from-red-500 to-rose-500",
     },
     {
       value: "feature" as const,
       label: "Feature",
       icon: Lightbulb,
-      gradient: "from-purple-500 to-pink-500",
+      accent: "from-purple-500 to-pink-500",
     },
     {
       value: "feedback" as const,
       label: "Feedback",
       icon: MessageSquare,
-      gradient: "from-amber-500 to-orange-500",
+      accent: "from-amber-500 to-orange-500",
     },
   ];
 
   return (
-    <section className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="text-center mb-12 space-y-4">
-        <span className="inline-block px-4 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-sm font-medium text-amber-700 dark:text-amber-300">
-          We&apos;re here to help
-        </span>
+    <div className="min-h-screen px-6 py-16 bg-gradient-to-b from-black via-[#0b0f17] to-black text-white">
+      <section className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-14 space-y-4">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300">
+            We’re listening
+          </span>
 
-        <h1 className="text-5xl font-bold text-neutral-900 dark:text-white">
-          Contact Us
-        </h1>
+          <h1 className="text-5xl font-extrabold tracking-tight">
+            Contact <span className="text-blue-400">Support</span>
+          </h1>
 
-        <p className="text-neutral-600 dark:text-neutral-400">
-          Questions, feedback, bugs, or ideas — drop a message.
-        </p>
-      </div>
+          <p className="text-gray-400 max-w-xl mx-auto">
+            Questions, bugs, feature requests, or feedback — send it straight to
+            us.
+          </p>
+        </div>
 
-      {/* Type Selector */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-        {contactTypes.map((t) => {
-          const Icon = t.icon;
-          const active = formData.type === t.value;
+        {/* Type Selector */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          {contactTypes.map((t) => {
+            const Icon = t.icon;
+            const active = formData.type === t.value;
 
-          return (
-            <button
-              key={t.value}
-              onClick={() => setFormData((p) => ({ ...p, type: t.value }))}
-              className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition-all ${
-                active
-                  ? `bg-gradient-to-r ${t.gradient} text-white border-transparent`
-                  : "bg-white dark:bg-neutral-900 hover:border-neutral-400"
-              }`}
-            >
-              <Icon className="w-6 h-6" />
-              <span className="text-sm font-semibold">{t.label}</span>
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                key={t.value}
+                onClick={() => setFormData((p) => ({ ...p, type: t.value }))}
+                className={`relative overflow-hidden rounded-2xl p-4 border transition-all
+                ${
+                  active
+                    ? `bg-gradient-to-r ${t.accent} text-white border-transparent shadow-lg`
+                    : "bg-white/5 border-white/10 hover:border-white/30 text-gray-300"
+                }`}
+              >
+                <div className="flex flex-col items-center gap-2 relative z-10">
+                  <Icon className="w-6 h-6" />
+                  <span className="text-sm font-semibold">{t.label}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Form Card */}
-      <div className="bg-white dark:bg-neutral-900 rounded-3xl p-8 shadow-sm border border-neutral-200 dark:border-neutral-800">
-        {submitted ? (
-          <div className="py-14 text-center">
-            <Send className="w-10 h-10 mx-auto text-green-500" />
-            <h2 className="mt-4 text-2xl font-bold">Message Sent</h2>
-            <p className="text-neutral-500 mt-2">
-              We&apos;ll get back to you shortly.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Top Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <input
-                name="name"
-                placeholder="Your name"
-                value={formData.name}
-                onChange={handleChange}
-                className="input"
-              />
-              <input
-                name="email"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-                className="input"
-              />
-              <input
-                name="subject"
-                placeholder="Subject"
-                value={formData.subject}
-                onChange={handleChange}
-                className="input"
-              />
+        {/* Form Card */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-xl">
+          {submitted ? (
+            <div className="py-20 text-center">
+              <div className="w-14 h-14 mx-auto rounded-full bg-green-500/10 flex items-center justify-center">
+                <Send className="w-7 h-7 text-green-400" />
+              </div>
+              <h2 className="mt-6 text-2xl font-bold">
+                Message sent successfully
+              </h2>
+              <p className="text-gray-400 mt-2">
+                Our team will get back to you shortly.
+              </p>
             </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Inputs */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input
+                  name="name"
+                  placeholder="Your name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+                <Input
+                  name="email"
+                  placeholder="Email address"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+                <Input
+                  name="subject"
+                  placeholder="Subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                />
+              </div>
 
-            {/* Message */}
-            <textarea
-              name="message"
-              rows={6}
-              placeholder="Write your message..."
-              value={formData.message}
-              onChange={handleChange}
-              className="input resize-none"
-            />
+              <textarea
+                name="message"
+                rows={6}
+                placeholder="Write your message..."
+                value={formData.message}
+                onChange={handleChange}
+                className="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              />
 
-            {/* CTA */}
-            <button
-              onClick={handleSubmit}
-              disabled={!isFormValid || isSubmitting}
-              className="w-full py-4 rounded-full bg-gradient-to-r from-amber-600 to-rose-600 text-white font-semibold transition disabled:opacity-50"
-            >
-              {isSubmitting ? "Sending…" : "Send Message"}
-            </button>
-          </div>
-        )}
-      </div>
-    </section>
+              {/* CTA */}
+              <button
+                onClick={handleSubmit}
+                disabled={!isFormValid || isSubmitting}
+                className="w-full py-4 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 font-semibold transition-all disabled:opacity-50 hover:shadow-[0_0_25px_rgba(59,130,246,0.5)]"
+              >
+                {isSubmitting ? "Sending…" : "Send Message"}
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* ============================== */
+/* Small Input Component          */
+/* ============================== */
+
+function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      {...props}
+      className="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
   );
 }

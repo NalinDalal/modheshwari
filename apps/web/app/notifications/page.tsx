@@ -15,7 +15,7 @@ interface Me {
   name: string;
   email: string;
   role: string;
-  families?: Family; // You can replace this later with Family[] if you have the type
+  families?: Family;
 }
 
 /**
@@ -46,11 +46,13 @@ export default function NotificationsPage(): React.ReactElement {
   async function fetchMe(): Promise<void> {
     const token = getToken();
     if (!token) return;
+
     try {
       const res = await fetch("http://localhost:3001/api/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
+
       const js = await res.json();
       setMe(js.data || null);
     } catch (err) {
@@ -61,11 +63,13 @@ export default function NotificationsPage(): React.ReactElement {
   async function fetchNotifications(): Promise<void> {
     const token = getToken();
     if (!token) return;
+
     try {
       const res = await fetch("http://localhost:3001/api/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
+
       const js = await res.json();
       setNotifications(js.data?.notifications || []);
     } catch (err) {
@@ -77,6 +81,7 @@ export default function NotificationsPage(): React.ReactElement {
     e.preventDefault();
     const token = getToken();
     if (!token) return alert("Login as admin to broadcast");
+
     try {
       const body: Record<string, string> = { message };
       if (targetRole !== "ALL") body.targetRole = targetRole;
@@ -109,23 +114,34 @@ export default function NotificationsPage(): React.ReactElement {
     ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"].includes(me.role);
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1>Notifications</h1>
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white px-6 py-10">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-1">Notifications</h1>
+        <p className="text-sm text-gray-400">
+          Stay updated with system and community alerts
+        </p>
+      </div>
 
+      {/* Admin Broadcast */}
       {isAdmin && (
-        <section style={{ marginBottom: 24 }}>
-          <h2>Broadcast notification</h2>
-          <form onSubmit={handleBroadcast}>
+        <section className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-5 mb-10">
+          <h2 className="text-lg font-semibold mb-4">Broadcast Notification</h2>
+
+          <form onSubmit={handleBroadcast} className="space-y-4">
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={3}
-              style={{ width: "60%" }}
+              placeholder="Write a message to broadcast..."
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <div style={{ marginTop: 8 }}>
+
+            <div className="flex items-center gap-3">
               <select
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
+                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm"
               >
                 <option value="ALL">All users</option>
                 <option value="COMMUNITY_HEAD">Community Heads</option>
@@ -134,7 +150,11 @@ export default function NotificationsPage(): React.ReactElement {
                 <option value="FAMILY_HEAD">Family Heads</option>
                 <option value="MEMBER">Members</option>
               </select>
-              <button style={{ marginLeft: 8 }} type="submit">
+
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 transition"
+              >
                 Send
               </button>
             </div>
@@ -142,16 +162,33 @@ export default function NotificationsPage(): React.ReactElement {
         </section>
       )}
 
-      <section>
-        <h2>Your notifications</h2>
-        <ul>
-          {notifications.map((n) => (
-            <li key={n.id}>
-              <strong>{n.type}</strong>: {n.message}{" "}
-              <em>— {new Date(n.createdAt).toLocaleString()}</em>
-            </li>
-          ))}
-        </ul>
+      {/* Notifications List */}
+      <section className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl">
+        <div className="px-5 py-4 border-b border-white/5">
+          <h2 className="text-lg font-semibold">Your Notifications</h2>
+        </div>
+
+        {notifications.length === 0 ? (
+          <p className="text-center text-gray-500 py-10 text-sm">
+            No notifications yet
+          </p>
+        ) : (
+          <ul className="divide-y divide-white/5">
+            {notifications.map((n) => (
+              <li key={n.id} className="px-5 py-4 hover:bg-white/5 transition">
+                <div className="flex justify-between items-start gap-4">
+                  <div>
+                    <p className="text-sm font-medium">{n.message}</p>
+                    <p className="text-xs text-gray-400 mt-1">{n.type}</p>
+                  </div>
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {new Date(n.createdAt).toLocaleString()}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

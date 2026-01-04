@@ -81,8 +81,8 @@ export default function ResourceRequestsPage(): React.JSX.Element {
     try {
       const token = getToken();
       const url = API_BASE
-        ? `${API_BASE}/api/resource-requests`
-        : "http://localhost:3001/api/resource-requests";
+        ? `${API_BASE}/api/me`
+        : "http://localhost:3001/api/me";
 
       const res = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -91,8 +91,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
       const json = await res.json();
       setMe(json.data || null);
     } catch {
-      console.error("Failed to fetch details, please try again.");
-      // ignore network errors silently
+      console.error("Failed to fetch user details");
     }
   }
 
@@ -121,13 +120,13 @@ export default function ResourceRequestsPage(): React.JSX.Element {
 
   /**
    * Handles creation of a new resource request.
-   * @param {React.FormEvent} e - The form submission event.
    */
   async function handleCreate(
     e: React.FormEvent<HTMLFormElement>,
   ): Promise<void> {
     e.preventDefault();
     const token = getToken();
+
     try {
       const res = await fetch("http://localhost:3001/api/resource-requests", {
         method: "POST",
@@ -137,12 +136,13 @@ export default function ResourceRequestsPage(): React.JSX.Element {
         },
         body: JSON.stringify({ resource }),
       });
+
       if (res.ok) {
         setResource("");
         void fetchRequests();
       } else {
         const js = await res.json();
-        alert(js.message || "Failed to create");
+        alert(js.message || "Failed to create request");
       }
     } catch {
       alert("Network error");
@@ -151,8 +151,6 @@ export default function ResourceRequestsPage(): React.JSX.Element {
 
   /**
    * Allows an approver to review a resource request.
-   * @param id The request ID.
-   * @param action The review action.
    */
   async function handleReview(
     id: string,
@@ -174,7 +172,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
       if (res.ok) void fetchRequests();
       else {
         const js = await res.json();
-        alert(js.message || "Failed");
+        alert(js.message || "Failed to review");
       }
     } catch {
       alert("Network error");
@@ -186,102 +184,113 @@ export default function ResourceRequestsPage(): React.JSX.Element {
     ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"].includes(me.role);
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1>Resource Requests</h1>
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white px-6 py-10">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-1">Resource Requests</h1>
+        <p className="text-sm text-gray-400">
+          Request, track, and review shared resources
+        </p>
+      </div>
 
-      <section style={{ marginBottom: 24 }}>
-        <h2>Create Request</h2>
-        <form onSubmit={handleCreate}>
+      {/* Create Request */}
+      <section className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-5 mb-10">
+        <h2 className="text-lg font-semibold mb-4">Create Request</h2>
+
+        <form onSubmit={handleCreate} className="flex gap-3">
           <input
             value={resource}
             onChange={(e) => setResource(e.target.value)}
             placeholder="What resource do you need?"
-            style={{ width: "60%", padding: 8, marginRight: 8 }}
+            className="flex-grow bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <button type="submit">Create</button>
+          <Button type="submit">Create</Button>
         </form>
       </section>
 
-      <section>
-        <h2>Requests</h2>
+      {/* Requests Table */}
+      <section className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/5">
+          <h2 className="text-lg font-semibold">Requests</h2>
+        </div>
+
         {loading ? (
-          <div className="flex items-center gap-2">
-            <LoaderThree /> <span>Loading...</span>
+          <div className="flex items-center justify-center gap-2 py-10 text-gray-400">
+            <LoaderThree />
+            <span className="text-sm">Loading requests...</span>
           </div>
+        ) : requests.length === 0 ? (
+          <p className="text-center text-gray-500 py-10 text-sm">
+            No requests found
+          </p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th
-                  style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}
-                >
-                  Resource
-                </th>
-                <th
-                  style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}
-                >
-                  Status
-                </th>
-                <th
-                  style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}
-                >
-                  Approvals
-                </th>
-                <th
-                  style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((r) => (
-                <tr key={r.id}>
-                  <td style={{ padding: 8, borderBottom: "1px solid #f0f0f0" }}>
-                    {r.resource}
-                  </td>
-                  <td style={{ padding: 8, borderBottom: "1px solid #f0f0f0" }}>
-                    {r.status}
-                  </td>
-                  <td style={{ padding: 8, borderBottom: "1px solid #f0f0f0" }}>
-                    {r.approvals?.map((a) => (
-                      <div
-                        key={a.id}
-                        className="text-sm text-gray-600 dark:text-gray-300"
-                      >
-                        <strong> {a.approverName}</strong>: {a.status}
-                      </div>
-                    ))}
-                  </td>
-                  <td style={{ padding: 8, borderBottom: "1px solid #f0f0f0" }}>
-                    {isAdmin ? (
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => void handleReview(r.id, "approve")}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          variant="danger"
-                          onClick={() => void handleReview(r.id, "reject")}
-                        >
-                          Reject
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={() => void handleReview(r.id, "changes")}
-                        >
-                          Request Changes
-                        </Button>
-                      </div>
-                    ) : (
-                      <em>—</em>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-black/40 text-gray-400">
+                <tr>
+                  <th className="px-4 py-3 text-left">Resource</th>
+                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-left">Approvals</th>
+                  <th className="px-4 py-3 text-left">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {requests.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="border-t border-white/5 hover:bg-white/5 transition"
+                  >
+                    <td className="px-4 py-3">{r.resource}</td>
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs">
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 space-y-1">
+                      {r.approvals?.length ? (
+                        r.approvals.map((a) => (
+                          <div key={a.id} className="text-xs text-gray-300">
+                            <strong>{a.approverName}</strong>: {a.status}
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-xs text-gray-500">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {isAdmin ? (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => void handleReview(r.id, "approve")}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => void handleReview(r.id, "reject")}
+                          >
+                            Reject
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => void handleReview(r.id, "changes")}
+                          >
+                            Changes
+                          </Button>
+                        </div>
+                      ) : (
+                        <em className="text-gray-500">—</em>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </div>
