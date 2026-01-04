@@ -4,20 +4,34 @@ import React, { forwardRef } from "react";
 import colors from "./colors";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+export type ButtonSize = "sm" | "md";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
+  size?: ButtonSize;
   className?: string;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { children, variant = "primary", className = "", disabled, ...rest },
+    {
+      children,
+      variant = "primary",
+      size = "md",
+      className = "",
+      disabled,
+      ...rest
+    },
     ref,
   ) => {
     const base =
-      "px-5 py-2.5 rounded-lg font-medium transition-all duration-200 inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-[0.97]";
+      "rounded-lg font-medium transition-all duration-200 inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-[0.97]";
+
+    const sizeClasses: Record<ButtonSize, string> = {
+      sm: "px-3 py-1.5 text-sm",
+      md: "px-5 py-2.5",
+    };
 
     const variantClasses: Record<ButtonVariant, string> = {
       primary: `
@@ -54,14 +68,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const disabledClasses = disabled
-      ? "opacity-60 cursor-not-allowed pointer-events-none hover:scale-100 hover:bg-[${colors.brand600}] hover:[&>span]:scale-100"
+      ? `opacity-60 cursor-not-allowed pointer-events-none hover:scale-100 hover:bg-[${colors.brand600}] hover:[&>span]:scale-100`
       : "";
 
     return (
       <button
         ref={ref}
         disabled={disabled}
-        className={`${base} ${variantClasses[variant]} ${disabledClasses} ${className}`.trim()}
+        className={`${base} ${sizeClasses[size]} ${variantClasses[variant]} ${disabledClasses} ${className}`.trim()}
         {...rest}
       >
         {children}
