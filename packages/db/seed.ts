@@ -14,10 +14,10 @@ const prisma = new PrismaClient();
  * @returns {Promise<void>} Description of return value
  */
 async function main() {
-  console.log(" Seeding database...");
+  console.log("Seeding database...");
 
   if (!process.env.DATABASE_URL) {
-    throw new Error(" DATABASE_URL not found in environment variables!");
+    throw new Error("DATABASE_URL not found in environment variables!");
   }
 
   // ----- Core Admin Roles -----
@@ -51,7 +51,7 @@ async function main() {
     }),
   ]);
 
-  console.log("✅ Created core admin users");
+  console.log("Created core admin users");
 
   // ----- Families -----
   const families = await Promise.all([
@@ -67,7 +67,10 @@ async function main() {
   console.log(" Created base families");
 
   // ----- Helper to build family with members -----
-  async function makeFamily(fam: { id: string; name?: string }, names: Record<string, string>) {
+  async function makeFamily(
+    fam: { id: string; name?: string },
+    names: Record<string, string>,
+  ) {
     const head = await prisma.user.create({
       data: {
         name: names.head,
