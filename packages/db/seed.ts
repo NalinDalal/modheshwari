@@ -1,8 +1,15 @@
 import { config } from "dotenv";
 import { join } from "path";
+import { resolve } from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 config({ path: join(process.cwd(), "../../.env") });
-
+config({ path: resolve(process.cwd(), ".env") });
+config();
 import {
   PrismaClient,
   Role,
