@@ -18,6 +18,10 @@ interface User {
   }[];
 }
 
+/**
+ * Performs  me page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function MePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);

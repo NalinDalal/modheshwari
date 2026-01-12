@@ -1,6 +1,12 @@
 // Very small sliding-window in-memory limiter (per IP)
 const store = new Map<string, number[]>();
 
+/**
+ * Performs rate limit operation.
+ * @param {Request} req - Description of req
+ * @param {{ max: number; windowMs: number; }} options - Description of options
+ * @returns {boolean} Description of return value
+ */
 export function rateLimit(
   req: Request,
   options: { max: number; windowMs: number },

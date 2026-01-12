@@ -24,6 +24,10 @@ import { hashPassword } from "../utils/hash.ts";
 
 const prisma = new PrismaClient();
 
+/**
+ * Performs main operation.
+ * @returns {Promise<void>} Description of return value
+ */
 async function main() {
   console.log("Starting database seed...");
 

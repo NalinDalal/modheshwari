@@ -29,6 +29,10 @@ const INITIAL_FORM_STATE: ContactFormState = {
 /* Component                      */
 /* ============================== */
 
+/**
+ * Performs  contact page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function ContactPage() {
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -201,6 +205,11 @@ export default function ContactPage() {
 /* Small Input Component          */
 /* ============================== */
 
+/**
+ * Performs  input operation.
+ * @param {React.InputHTMLAttributes<HTMLInputElement>} props - Description of props
+ * @returns {React.JSX.Element} Description of return value
+ */
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input

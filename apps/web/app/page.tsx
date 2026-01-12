@@ -5,6 +5,10 @@ import { motion } from "framer-motion";
 import { Button } from "@repo/ui/button";
 import { BackgroundRippleEffect } from "@repo/ui/background-ripple-effect";
 
+/**
+ * Performs  home operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function Home() {
   const router = useRouter();
 

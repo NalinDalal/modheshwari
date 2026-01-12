@@ -3,6 +3,11 @@
 import React from "react";
 import { Button } from "./button";
 
+/**
+ * Performs  member card operation.
+ * @param {any} { member, onToggle } - Description of { member, onToggle }
+ * @returns {any} Description of return value
+ */
 export function MemberCard({ member, onToggle }: any) {
   const alive = member.user.status;
 

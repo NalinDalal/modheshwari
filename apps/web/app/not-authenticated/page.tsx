@@ -3,6 +3,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { NotAuthenticated } from "@repo/ui/not-authenticated";
 
+/**
+ * Performs  protected page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function ProtectedPage() {
   const router = useRouter();
 

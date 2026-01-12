@@ -59,11 +59,20 @@ import {
 } from "./routes/status-update-request";
 
 // Medical & Family Transfer
-import { handleUpdateMedical } from "./routes/medical";
+import {
+  handleUpdateMedical,
+  handleSearchByBloodGroup,
+} from "./routes/medical";
 import { handleFamilyTransfer } from "./routes/family-transfer";
 
 // ------------------ Utility path matcher ------------------
 
+/**
+ * Performs match operation.
+ * @param {string} path - Description of path
+ * @param {string} pattern - Description of pattern
+ * @returns {Record<string, string>} Description of return value
+ */
 function match(path: string, pattern: string) {
   const keys: string[] = [];
   const regexStr =
@@ -414,6 +423,24 @@ const server = serve({
 
       if (url.pathname === "/api/family/transfer" && method === "POST") {
         return withCorsHeaders(await handleFamilyTransfer(req));
+      }
+
+      // ------------------ Search ------------------
+
+      if (url.pathname.startsWith("/api/search") && method === "GET") {
+        return withCorsHeaders(await handleSearch(req));
+      }
+
+      // ------------------ Medical Search ------------------
+
+      if (url.pathname === "/api/medical/search" && method === "GET") {
+        return withCorsHeaders(await handleSearchByBloodGroup(req));
+      }
+
+      // ------------------ Resource Requests ------------------
+
+      if (url.pathname === "/api/resource-requests" && method === "POST") {
+        return withCorsHeaders(await handleCreateResourceRequest(req));
       }
 
       // ------------------ 404 ------------------

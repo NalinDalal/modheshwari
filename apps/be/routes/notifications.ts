@@ -1,10 +1,9 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
-
 import { requireAuth } from "./auth-middleware";
 
 /**
- * Broadcast a notification to all users or a role
+ * Broadcast a notification to users based on sender's role and scope
  * POST /api/notifications
  * Body: { message: string, type?: string, channel?: string, targetRole?: string }
  */
@@ -14,7 +13,10 @@ export async function handleCreateNotification(req: any): Promise<Response> {
       "COMMUNITY_HEAD",
       "COMMUNITY_SUBHEAD",
       "GOTRA_HEAD",
+      "FAMILY_HEAD",
+      "FAMILY_MEMBER",
     ]);
+
     if (!auth.ok) return auth.response as Response;
 
     const body: any = await (req as Request).json().catch(() => null);
@@ -22,14 +24,72 @@ export async function handleCreateNotification(req: any): Promise<Response> {
       return failure("Missing message", "Validation Error", 400);
 
     const { message, type = "GENERIC", channel = "IN_APP", targetRole } = body;
+    const senderRole = auth.user.role;
+    const senderId = auth.user.id;
 
-    // build user list
+    // Build user filter based on sender's role
     const where: any = { status: true };
-    if (targetRole && typeof targetRole === "string") where.role = targetRole;
 
-    const users = await prisma.user.findMany({ where, select: { id: true } });
-    if (!users.length)
+    switch (senderRole) {
+      case "FAMILY_HEAD":
+      case "FAMILY_MEMBER":
+        // Get sender's family
+        const senderFamily = await prisma.user.findUnique({
+          where: { id: senderId },
+          select: { familyId: true },
+        });
+
+        if (!senderFamily?.familyId) {
+          return failure(
+            "User not associated with a family",
+            "Invalid State",
+            400,
+          );
+        }
+
+        where.familyId = senderFamily.familyId;
+        break;
+
+      case "GOTRA_HEAD":
+        // Get sender's gotra
+        const senderGotra = await prisma.user.findUnique({
+          where: { id: senderId },
+          select: { gotraId: true },
+        });
+
+        if (!senderGotra?.gotraId) {
+          return failure(
+            "User not associated with a gotra",
+            "Invalid State",
+            400,
+          );
+        }
+
+        where.gotraId = senderGotra.gotraId;
+        break;
+
+      case "COMMUNITY_HEAD":
+      case "COMMUNITY_SUBHEAD":
+        // No additional filter - broadcast to entire community
+        break;
+
+      default:
+        return failure("Unauthorized role", "Authorization Error", 403);
+    }
+
+    // Apply optional targetRole filter
+    if (targetRole && typeof targetRole === "string") {
+      where.role = targetRole;
+    }
+
+    const users = await prisma.user.findMany({
+      where,
+      select: { id: true },
+    });
+
+    if (!users.length) {
       return failure("No users found for the target filter", "Not Found", 404);
+    }
 
     const data = users.map((u: any) => ({
       userId: u.id,

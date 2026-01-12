@@ -81,3 +81,9 @@ This project is licensed under the [MIT License](LICENSE).
 ## Case Study
 
 [Case Study](./case.md)
+
+---
+
+list down everything you know from resume and implement here
+
+head count 10-15k
