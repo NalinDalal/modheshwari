@@ -24,8 +24,8 @@ export async function handleCreateNotification(req: any): Promise<Response> {
       return failure("Missing message", "Validation Error", 400);
 
     const { message, type = "GENERIC", channel = "IN_APP", targetRole } = body;
-    const senderRole = auth.user.role;
-    const senderId = auth.user.id;
+    const senderRole = auth.payload.role;
+    const senderId = auth.payload.id;
 
     // Build user filter based on sender's role
     const where: any = { status: true };
@@ -34,12 +34,12 @@ export async function handleCreateNotification(req: any): Promise<Response> {
       case "FAMILY_HEAD":
       case "FAMILY_MEMBER":
         // Get sender's family
-        const senderFamily = await prisma.user.findUnique({
-          where: { id: senderId },
-          select: { familyId: true },
+        const senderFamily = await prisma.familyMember.findFirst({
+          where: { userId: senderId },
+          select: { family: { select: { id: true } } },
         });
 
-        if (!senderFamily?.familyId) {
+        if (!senderFamily?.family?.id) {
           return failure(
             "User not associated with a family",
             "Invalid State",
@@ -47,17 +47,17 @@ export async function handleCreateNotification(req: any): Promise<Response> {
           );
         }
 
-        where.familyId = senderFamily.familyId;
+        where.familyId = senderFamily.family.id;
         break;
 
       case "GOTRA_HEAD":
         // Get sender's gotra
-        const senderGotra = await prisma.user.findUnique({
-          where: { id: senderId },
-          select: { gotraId: true },
+        const senderGotra = await prisma.profile.findUnique({
+          where: { userId: senderId },
+          select: { gotra: true },
         });
 
-        if (!senderGotra?.gotraId) {
+        if (!senderGotra?.gotra) {
           return failure(
             "User not associated with a gotra",
             "Invalid State",
@@ -65,7 +65,7 @@ export async function handleCreateNotification(req: any): Promise<Response> {
           );
         }
 
-        where.gotraId = senderGotra.gotraId;
+        where.gotraId = senderGotra.gotra;
         break;
 
       case "COMMUNITY_HEAD":
