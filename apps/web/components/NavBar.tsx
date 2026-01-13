@@ -3,6 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  Search,
+  Menu,
+  X,
+  Home,
+  Users,
+  Package,
+  Bell,
+  Phone,
+} from "lucide-react";
 
 interface User {
   id: string;
@@ -11,16 +21,13 @@ interface User {
   role: string;
 }
 
-/**
- * Performs  nav bar operation.
- * @returns {React.JSX.Element} Description of return value
- */
 export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   /* ============================== */
   /* Auth check                    */
@@ -69,18 +76,55 @@ export default function NavBar() {
   /* Helpers                       */
   /* ============================== */
 
-  const navLink = (href: string, label: string) => {
-    const active = pathname === href;
+  const isActive = (href: string) => pathname === href;
+
+  const navLink = (href: string, label: string, icon?: any) => {
+    const active = isActive(href);
+    const Icon = icon;
 
     return (
       <Link
+        key={href}
         href={href}
-        className={`text-sm font-medium transition-colors ${
-          active
-            ? "text-amber-600 dark:text-amber-400"
-            : "text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white"
-        }`}
+        className={`
+          group relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+          ${
+            active
+              ? "text-white bg-white/10"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
+          }
+        `}
       >
+        <span className="flex items-center gap-2">
+          {Icon && <Icon className="w-4 h-4" />}
+          {label}
+        </span>
+        {active && (
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
+        )}
+      </Link>
+    );
+  };
+
+  const mobileNavLink = (href: string, label: string, icon?: any) => {
+    const active = isActive(href);
+    const Icon = icon;
+
+    return (
+      <Link
+        key={href}
+        href={href}
+        onClick={() => setMobileMenuOpen(false)}
+        className={`
+          flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all
+          ${
+            active
+              ? "text-white bg-white/10"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
+          }
+        `}
+      >
+        {Icon && <Icon className="w-5 h-5" />}
         {label}
       </Link>
     );
@@ -99,72 +143,128 @@ export default function NavBar() {
   /* ============================== */
 
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-neutral-950/80 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="text-lg font-bold tracking-tight text-neutral-900 dark:text-white"
-        >
-          Modheshwari
-        </Link>
+    <nav className="fixed top-0 z-50 w-full border-b border-white/10 bg-black/80 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="group flex items-center gap-2 text-xl font-bold"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/25 transition-transform group-hover:scale-110">
+              <span className="text-sm font-bold text-white">M</span>
+            </div>
+            <span className="bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+              Modheshwari
+            </span>
+          </Link>
 
-        {/* Nav */}
-        {!loading && (
-          <div className="flex items-center gap-6">
-            {/* Public */}
-            {navLink("/", "Home")}
+          {/* Desktop Navigation */}
+          {!loading && (
+            <div className="hidden md:flex items-center gap-1">
+              {/* Public Links */}
+              {navLink("/", "Home", Home)}
+              {navLink("/contact", "Contact", Phone)}
 
-            {/* Contact + Search */}
-            <div className="flex items-center gap-2">
-              {navLink("/contact", "Contact")}
-
+              {/* Search Button */}
               <Link
                 href="/search"
-                title="Search"
-                className="group flex h-8 w-8 items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
+                className="group flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/10 transition-all duration-200"
               >
-                {/* Search SVG */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-4 w-4 text-neutral-600 dark:text-neutral-300 group-hover:text-neutral-900 dark:group-hover:text-white"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
+                <Search className="h-4 w-4 text-gray-400 group-hover:text-white transition-colors" />
               </Link>
-            </div>
 
-            {/* Private */}
+              {/* Private Links (if logged in) */}
+              {user && (
+                <>
+                  <div className="mx-2 h-6 w-px bg-white/10" />
+
+                  {navLink("/family", "Family", Users)}
+                  {navLink("/resources", "Resources", Package)}
+                  {navLink("/notifications", "Notifications", Bell)}
+
+                  {/* User Avatar */}
+                  <button
+                    onClick={() => router.push("/me")}
+                    title={user.name}
+                    className="ml-2 flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-110 hover:shadow-blue-500/40"
+                  >
+                    {initials}
+                  </button>
+                </>
+              )}
+
+              {/* Sign In Button */}
+              {!user && (
+                <Link
+                  href="/signin"
+                  className="ml-4 px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-105 hover:shadow-blue-500/40"
+                >
+                  Sign in
+                </Link>
+              )}
+            </div>
+          )}
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+          >
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5 text-white" />
+            ) : (
+              <Menu className="h-5 w-5 text-white" />
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && !loading && (
+          <div className="md:hidden mt-4 py-4 border-t border-white/10 space-y-2">
+            {/* Public Links */}
+            {mobileNavLink("/", "Home", Home)}
+            {mobileNavLink("/contact", "Contact", Phone)}
+
+            {/* Search */}
+            <Link
+              href="/search"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+            >
+              <Search className="w-5 h-5" />
+              Search
+            </Link>
+
+            {/* Private Links (if logged in) */}
             {user && (
               <>
-                <span className="mx-2 h-4 w-px bg-neutral-300 dark:bg-neutral-700" />
-                {navLink("/family", "Family")}
-                {navLink("/resources", "Resources")}
-                {navLink("/notifications", "Notifications")}
+                <div className="my-2 h-px bg-white/10" />
 
-                {/* Avatar */}
-                <button
-                  onClick={() => router.push("/me")}
-                  title={user.name}
-                  className="ml-2 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-rose-600 text-sm font-bold text-white shadow-md transition hover:scale-105"
+                {mobileNavLink("/family", "Family", Users)}
+                {mobileNavLink("/resources", "Resources", Package)}
+                {mobileNavLink("/notifications", "Notifications", Bell)}
+
+                {/* Profile Link */}
+                <Link
+                  href="/me"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                 >
-                  {initials}
-                </button>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-xs font-bold text-white">
+                    {initials}
+                  </div>
+                  {user.name}
+                </Link>
               </>
             )}
 
-            {/* Auth CTA */}
+            {/* Sign In Button (Mobile) */}
             {!user && (
               <Link
                 href="/signin"
-                className="ml-4 rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center px-4 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40"
               >
                 Sign in
               </Link>

@@ -48,9 +48,12 @@ export default function NotificationsPage(): React.ReactElement {
     if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:3001/api/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/me`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!res.ok) return;
 
       const js = await res.json();
@@ -65,9 +68,12 @@ export default function NotificationsPage(): React.ReactElement {
     if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:3001/api/notifications", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/notifications`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!res.ok) return;
 
       const js = await res.json();
@@ -86,14 +92,18 @@ export default function NotificationsPage(): React.ReactElement {
       const body: Record<string, string> = { message };
       if (targetRole !== "ALL") body.targetRole = targetRole;
 
-      const res = await fetch("http://localhost:3001/api/notifications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/notifications`,
+
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
         },
-        body: JSON.stringify(body),
-      });
+      );
 
       if (res.ok) {
         setMessage("");

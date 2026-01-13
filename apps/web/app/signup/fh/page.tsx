@@ -3,6 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui/button";
+import { motion } from "framer-motion";
+import {
+  User,
+  Mail,
+  Lock,
+  Users,
+  Loader2,
+  ArrowRight,
+  Shield,
+} from "lucide-react";
 
 /**
  * Signup Page Component — Handles registration flow for the Family Head role.
@@ -32,10 +42,10 @@ import { Button } from "@repo/ui/button";
  *
  * @returns {React.JSX.Element} The Family Head Signup Page
  */
+
 export default function SignupPage() {
   const router = useRouter();
 
-  // --- Local state for form fields ---
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -43,21 +53,13 @@ export default function SignupPage() {
     familyName: "",
   });
 
-  // --- Loading state for async submission ---
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Handles the signup submission.
-   * 1. Prevents default form reload
-   * 2. Sends POST request to /api/signup/familyhead
-   * 3. Handles success/failure and redirects appropriately
-   */
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Construct API base URL — fallback to localhost if missing
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || "http://localhost:3001/api"}/signup/familyhead`,
         {
@@ -70,7 +72,6 @@ export default function SignupPage() {
       const data = await res.json();
       console.log("Signup response:", data);
 
-      // ✅ If signup succeeds, redirect user to /me
       if (data.status === "success") {
         alert("Signup successful!");
         router.push("/me");
@@ -85,107 +86,167 @@ export default function SignupPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-neutral-50 via-amber-50 to-rose-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-900 px-4">
-      {/* --- Background visual gradient orb --- */}
-      <div className="fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-amber-300/30 via-rose-300/30 to-purple-400/30 blur-3xl dark:from-amber-500/20 dark:via-rose-500/20 dark:to-purple-500/20" />
+  const isFormValid =
+    form.name && form.email && form.password && form.familyName;
 
-      <main className="max-w-md w-full">
-        {/* --- Main signup card container --- */}
-        <div className="bg-white/80 dark:bg-neutral-900/80 shadow-xl backdrop-blur-sm rounded-2xl p-8 border border-amber-100/40 dark:border-neutral-700/40 transition-all duration-300 hover:shadow-2xl">
-          {/* --- Header section (icon + title) --- */}
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-[#0a0e1a] to-black px-4 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div
+          className="absolute top-60 -left-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        />
+        <div
+          className="absolute bottom-20 right-1/4 w-80 h-80 bg-pink-500/5 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        />
+      </div>
+
+      {/* Grid Pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
+
+      <motion.main
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="max-w-md w-full relative z-10"
+      >
+        <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-2xl">
+          {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-amber-500 to-rose-600 text-white text-xl font-bold shadow-md mb-4">
-              FH
-            </div>
-            <h1 className="text-3xl font-semibold text-amber-900 dark:text-white">
-              Family Head Signup
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="inline-flex items-center justify-center h-16 w-16 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-white text-lg font-bold shadow-lg shadow-blue-500/25 mb-4"
+            >
+              <Users className="w-8 h-8" />
+            </motion.div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-2">
+              Become a Family Head
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              Create your family account
+            <p className="text-sm text-gray-400">
+              Create your family account and start managing
             </p>
           </div>
 
-          {/* --- Signup Form --- */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Full Name Field */}
+          <div className="space-y-5">
+            {/* Full Name */}
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5 ml-1">
+              <label className="block text-xs font-medium text-gray-400 mb-2">
                 Full Name
               </label>
-              <input
-                className="w-full p-3 bg-gradient-to-br from-white to-amber-50/40 dark:from-neutral-800 dark:to-neutral-900 rounded-lg border border-amber-100/40 dark:border-neutral-700/40 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-200"
-                placeholder="Enter your full name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  className="w-full pl-11 pr-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                  placeholder="Enter your full name"
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                />
+              </div>
             </div>
 
-            {/* Email Field */}
+            {/* Email */}
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5 ml-1">
+              <label className="block text-xs font-medium text-gray-400 mb-2">
                 Email Address
               </label>
-              <input
-                className="w-full p-3 bg-gradient-to-br from-white to-amber-50/40 dark:from-neutral-800 dark:to-neutral-900 rounded-lg border border-amber-100/40 dark:border-neutral-700/40 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-200"
-                placeholder="your.email@example.com"
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  className="w-full pl-11 pr-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                  placeholder="your.email@example.com"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
+                />
+              </div>
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5 ml-1">
+              <label className="block text-xs font-medium text-gray-400 mb-2">
                 Password
               </label>
-              <input
-                className="w-full p-3 bg-gradient-to-br from-white to-amber-50/40 dark:from-neutral-800 dark:to-neutral-900 rounded-lg border border-amber-100/40 dark:border-neutral-700/40 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-200"
-                placeholder="Create a secure password"
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required
-              />
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  className="w-full pl-11 pr-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                  placeholder="Create a secure password"
+                  type="password"
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
+                  required
+                />
+              </div>
             </div>
 
-            {/* Family Name Field */}
+            {/* Family Name */}
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5 ml-1">
+              <label className="block text-xs font-medium text-gray-400 mb-2">
                 Family Name
               </label>
-              <input
-                className="w-full p-3 bg-gradient-to-br from-white to-amber-50/40 dark:from-neutral-800 dark:to-neutral-900 rounded-lg border border-amber-100/40 dark:border-neutral-700/40 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all duration-200"
-                placeholder="Your family name"
-                value={form.familyName}
-                onChange={(e) =>
-                  setForm({ ...form, familyName: e.target.value })
-                }
-                required
-              />
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  className="w-full pl-11 pr-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                  placeholder="Your family name"
+                  type="text"
+                  value={form.familyName}
+                  onChange={(e) =>
+                    setForm({ ...form, familyName: e.target.value })
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && isFormValid) {
+                      handleSubmit(e as any);
+                    }
+                  }}
+                  required
+                />
+              </div>
             </div>
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={loading}
-              variant="primary"
-              className="w-full mt-6"
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !isFormValid}
+              className="group relative w-full px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden"
             >
-              {loading ? "Creating Account..." : "Sign Up"}
-            </Button>
-          </form>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-          {/* --- Footer section --- */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {loading ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="relative flex items-center justify-center gap-2"
+                >
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Creating Account...</span>
+                </motion.div>
+              ) : (
+                <span className="relative flex items-center justify-center gap-2">
+                  Create Family Account
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Footer Links */}
+          <div className="mt-6 pt-6 border-t border-white/10">
+            <p className="text-center text-sm text-gray-400">
               Already have an account?{" "}
               <a
                 href="/signin"
-                className="text-amber-600 dark:text-amber-500 hover:text-rose-600 dark:hover:text-rose-500 font-medium transition-colors duration-200"
+                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
               >
                 Sign In
               </a>
@@ -193,14 +254,57 @@ export default function SignupPage() {
           </div>
         </div>
 
-        {/* --- Informational card below form --- */}
-        <div className="mt-6 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm shadow-md rounded-2xl p-4 border border-amber-100/40 dark:border-neutral-700/40">
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center leading-relaxed">
-            By signing up, you agree to create a family account and become the
-            family head responsible for managing your members.
+        {/* Info Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-6 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl rounded-xl p-4 border border-white/10"
+        >
+          <div className="flex items-start gap-3">
+            <Shield className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-gray-400 leading-relaxed">
+              As a Family Head, you'll be responsible for managing your family
+              members, handling invitations, and maintaining family records
+              securely.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Features List */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="mt-4 space-y-2"
+        >
+          {[
+            "Full control over family member management",
+            "Secure access with role-based permissions",
+            "Track family events and medical records",
+          ].map((feature, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-2 text-xs text-gray-500"
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500/50" />
+              <span>{feature}</span>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Trust Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="mt-6 text-center"
+        >
+          <p className="text-xs text-gray-500">
+            🔒 Secure signup powered by Modheshwari
           </p>
-        </div>
-      </main>
+        </motion.div>
+      </motion.main>
     </div>
   );
 }

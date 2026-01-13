@@ -39,9 +39,9 @@ export default function RootLayout({
         "
       >
         <ThemeInitializer />
-        {/* Global Navbar */}
         <NavBar />
-        <main className="max-w-5xl mx-auto px-6 py-8 pt-20">{children}</main>
+        {/* Remove max-w-5xl and padding - let pages control their own layout */}
+        <main>{children}</main>
       </body>
     </html>
   );
