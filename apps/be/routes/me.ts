@@ -110,3 +110,52 @@ export async function handleGetMe(req: Request): Promise<Response> {
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
+
+/**
+ * PUT /api/me
+ * Updates the authenticated user's profile details.
+ */
+export async function handleUpdateMe(req: Request): Promise<Response> {
+  try {
+    // --- Step 1: Extract and validate JWT ---
+    const authHeader = req.headers.get("authorization") || "";
+    const token = authHeader.replace("Bearer ", "").trim();
+
+    if (!token) return failure("Missing token", "Auth Error", 401);
+
+    let decoded;
+    try {
+      decoded = verifyJWT(token);
+    } catch {
+      return failure("Invalid or expired token", "Auth Error", 401);
+    }
+
+    const userId = decoded?.userId ?? decoded?.id;
+    if (!userId) return failure("Unauthorized", "Auth Error", 401);
+
+    // --- Step 2: Parse and validate input ---
+    const body = await req.json();
+    const { bloodGroup, gotra, profession } = body;
+
+    if (!bloodGroup && !gotra && !profession) {
+      return failure(
+        "No valid fields provided for update",
+        "Validation Error",
+        400,
+      );
+    }
+
+    // --- Step 3: Update profile ---
+    const updatedProfile = await prisma.profile.upsert({
+      where: { userId },
+      update: { bloodGroup, gotra, profession },
+      create: { userId, bloodGroup, gotra, profession },
+    });
+
+    // --- Step 4: Send success response ---
+    return success("Profile updated successfully", updatedProfile);
+  } catch (err) {
+    console.error(" UpdateMe Error:", err);
+    return failure("Internal server error", "Unexpected Error", 500);
+  }
+}

@@ -1,8 +1,7 @@
 import prisma from "@modheshwari/db";
 import { verifyAuth } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/index";
-
-import type { Role, Prisma } from "@prisma/client";
+import type { Role } from "@prisma/client";
 
 // ---------------- CREATE ----------------
 /**

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import SearchInput from "./SearchInput";
-import { Search, Command, Sparkles } from "lucide-react";
+import { Search } from "lucide-react";
 import { motion } from "framer-motion";
+
+import SearchInput from "./SearchInput";
 /**
  * Search Members Page with:
  * - Better layout

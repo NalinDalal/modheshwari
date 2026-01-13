@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { Search, Loader2, User, Mail, Users, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 
 /**
  * Represents a single search result item.

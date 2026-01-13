@@ -127,62 +127,6 @@ model Post {
 
 ---
 
-### 4. Community Polls & Voting
-
-**Requirement:** FR6 in design doc  
-**Expected:** Create and vote on community polls
-
-**What's Missing:**
-
-- No poll database models
-- No voting mechanism
-- No frontend UI for polls
-
-**Database Models Needed:**
-
-```prisma
-model Poll {
-  id String @id @default(uuid())
-  question String
-  description String?
-  createdBy User @relation(fields: [createdById], references: [id])
-  createdById String
-  options PollOption[]
-  visibility String // "public" | "gotra" | "family"
-  status String // "active" | "closed"
-  createdAt DateTime @default(now())
-  expiresAt DateTime?
-}
-
-model PollOption {
-  id String @id @default(uuid())
-  poll Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  pollId String
-  text String
-  votes PollVote[]
-}
-
-model PollVote {
-  id String @id @default(uuid())
-  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  optionId String
-  user User @relation(fields: [userId], references: [id])
-  userId String
-  createdAt DateTime @default(now())
-  @@unique([optionId, userId])
-}
-```
-
-**Files Needed:**
-
-- `packages/db/schema.prisma` updates
-- `apps/be/routes/polls.ts`
-- `apps/web/app/polls/page.tsx`
-
-**Estimated Effort:** 2-3 days
-
----
-
 ### 5. Location-Based Services
 
 **Requirement:** Design doc key capability  
@@ -241,38 +185,6 @@ model Profile {
 - `apps/web/app/family/tree/page.tsx`
 
 **Estimated Effort:** 3-4 days
-
----
-
-### 7. Attendance Tracking for Events
-
-**Requirement:** FR4 in design doc  
-**Expected:** Track which members attended events
-
-**What's Missing:**
-
-- `EventRegistration` model lacks attendance field
-- No check-in mechanism
-- No attendance reporting API
-- No UI for tracking attendance
-
-**Database Changes Needed:**
-
-```prisma
-model EventRegistration {
-  // ... existing fields
-  attendanceStatus String? // "REGISTERED" | "ATTENDED" | "NO_SHOW"
-  checkedInAt DateTime?
-}
-```
-
-**Files Needed:**
-
-- Database migration to add attendance fields
-- `apps/be/routes/event-attendance.ts`
-- QR code scanning UI (uses passes from Feature #2)
-
-**Estimated Effort:** 1-2 days
 
 ---
 
@@ -458,6 +370,9 @@ model MedicalRecord {
 - Notification preference model/API
 
 **Estimated Effort:** 1-2 days
+
+what do you suggest for notifications??
+system design, it's a lot of people, single server handling it , it will be destroyed
 
 ---
 
@@ -840,3 +755,32 @@ model MedicalRecord {
 - ✅ = Complete & Working
 - ⚠️ = Partial / Scaffolding
 - ❌ = Not Started
+
+---
+
+Modheshwari:
+Hall wise resource should be visible,
+
+Someone wanna notify everyone/or particular gotra
+
+Booking
+
+Message to gotra or whole body/community, family
+Notification to admins only
+
+Admin change logic check it please
+What is wanna change admins
+
+Need to reach out people not in state/country
+
+Need to put logic for
+
+Uhh, once do like complete db drop, then seed as per schema, so that everything exists all at once, so can actually see in db upon visualise
+
+Hmm, generate openapi spec of all of routes of the backend to easily debug
+
+——
+
+To do as developer:
+
+Admin signup logic to see,

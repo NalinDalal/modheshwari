@@ -2,10 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Button } from "@repo/ui/button";
 import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/not-authenticated";
-import { DeleteButton } from "@repo/ui/delete-button";
 import { MemberCard } from "@repo/ui/member-card";
 
 /**

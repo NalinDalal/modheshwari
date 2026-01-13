@@ -1,15 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Button } from "@repo/ui/button";
-import { LoaderThree } from "@repo/ui/loading";
 import { motion } from "framer-motion";
 import {
   Package,
   Plus,
   Check,
   X,
-  Clock,
   Loader2,
   AlertCircle,
 } from "lucide-react";

@@ -1,8 +1,9 @@
 "use client";
 
 import { Suspense } from "react";
-import FamilyPageContent from "./FamilyPageContent";
 import { LoaderOne } from "@repo/ui/loading";
+
+import FamilyPageContent from "./FamilyPageContent";
 
 /**
  * Family Page (Client Component)
