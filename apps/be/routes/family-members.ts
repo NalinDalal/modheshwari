@@ -1,7 +1,6 @@
-// @ts-nocheck
 import prisma from "@modheshwari/db";
-import { verifyJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
+import { extractAndVerifyToken } from "../utils/auth";
 
 /**
  * GET /api/family/members
@@ -10,21 +9,17 @@ import { success, failure } from "@modheshwari/utils/response";
  */
 export async function handleGetFamilyMembers(req: Request): Promise<Response> {
   try {
-    const auth = req.headers.get("authorization") || "";
-    const token = auth.replace("Bearer ", "").trim();
-    const decoded: any = verifyJWT(token);
-    if (!decoded || decoded.role !== "FAMILY_HEAD")
-      return failure("Forbidden: Not a family head", "Forbidden", 403);
+    const userId = extractAndVerifyToken(req);
+
+    // Find family headed by this user
+    const family = await prisma.family.findFirst({
+      where: { headId: userId },
+    });
+    if (!family) return failure("Family not found", "Not Found", 404);
 
     // Parse query params
     const url = new URL(req.url);
     const includeAll = url.searchParams.get("all") === "true";
-
-    // Find family headed by this user
-    const family = await prisma.family.findFirst({
-      where: { headId: decoded.id },
-    });
-    if (!family) return failure("Family not found", "Not Found", 404);
 
     // If not all, only fetch alive members
     const userFilter = includeAll ? {} : { status: true };

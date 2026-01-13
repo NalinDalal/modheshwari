@@ -3,7 +3,12 @@
  * @description Authentication middleware that validates JWT tokens for protected routes.
  */
 
+import { extractAndVerifyToken } from "../utils/auth";
 import { verifyJWT } from "@modheshwari/utils/jwt";
+
+interface HttpError extends Error {
+  status?: number;
+}
 
 /**
  * Validates JWT from the `Authorization` header and attaches user payload to context.
@@ -25,37 +30,37 @@ import { verifyJWT } from "@modheshwari/utils/jwt";
  */
 export async function authMiddleware({ request, set, store }: any) {
   try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader) {
-      set.status = 401;
-      return new Response(
-        JSON.stringify({ error: "Missing Authorization header" }),
-        { status: 401, headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    const token = authHeader.replace("Bearer ", "").trim();
-    const decoded = verifyJWT(token);
-
-    if (!decoded) {
-      set.status = 401;
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired token" }),
-        { status: 401, headers: { "Content-Type": "application/json" } },
-      );
-    }
+    const userId = extractAndVerifyToken(request);
 
     // Attach user payload to store for downstream handlers
-    if (store) store.user = decoded;
-    else (request as any).user = decoded; // fallback if store not used
+    if (store) store.user = { id: userId };
+    else (request as any).user = { id: userId }; // fallback if store not used
 
     // Continue silently (no return = pass-through)
     return;
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("Auth Middleware Error:", err);
-    set.status = 500;
-    return new Response(JSON.stringify({ error: "Authentication failed" }), {
-      status: 500,
+
+    let status = 500;
+    let message = "Internal Server Error";
+
+    if (err instanceof Error) {
+      message = err.message;
+    }
+
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "status" in err &&
+      typeof (err as any).status === "number"
+    ) {
+      status = (err as any).status;
+    }
+
+    set.status = status;
+
+    return new Response(JSON.stringify({ error: message }), {
+      status,
       headers: { "Content-Type": "application/json" },
     });
   }

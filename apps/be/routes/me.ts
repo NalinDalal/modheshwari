@@ -118,19 +118,7 @@ export async function handleGetMe(req: Request): Promise<Response> {
 export async function handleUpdateMe(req: Request): Promise<Response> {
   try {
     // --- Step 1: Extract and validate JWT ---
-    const authHeader = req.headers.get("authorization") || "";
-    const token = authHeader.replace("Bearer ", "").trim();
-
-    if (!token) return failure("Missing token", "Auth Error", 401);
-
-    let decoded;
-    try {
-      decoded = verifyJWT(token);
-    } catch {
-      return failure("Invalid or expired token", "Auth Error", 401);
-    }
-
-    const userId = decoded?.userId ?? decoded?.id;
+    const userId = extractAndVerifyToken(req);
     if (!userId) return failure("Unauthorized", "Auth Error", 401);
 
     // --- Step 2: Parse and validate input ---
