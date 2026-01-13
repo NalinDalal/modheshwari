@@ -63,6 +63,24 @@ function getToken(): string | null {
   return localStorage.getItem("token");
 }
 
+/**
+ * Retrieves the status and checks the type of status
+ * @param {string} status - Description of status
+ * @returns {string} Description of return value
+ */
+function getStatusColor(status: string): string {
+  switch (status) {
+    case "APPROVED":
+      return "bg-green-500/10 text-green-400 border-green-500/20";
+    case "REJECTED":
+      return "bg-red-500/10 text-red-400 border-red-500/20";
+    case "CHANGES_REQUESTED":
+      return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+    default:
+      return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+  }
+}
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 /**
@@ -131,10 +149,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
   /**
    * Handles creation of a new resource request.
    */
-  async function handleCreate(
-    e: React.FormEvent<HTMLFormElement>,
-  ): Promise<void> {
-    e.preventDefault();
+  async function handleCreate(): Promise<void> {
     const token = getToken();
 
     try {
@@ -249,7 +264,8 @@ export default function ResourceRequestsPage(): React.JSX.Element {
                 placeholder="What resource do you need?"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && resource.trim()) {
-                    handleCreate(e as any);
+                    e.preventDefault();
+                    void handleCreate();
                   }
                 }}
                 className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
@@ -339,7 +355,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(r.status)}`}
                         >
-                          {getStatusIcon(r.status)}
+                          {getStatusColor(r.status)}
                           {r.status}
                         </span>
                       </td>
