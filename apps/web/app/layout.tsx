@@ -41,7 +41,6 @@ export default function RootLayout({
       >
         <ThemeInitializer />
         <NavBar />
-        {/* Remove max-w-5xl and padding - let pages control their own layout */}
         <main>{children}</main>
       </body>
     </html>

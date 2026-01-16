@@ -95,7 +95,6 @@ export async function handleGetMe(req: Request): Promise<Response> {
           user: {
             select: { name: true },
           },
-          role: true,
         },
       });
       if (profile) {
