@@ -17,7 +17,7 @@ import {
   normalizeRole,
   buildWhereClause,
   buildSelectClause,
-} from "../utils/search-parser";
+} from "../utils/searchParser";
 import { isRateLimited } from "@modheshwari/utils/rate-limit";
 
 type CacheEntry = { ts: number; data: any };
