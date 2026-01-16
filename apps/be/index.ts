@@ -13,7 +13,7 @@ import { join } from "path";
 config({ path: join(process.cwd(), "../../.env") });
 
 // Auth
-import { rateLimit } from "@modheshwari/utils";
+import { isRateLimited } from "@modheshwari/utils/rate-limit";
 
 import { handleAdminLogin, handleAdminSignup } from "./routes/auth-admin";
 import { handleFHLogin, handleFHSignup } from "./routes/auth-fh";
@@ -170,10 +170,10 @@ const server = serve({
 
       // ------------------ Global Rate-Limits ------------------
 
-      // NOTE: treat rateLimit(...) as returning boolean "limited"
+      // NOTE: treat isRateLimited(...) as returning boolean "limited"
       // All login routes (prevents brute-force)
       if (url.pathname.startsWith("/api/login") && method === "POST") {
-        const limited = rateLimit(req, {
+        const limited = isRateLimited(req, {
           windowMs: 60000,
           max: 5,
         });
@@ -189,7 +189,7 @@ const server = serve({
 
       // All signup routes (prevents mass account creation)
       if (url.pathname.startsWith("/api/signup") && method === "POST") {
-        const limited = rateLimit(req, {
+        const limited = isRateLimited(req, {
           windowMs: 60000,
           max: 5,
         });
@@ -205,7 +205,7 @@ const server = serve({
 
       // Search rate-limit (UI-friendly)
       if (url.pathname.startsWith("/api/search") && method === "GET") {
-        const limited = rateLimit(req, {
+        const limited = isRateLimited(req, {
           windowMs: 10000,
           max: 20,
         });

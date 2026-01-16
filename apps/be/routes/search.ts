@@ -17,8 +17,12 @@ import {
   normalizeRole,
   buildWhereClause,
   buildSelectClause,
-} from "../utils/searchParser";
-import { isRateLimited, getClientIp } from "@modheshwari/utils/rate-limit";
+} from "../utils/search-parser";
+import { isRateLimited } from "@modheshwari/utils/rate-limit";
+
+type CacheEntry = { ts: number; data: any };
+const CACHE_TTL = 60 * 1000; // 60 seconds
+const cache = new Map<string, CacheEntry>();
 
 /**
  * GET /api/search?q=xxx
@@ -50,8 +54,13 @@ export async function handleSearch(req: Request): Promise<Response> {
       return failure("Query too short", "Validation Error", 400);
     }
 
-    const ip = getClientIp(req);
-    if (isRateLimited(ip)) {
+    if (
+      isRateLimited(req, {
+        windowMs: 60_000,
+        max: 30,
+        scope: "search",
+      })
+    ) {
       return failure("Too many requests", "Rate Limit", 429);
     }
 

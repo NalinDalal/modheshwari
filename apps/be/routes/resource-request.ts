@@ -8,119 +8,124 @@ import { isRateLimited } from "@modheshwari/utils/rate-limit";
    POST /api/resource-requests
    ========================================================= */
 
-export const handleCreateResourceRequest = isRateLimited(
-  async (req: Request): Promise<Response> => {
-    try {
-      const auth = requireAuth(req);
-      if (!auth.ok) return auth.response as Response;
+export async function handleCreateResourceRequest(
+  req: Request,
+): Promise<Response> {
+  try {
+    if (
+      isRateLimited(req, {
+        max: 5,
+        windowMs: 5 * 60_000,
+        scope: "resource-create",
+      })
+    ) {
+      return failure("Too many requests", "Rate Limit", 429);
+    }
 
-      const userId = auth.payload.userId ?? auth.payload.id;
-      const body = await req.json().catch(() => null);
+    const auth = requireAuth(req);
+    if (!auth.ok) return auth.response as Response;
 
-      if (!body?.resource) {
-        return failure("Missing resource field", "Validation Error", 400);
-      }
+    const userId = auth.payload.userId ?? auth.payload.id;
+    const body = (await req.json().catch(() => null)) as any;
 
-      /* -------- Identify approvers -------- */
+    if (!body?.resource) {
+      return failure("Missing resource field", "Validation Error", 400);
+    }
 
-      const approvers: Array<{ id: string; role: string; name: string }> = [];
+    /* -------- Identify approvers -------- */
 
-      const communityHead = await prisma.user.findFirst({
-        where: { role: "COMMUNITY_HEAD", status: true },
+    const approvers: Array<{ id: string; role: string; name: string }> = [];
+
+    const communityHead = await prisma.user.findFirst({
+      where: { role: "COMMUNITY_HEAD", status: true },
+    });
+
+    if (communityHead) {
+      approvers.push({
+        id: communityHead.id,
+        role: "COMMUNITY_HEAD",
+        name: communityHead.name,
+      });
+    }
+
+    const communitySub = await prisma.user.findFirst({
+      where: { role: "COMMUNITY_SUBHEAD", status: true },
+    });
+
+    if (communitySub) {
+      approvers.push({
+        id: communitySub.id,
+        role: "COMMUNITY_SUBHEAD",
+        name: communitySub.name,
+      });
+    }
+
+    const profile = await prisma.profile.findUnique({
+      where: { userId },
+    });
+
+    if (profile?.gotra) {
+      const gotraHead = await prisma.user.findFirst({
+        where: {
+          role: "GOTRA_HEAD",
+          status: true,
+          profile: { gotra: profile.gotra },
+        },
       });
 
-      if (communityHead) {
+      if (gotraHead) {
         approvers.push({
-          id: communityHead.id,
-          role: "COMMUNITY_HEAD",
-          name: communityHead.name,
+          id: gotraHead.id,
+          role: "GOTRA_HEAD",
+          name: gotraHead.name,
         });
       }
+    }
 
-      const communitySub = await prisma.user.findFirst({
-        where: { role: "COMMUNITY_SUBHEAD", status: true },
+    /* -------- Transaction -------- */
+
+    const created = await prisma.$transaction(async (tx) => {
+      const rr = await tx.resourceRequest.create({
+        data: {
+          userId,
+          resource: body.resource,
+          details: body.details ?? null,
+          status: "PENDING",
+        },
       });
 
-      if (communitySub) {
-        approvers.push({
-          id: communitySub.id,
-          role: "COMMUNITY_SUBHEAD",
-          name: communitySub.name,
-        });
-      }
-
-      const profile = await prisma.profile.findUnique({
-        where: { userId },
-      });
-
-      if (profile?.gotra) {
-        const gotraHead = await prisma.user.findFirst({
-          where: {
-            role: "GOTRA_HEAD",
-            status: true,
-            profile: { gotra: profile.gotra },
-          },
-        });
-
-        if (gotraHead) {
-          approvers.push({
-            id: gotraHead.id,
-            role: "GOTRA_HEAD",
-            name: gotraHead.name,
-          });
-        }
-      }
-
-      /* -------- Transaction -------- */
-
-      const created = await prisma.$transaction(async (tx) => {
-        const rr = await tx.resourceRequest.create({
+      for (const a of approvers) {
+        await tx.resourceRequestApproval.create({
           data: {
-            userId,
-            resource: body.resource,
-            details: body.details ?? null,
+            requestId: rr.id,
+            approverId: a.id,
+            approverName: a.name,
+            role: a.role as any,
             status: "PENDING",
           },
         });
 
-        for (const a of approvers) {
-          await tx.resourceRequestApproval.create({
-            data: {
-              requestId: rr.id,
-              approverId: a.id,
-              approverName: a.name,
-              role: a.role as any,
-              status: "PENDING",
-            },
-          });
-
-          await tx.notification.create({
-            data: {
-              userId: a.id,
-              type: "RESOURCE_REQUEST",
-              message: `New resource request from ${auth.payload.name ?? "a user"}: ${body.resource}`,
-            },
-          });
-        }
-
-        return tx.resourceRequest.findUnique({
-          where: { id: rr.id },
-          include: { approvals: true },
+        await tx.notification.create({
+          data: {
+            userId: a.id,
+            type: "RESOURCE_REQUEST",
+            message: `New resource request from ${auth.payload.name ?? "a user"}: ${body.resource}`,
+          },
         });
-      });
+      }
 
-      return success("Resource request created", { request: created }, 201);
-    } catch (err) {
-      console.error("Create ResourceRequest Error:", err);
-      return failure("Internal server error", "Unexpected Error", 500);
-    }
-  },
-  {
-    max: 5,
-    windowMs: 5 * 60_000,
-    scope: "resource-create",
-  },
-);
+      return tx.resourceRequest.findUnique({
+        where: { id: rr.id },
+        include: { approvals: true },
+      });
+    });
+
+    return success("Resource request created", { request: created }, 201);
+  } catch (err) {
+    console.error("Create ResourceRequest Error:", err);
+    return failure("Internal server error", "Unexpected Error", 500);
+  }
+}
 
 /* =========================================================
    LIST RESOURCE REQUESTS
@@ -200,92 +205,98 @@ export async function handleGetResourceRequest(
    POST /api/resource-requests/:id/review
    ========================================================= */
 
-export const handleReviewResourceRequest = isRateLimited(
-  async (req: Request, id: string): Promise<Response> => {
-    try {
-      const auth = requireAuth(req, [
-        "COMMUNITY_HEAD",
-        "COMMUNITY_SUBHEAD",
-        "GOTRA_HEAD",
-      ]);
-      if (!auth.ok) return auth.response as Response;
+export async function handleReviewResourceRequest(
+  req: Request,
+  id: string,
+): Promise<Response> {
+  try {
+    if (
+      isRateLimited(req, {
+        max: 10,
+        windowMs: 60_000,
+        scope: "resource-review",
+      })
+    ) {
+      return failure("Too many requests", "Rate Limit", 429);
+    }
 
-      const reviewerId = auth.payload.userId ?? auth.payload.id;
-      const body = await req.json().catch(() => null);
+    const auth = requireAuth(req, [
+      "COMMUNITY_HEAD",
+      "COMMUNITY_SUBHEAD",
+      "GOTRA_HEAD",
+    ]);
+    if (!auth.ok) return auth.response as Response;
 
-      if (!body?.action) {
-        return failure("Missing action", "Validation Error", 400);
-      }
+    const reviewerId = auth.payload.userId ?? auth.payload.id;
+    const body = (await req.json().catch(() => null)) as any;
 
-      const statusMap: Record<string, string> = {
-        approve: "APPROVED",
-        reject: "REJECTED",
-        changes: "CHANGES_REQUESTED",
-      };
+    if (!body?.action) {
+      return failure("Missing action", "Validation Error", 400);
+    }
 
-      const newStatus = statusMap[body.action];
-      if (!newStatus) {
-        return failure("Invalid action", "Bad Request", 400);
-      }
+    const statusMap: Record<string, string> = {
+      approve: "APPROVED",
+      reject: "REJECTED",
+      changes: "CHANGES_REQUESTED",
+    };
 
-      await prisma.$transaction(async (tx) => {
-        const approval = await tx.resourceRequestApproval.findFirst({
-          where: { requestId: id, approverId: reviewerId },
-        });
+    const newStatus = statusMap[body.action];
+    if (!newStatus) {
+      return failure("Invalid action", "Bad Request", 400);
+    }
 
-        if (!approval) throw new Error("NOT_AUTHORIZED");
-
-        await tx.resourceRequestApproval.update({
-          where: { id: approval.id },
-          data: {
-            status: newStatus,
-            remarks: body.remarks ?? null,
-            reviewedAt: new Date(),
-          },
-        });
-
-        const approvals = await tx.resourceRequestApproval.findMany({
-          where: { requestId: id },
-        });
-
-        let overall = "PENDING";
-        if (approvals.some((a) => a.status === "REJECTED"))
-          overall = "REJECTED";
-        else if (approvals.every((a) => a.status === "APPROVED"))
-          overall = "APPROVED";
-        else if (approvals.some((a) => a.status === "CHANGES_REQUESTED"))
-          overall = "CHANGES_REQUESTED";
-
-        const reqRow = await tx.resourceRequest.update({
-          where: { id },
-          data: { status: overall, lastReviewedBy: reviewerId },
-        });
-
-        await tx.notification.create({
-          data: {
-            userId: reqRow.userId,
-            type: "RESOURCE_REQUEST",
-            message: `Your resource request status changed to ${overall}`,
-          },
-        });
+    await prisma.$transaction(async (tx) => {
+      const approval = await tx.resourceRequestApproval.findFirst({
+        where: { requestId: id, approverId: reviewerId },
       });
 
-      return success("Review recorded", null, 200);
-    } catch (err: any) {
-      if (err.message === "NOT_AUTHORIZED") {
-        return failure("Not your approval", "Forbidden", 403);
-      }
+      if (!approval) throw new Error("NOT_AUTHORIZED");
 
-      console.error("Review ResourceRequest Error:", err);
-      return failure("Internal server error", "Unexpected Error", 500);
+      await tx.resourceRequestApproval.update({
+        where: { id: approval.id },
+        data: {
+          status: newStatus,
+          remarks: body.remarks ?? null,
+          reviewedAt: new Date(),
+        },
+      });
+
+      const approvals = await tx.resourceRequestApproval.findMany({
+        where: { requestId: id },
+      });
+
+      let overall = "PENDING";
+      if (approvals.some((a) => a.status === "REJECTED"))
+        overall = "REJECTED";
+      else if (approvals.every((a) => a.status === "APPROVED"))
+        overall = "APPROVED";
+      else if (approvals.some((a) => a.status === "CHANGES_REQUESTED"))
+        overall = "CHANGES_REQUESTED";
+
+      const reqRow = await tx.resourceRequest.update({
+        where: { id },
+        data: { status: overall, lastReviewedBy: reviewerId },
+      });
+
+      await tx.notification.create({
+        data: {
+          userId: reqRow.userId,
+          type: "RESOURCE_REQUEST",
+          message: `Your resource request status changed to ${overall}`,
+        },
+      });
+    });
+
+    return success("Review recorded", null, 200);
+  } catch (err: any) {
+    if (err.message === "NOT_AUTHORIZED") {
+      return failure("Not your approval", "Forbidden", 403);
     }
-  },
-  {
-    max: 10,
-    windowMs: 60_000,
-    scope: "resource-review",
-  },
-);
+
+    console.error("Review ResourceRequest Error:", err);
+    return failure("Internal server error", "Unexpected Error", 500);
+  }
+}
 
 /* =========================================================
    LIST NOTIFICATIONS
