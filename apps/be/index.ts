@@ -10,9 +10,9 @@ import { handleCors, withCorsHeaders } from "./utils/cors";
 // Rate limiting
 import { isRateLimited } from "@modheshwari/utils/rate-limit";
 // Auth
-import { handleAdminLogin, handleAdminSignup } from "./routes/auth-admin";
-import { handleFHLogin, handleFHSignup } from "./routes/auth-fh";
-import { handleMemberLogin, handleMemberSignup } from "./routes/auth-fm";
+import { handleAdminLogin, handleAdminSignup } from "./routes/auth/admin";
+import { handleFHLogin, handleFHSignup } from "./routes/auth/fh";
+import { handleMemberLogin, handleMemberSignup } from "./routes/auth/fm";
 
 // Family
 import {
