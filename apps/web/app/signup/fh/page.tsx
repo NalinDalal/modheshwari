@@ -263,9 +263,9 @@ export default function SignupPage() {
           <div className="flex items-start gap-3">
             <Shield className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-gray-400 leading-relaxed">
-              As a Family Head, you'll be responsible for managing your family
-              members, handling invitations, and maintaining family records
-              securely.
+              As a Family Head, you&apos;ll be responsible for managing your
+              family members, handling invitations, and maintaining family
+              records securely.
             </p>
           </div>
         </motion.div>

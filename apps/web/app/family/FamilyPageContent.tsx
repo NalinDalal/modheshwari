@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/not-authenticated";
 import { MemberCard } from "@repo/ui/member-card";
@@ -39,7 +39,6 @@ interface Member {
 
 export default function FamilyPageContent() {
   const router = useRouter();
-  const params = useSearchParams();
 
   const [hydrated, setHydrated] = useState(false);
   const [token, setToken] = useState<string | null>(null);

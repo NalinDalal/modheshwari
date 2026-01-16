@@ -16,7 +16,7 @@ export default function ProtectedPage() {
     }, 2500);
 
     return () => clearTimeout(t);
-  }, []);
+  }, [router]);
 
   return <NotAuthenticated />;
 }

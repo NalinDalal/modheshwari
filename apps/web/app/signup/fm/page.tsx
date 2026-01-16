@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui/button";
 
 /**
@@ -9,8 +8,6 @@ import { Button } from "@repo/ui/button";
  * @returns {React.JSX.Element} Description of return value
  */
 export default function MemberSignupPage() {
-  const router = useRouter();
-
   const [form, setForm] = useState({
     name: "",
     email: "",

@@ -132,7 +132,7 @@ export default function SearchPage() {
         >
           <p className="text-xs text-gray-600">
             💡 Tip: Use specific keywords for better results. Contact support if
-            you can't find someone.
+            you can`&apos;`t find someone.
           </p>
         </motion.div>
       </div>

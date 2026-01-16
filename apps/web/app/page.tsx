@@ -223,7 +223,7 @@ export default function Home() {
             className="relative p-8 sm:p-12 bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-sm border border-white/10 rounded-3xl"
           >
             <div className="absolute -top-6 left-8">
-              <div className="text-6xl text-blue-400/20">"</div>
+              <div className="text-6xl text-blue-400/20">&quot;</div>
             </div>
 
             <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-6 italic">

@@ -196,8 +196,9 @@ export default function SearchInput({
                   <Search className="w-6 h-6 text-gray-500" />
                 </div>
                 <p className="text-sm text-gray-400">
-                  No results found for "
-                  <span className="text-white font-medium">{debouncedQ}</span>"
+                  No results found for `&quot;`
+                  <span className="text-white font-medium">{debouncedQ}</span>
+                  `&quot;`
                 </p>
                 <p className="text-xs text-gray-600 mt-1">
                   Try searching with a different keyword
