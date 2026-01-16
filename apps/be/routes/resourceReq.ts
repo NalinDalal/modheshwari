@@ -89,7 +89,7 @@ export async function handleCreateResourceRequest(
       const rr = await tx.resourceRequest.create({
         data: {
           userId,
-          resource: body.resource,
+          resourceId: body.resource,
           status: "PENDING",
         },
       });
@@ -269,10 +269,23 @@ export async function handleReviewResourceRequest(
       });
 
       let overall: ApprovalStatus = "PENDING";
-      if (approvals.some((a) => a.status === "REJECTED")) overall = "REJECTED";
-      else if (approvals.every((a) => a.status === "APPROVED"))
+      if (
+        approvals.some(
+          (a: (typeof approvals)[number]) => a.status === "REJECTED",
+        )
+      )
+        overall = "REJECTED";
+      else if (
+        approvals.every(
+          (a: (typeof approvals)[number]) => a.status === "APPROVED",
+        )
+      )
         overall = "APPROVED";
-      else if (approvals.some((a) => a.status === "CHANGES_REQUESTED"))
+      else if (
+        approvals.some(
+          (a: (typeof approvals)[number]) => a.status === "CHANGES_REQUESTED",
+        )
+      )
         overall = "CHANGES_REQUESTED";
 
       const reqRow = await tx.resourceRequest.update({
