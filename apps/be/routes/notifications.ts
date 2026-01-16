@@ -1,105 +1,179 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import { requireAuth } from "./authMiddleware";
+import { Role, NotificationType, NotificationChannel } from "@prisma/client";
+
+/**
+ * Shape of create notification request body
+ */
+interface CreateNotificationBody {
+  message: string;
+  type?: NotificationType;
+  channel?: NotificationChannel;
+  targetRole?: Role;
+}
 
 /**
  * Broadcast a notification to users based on sender's role and scope
  * POST /api/notifications
- * Body: { message: string, type?: string, channel?: string, targetRole?: string }
+ * Body: { message: string, type?: string, channel?: string, targetRole?: Role }
  */
-export async function handleCreateNotification(req: any): Promise<Response> {
+export async function handleCreateNotification(
+  req: Request,
+): Promise<Response> {
   try {
-    const auth = requireAuth(req as Request, [
+    const auth = requireAuth(req, [
       "COMMUNITY_HEAD",
       "COMMUNITY_SUBHEAD",
       "GOTRA_HEAD",
       "FAMILY_HEAD",
-      "FAMILY_MEMBER",
     ]);
 
     if (!auth.ok) return auth.response as Response;
 
-    const body: any = await (req as Request).json().catch(() => null);
-    if (!body || !body.message)
+    /**
+     * Parse body safely
+     * `req.json()` returns `unknown` in strict TS
+     */
+    const rawBody: unknown = await req.json().catch(() => null);
+
+    if (
+      !rawBody ||
+      typeof rawBody !== "object" ||
+      !("message" in rawBody) ||
+      typeof (rawBody as any).message !== "string" ||
+      !(rawBody as any).message.trim()
+    ) {
       return failure("Missing message", "Validation Error", 400);
+    }
 
-    const { message, type = "GENERIC", channel = "IN_APP", targetRole } = body;
-    const senderRole = auth.payload.role;
+    const {
+      message,
+      type = NotificationType.GENERIC,
+      channel = NotificationChannel.IN_APP,
+      targetRole,
+    } = rawBody as CreateNotificationBody;
+
     const senderId = auth.payload.id;
+    const senderRole = auth.payload.role as Role;
 
-    // Build user filter based on sender's role
-    const where: any = { status: true };
+    /**
+     * Permission matrix:
+     * - COMMUNITY_HEAD        → everyone
+     * - COMMUNITY_SUBHEAD     → admins only
+     * - GOTRA_HEAD            → own gotra
+     * - FAMILY_HEAD           → own family
+     */
+    const ROLE_TARGETS: Record<Role, Role[]> = {
+      COMMUNITY_HEAD: [
+        "COMMUNITY_HEAD",
+        "COMMUNITY_SUBHEAD",
+        "GOTRA_HEAD",
+        "FAMILY_HEAD",
+        "MEMBER",
+      ],
+      COMMUNITY_SUBHEAD: ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"],
+      GOTRA_HEAD: ["FAMILY_HEAD", "MEMBER"],
+      FAMILY_HEAD: ["MEMBER"],
+      MEMBER: [],
+    };
 
+    // Validate targetRole if provided
+    if (targetRole) {
+      const allowed = ROLE_TARGETS[senderRole] || [];
+      if (!allowed.includes(targetRole)) {
+        return failure("Invalid target role", "Forbidden", 403);
+      }
+    }
+
+    /**
+     * Base user filter
+     */
+    const where: any = {
+      status: true,
+    };
+
+    /**
+     * Apply role-based scoping
+     */
     switch (senderRole) {
-      case "FAMILY_HEAD":
-      case "FAMILY_MEMBER":
-        // Get sender's family
-        const senderFamily = await prisma.familyMember.findFirst({
-          where: { userId: senderId },
-          select: { family: { select: { id: true } } },
+      case "FAMILY_HEAD": {
+        // Restrict to sender's family
+        const family = await prisma.familyMember.findFirst({
+          where: { userId: senderId, role: "FAMILY_HEAD" },
+          select: { familyId: true },
         });
 
-        if (!senderFamily?.family?.id) {
-          return failure(
-            "User not associated with a family",
-            "Invalid State",
-            400,
-          );
+        if (!family) {
+          return failure("Family not found", "Invalid State", 400);
         }
 
-        where.familyId = senderFamily.family.id;
+        where.families = {
+          some: { familyId: family.familyId },
+        };
         break;
+      }
 
-      case "GOTRA_HEAD":
-        // Get sender's gotra
-        const senderGotra = await prisma.profile.findUnique({
+      case "GOTRA_HEAD": {
+        // Restrict to sender's gotra
+        const profile = await prisma.profile.findUnique({
           where: { userId: senderId },
           select: { gotra: true },
         });
 
-        if (!senderGotra?.gotra) {
-          return failure(
-            "User not associated with a gotra",
-            "Invalid State",
-            400,
-          );
+        if (!profile?.gotra) {
+          return failure("Gotra not found", "Invalid State", 400);
         }
 
-        where.gotraId = senderGotra.gotra;
+        where.profile = {
+          gotra: profile.gotra,
+        };
         break;
+      }
+
+      case "COMMUNITY_SUBHEAD": {
+        // Admins only
+        where.role = {
+          in: ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"],
+        };
+        break;
+      }
 
       case "COMMUNITY_HEAD":
-      case "COMMUNITY_SUBHEAD":
-        // No additional filter - broadcast to entire community
+        // No restriction (full broadcast)
         break;
-
-      default:
-        return failure("Unauthorized role", "Authorization Error", 403);
     }
 
-    // Apply optional targetRole filter
-    if (targetRole && typeof targetRole === "string") {
+    /**
+     * Optional role filter (after scope)
+     */
+    if (targetRole) {
       where.role = targetRole;
     }
 
+    /**
+     * Fetch recipients
+     */
     const users = await prisma.user.findMany({
       where,
       select: { id: true },
     });
 
     if (!users.length) {
-      return failure("No users found for the target filter", "Not Found", 404);
+      return failure("No users found for broadcast", "Not Found", 404);
     }
 
-    const data = users.map((u: any) => ({
-      userId: u.id,
-      message,
-      type,
-      channel,
-    }));
-
-    // createMany for performance
-    await prisma.notification.createMany({ data });
+    /**
+     * Bulk create notifications
+     */
+    await prisma.notification.createMany({
+      data: users.map((u) => ({
+        userId: u.id,
+        message,
+        type,
+        channel,
+      })),
+    });
 
     return success("Notifications broadcasted", { count: users.length }, 201);
   } catch (err) {
