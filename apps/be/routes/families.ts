@@ -2,7 +2,7 @@ import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import { hashPassword } from "@modheshwari/utils/hash";
 
-import { requireAuth } from "./auth-middleware";
+import { requireAuth } from "./authMiddleware";
 
 /**
  * Create a Family for the authenticated user and make them the head.

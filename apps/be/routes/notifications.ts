@@ -1,7 +1,6 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
-
-import { requireAuth } from "./auth-middleware";
+import { requireAuth } from "./authMiddleware";
 
 /**
  * Broadcast a notification to users based on sender's role and scope

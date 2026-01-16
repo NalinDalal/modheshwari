@@ -1,7 +1,7 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 
-import { requireAuth } from "./auth-middleware";
+import { requireAuth } from "./authMiddleware";
 
 const ADMIN_ROLES = ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"];
 

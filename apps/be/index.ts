@@ -27,7 +27,7 @@ import {
   handleReviewInvite,
 } from "./routes/families";
 import { handleGetMe } from "./routes/me";
-import { handleGetFamilyMembers } from "./routes/family-members";
+import { handleGetFamilyMembers } from "./routes/familyMembers";
 
 // Search
 import { handleSearch } from "./routes/search";
@@ -44,7 +44,7 @@ import {
   handleGetResourceRequest,
   handleReviewResourceRequest,
   handleListNotifications,
-} from "./routes/resource-request";
+} from "./routes/resourceReq";
 import { handleCreateNotification } from "./routes/notifications";
 
 // Admin endpoints
@@ -62,7 +62,7 @@ import {
   handleUpdateMedical,
   handleSearchByBloodGroup,
 } from "./routes/medical";
-import { handleFamilyTransfer } from "./routes/family-transfer";
+import { handleFamilyTransfer } from "./routes/familyTransfer";
 
 // ------------------ Utility path matcher ------------------
 

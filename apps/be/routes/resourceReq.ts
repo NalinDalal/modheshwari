@@ -1,7 +1,8 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
-import { requireAuth } from "./auth-middleware";
+import { requireAuth } from "./authMiddleware";
 import { isRateLimited } from "@modheshwari/utils/rate-limit";
+import type { ApprovalStatus } from "@prisma/client";
 
 /* =========================================================
    CREATE RESOURCE REQUEST (RATE LIMITED)
@@ -89,7 +90,6 @@ export async function handleCreateResourceRequest(
         data: {
           userId,
           resource: body.resource,
-          details: body.details ?? null,
           status: "PENDING",
         },
       });
@@ -109,7 +109,9 @@ export async function handleCreateResourceRequest(
           data: {
             userId: a.id,
             type: "RESOURCE_REQUEST",
-            message: `New resource request from ${auth.payload.name ?? "a user"}: ${body.resource}`,
+            message: `New resource request from ${
+              auth.payload.name ?? "a user"
+            }: ${body.resource}`,
           },
         });
       }
@@ -228,13 +230,14 @@ export async function handleReviewResourceRequest(
     if (!auth.ok) return auth.response as Response;
 
     const reviewerId = auth.payload.userId ?? auth.payload.id;
+    const reviewerName = auth.payload.name ?? null;
     const body = (await req.json().catch(() => null)) as any;
 
     if (!body?.action) {
       return failure("Missing action", "Validation Error", 400);
     }
 
-    const statusMap: Record<string, string> = {
+    const statusMap: Record<string, ApprovalStatus> = {
       approve: "APPROVED",
       reject: "REJECTED",
       changes: "CHANGES_REQUESTED",
@@ -265,9 +268,8 @@ export async function handleReviewResourceRequest(
         where: { requestId: id },
       });
 
-      let overall = "PENDING";
-      if (approvals.some((a) => a.status === "REJECTED"))
-        overall = "REJECTED";
+      let overall: ApprovalStatus = "PENDING";
+      if (approvals.some((a) => a.status === "REJECTED")) overall = "REJECTED";
       else if (approvals.every((a) => a.status === "APPROVED"))
         overall = "APPROVED";
       else if (approvals.some((a) => a.status === "CHANGES_REQUESTED"))
@@ -275,7 +277,11 @@ export async function handleReviewResourceRequest(
 
       const reqRow = await tx.resourceRequest.update({
         where: { id },
-        data: { status: overall, lastReviewedBy: reviewerId },
+        data: {
+          status: overall,
+          approverId: reviewerId,
+          approverName: reviewerName,
+        },
       });
 
       await tx.notification.create({
