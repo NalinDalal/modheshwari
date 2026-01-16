@@ -1,20 +1,15 @@
-// apps/be/index.ts
-// i guess we should first write up the signup logic for family head
-// then write up logic for login like: userid+pwd, then if the endpoint is specifically like: /api/login/FamilyHead
-// then check if userid+pwd with role=familyhead check with db
-// if true then log logged in else log you are not a family head
-// index.ts lightweight (only routing, not logic).
-
 import { serve } from "bun";
 import { config } from "dotenv";
 import { join } from "path";
 
 // Load env first
 config({ path: join(process.cwd(), "../../.env") });
+// CORS
+import { handleCors, withCorsHeaders } from "./utils/cors";
 
-// Auth
+// Rate limiting
 import { isRateLimited } from "@modheshwari/utils/rate-limit";
-
+// Auth
 import { handleAdminLogin, handleAdminSignup } from "./routes/auth-admin";
 import { handleFHLogin, handleFHSignup } from "./routes/auth-fh";
 import { handleMemberLogin, handleMemberSignup } from "./routes/auth-fm";
@@ -31,11 +26,6 @@ import { handleGetFamilyMembers } from "./routes/familyMembers";
 
 // Search
 import { handleSearch } from "./routes/search";
-
-// CORS
-import { handleCors, withCorsHeaders } from "./utils/cors";
-
-// Rate limiting
 
 // Resource Requests
 import {
@@ -63,32 +53,7 @@ import {
   handleSearchByBloodGroup,
 } from "./routes/medical";
 import { handleFamilyTransfer } from "./routes/familyTransfer";
-
-// ------------------ Utility path matcher ------------------
-
-/**
- * Performs match operation.
- * @param {string} path - Description of path
- * @param {string} pattern - Description of pattern
- * @returns {Record<string, string>} Description of return value
- */
-function match(path: string, pattern: string) {
-  const keys: string[] = [];
-  const regexStr =
-    "^" +
-    pattern.replace(/:[^/]+/g, (m) => {
-      keys.push(m.slice(1));
-      return "([^/]+)";
-    }) +
-    "$";
-
-  const m = path.match(new RegExp(regexStr));
-  if (!m) return null;
-
-  const params: Record<string, string> = {};
-  keys.forEach((k, i) => (params[k] = m[i + 1] ?? ""));
-  return params;
-}
+import { match } from "@modheshwari/utils/match";
 
 // ------------------ Auth Route Table ------------------
 
