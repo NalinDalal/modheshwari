@@ -1,62 +1,45 @@
 /**
- * Simple search endpoint for demo purposes.
- * - Validates & normalizes the query
- * - Enforces a per-IP rate limit (in-memory)
- * - Uses a short in-memory cache (in-memory TTL)
- * - Falls back to a basic Prisma user search (name/email contains)
+ * Search endpoint with structured query modes.
+ * Parses structured queries (blood:, gotra:, role:, family:, profession:, location:)
+ * - Enforces per-IP rate limit (in-memory)
+ * - Uses in-memory cache (in-memory TTL) with search-mode-aware keys
+ *  - Supports exact and substring matches based on mode
+ * - Falls back to full-text search for unstructured queries
  */
 
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
-
-type CacheEntry = { ts: number; data: any };
-const CACHE_TTL = 60 * 1000; // 60 seconds
-const cache = new Map<string, CacheEntry>();
-
-// Very small in-memory rate limiter (demo only)
-const RATE_WINDOW = 60 * 1000;
-const RATE_MAX = 30;
-const hits: Map<string, number[]> = new Map();
-
-/**
- * Safely get client IP from headers or Bun internals.
- */
-function getClientIp(req: Request) {
-  const header =
-    req.headers.get("x-forwarded-for") ||
-    req.headers.get("x-real-ip") ||
-    req.headers.get("cf-connecting-ip");
-
-  if (header) {
-    const parts = header.split(",");
-    return parts[0]?.trim() || "unknown";
-  }
-
-  // Bun-specific fallback — not always present
-  try {
-    return (req as any).ip || "unknown";
-  } catch {
-    return "unknown";
-  }
-}
-
-/**
- * Simple sliding-window rate limit tracker.
- */
-function isRateLimited(ip: string) {
-  const now = Date.now();
-  const arr = hits.get(ip) || [];
-
-  const recent = arr.filter((t) => now - t < RATE_WINDOW);
-  recent.push(now);
-
-  hits.set(ip, recent);
-
-  return recent.length > RATE_MAX;
-}
+import {
+  parseQuery,
+  SearchMode,
+  isValidBloodGroup,
+  normalizeBloodGroup,
+  normalizeRole,
+  buildWhereClause,
+  buildSelectClause,
+} from "../utils/searchParser";
+import { isRateLimited, getClientIp } from "@modheshwari/utils/rate-limit";
 
 /**
  * GET /api/search?q=xxx
+ *
+ * Supported modes:
+ * - ?q=blood:O+         (exact match)
+ * - ?q=gotra:Shandilya  (substring, case-insensitive)
+ * - ?q=role:FAMILY_HEAD (exact match, role enum)
+ * - ?q=family:Patel     (substring, case-insensitive)
+ * - ?q=profession:doctor (substring, case-insensitive)
+ * - ?q=location:Mumbai  (exact and substring, case-insensitive)
+ * - ?q=rahul            (fallback: searches name, email, profession, gotra, location)
+ *
+ * Cache behavior:
+ * - Cached per search mode (blood:O+ != blood:A+)
+ * - TTL: 60 seconds
+ * - Cache key format: "{MODE}:{value_lowercase}"
+ *
+ * Rate limiting:
+ * - 30 requests per 60 seconds per IP
+ * - Sliding window algorithm (fair distribution)
  */
 export async function handleSearch(req: Request): Promise<Response> {
   try {
@@ -72,33 +55,62 @@ export async function handleSearch(req: Request): Promise<Response> {
       return failure("Too many requests", "Rate Limit", 429);
     }
 
-    const key = q.toLowerCase();
+    // Parse structured query
+    const parsed = parseQuery(q);
+
+    // Create cache key that includes search mode (highly specific)
+    const cacheKey = `${parsed.mode}:${parsed.value.toLowerCase()}`;
     const now = Date.now();
 
-    // Memory cache
-    const cached = cache.get(key);
+    // Check cache first (avoid DB hit if possible)
+    const cached = cache.get(cacheKey);
     if (cached && now - cached.ts < CACHE_TTL) {
       return success("Search results", cached.data);
     }
 
-    // Actual DB search
+    // Validate mode-specific requirements before DB query
+    if (parsed.mode === SearchMode.BLOOD) {
+      if (!isValidBloodGroup(parsed.value)) {
+        return failure(
+          "Invalid blood group. Use format like O+, A-, AB+, etc.",
+          "Validation Error",
+          400,
+        );
+      }
+    }
+
+    if (parsed.mode === SearchMode.ROLE) {
+      const validRoles = [
+        "COMMUNITY_HEAD",
+        "COMMUNITY_SUBHEAD",
+        "GOTRA_HEAD",
+        "FAMILY_HEAD",
+        "MEMBER",
+      ];
+      const normalizedRole = normalizeRole(parsed.value);
+      if (!validRoles.includes(normalizedRole)) {
+        return failure(
+          `Invalid role. Valid roles: ${validRoles.join(", ")}`,
+          "Validation Error",
+          400,
+        );
+      }
+    }
+
+    // Build dynamic where clause based on mode
+    const where = buildWhereClause(parsed.mode, parsed.value);
+    const select = buildSelectClause();
+
+    // Execute search query
     const users = await prisma.user.findMany({
-      where: {
-        OR: [
-          { name: { contains: q, mode: "insensitive" } },
-          { email: { contains: q, mode: "insensitive" } },
-        ],
-      },
+      where,
+      select,
       take: 20,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-      },
     });
 
-    cache.set(key, { ts: now, data: users });
+    // Cache results with mode-aware key
+    // Important: TTL is short (60s) to avoid stale data for fast-changing fields
+    cache.set(cacheKey, { ts: now, data: users });
 
     return success("Search results", users);
   } catch (err) {
