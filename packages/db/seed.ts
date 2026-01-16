@@ -790,6 +790,50 @@ async function main() {
   ]);
 
   console.log("Created notifications");
+
+  const resources = [
+    {
+      name: "Hall 1",
+      type: "marriage_hall",
+      description: "Main banquet hall - capacity 200",
+      capacity: 200,
+    },
+    {
+      name: "Hall 2",
+      type: "marriage_hall",
+      description: "Secondary banquet hall - capacity 150",
+      capacity: 150,
+    },
+    {
+      name: "Hall 3",
+      type: "marriage_hall",
+      description: "Community hall - capacity 100",
+      capacity: 100,
+    },
+  ];
+
+  for (const resource of resources) {
+    try {
+      const existing = await prisma.resource.findFirst({
+        where: { name: resource.name },
+      });
+
+      if (!existing) {
+        await prisma.resource.create({
+          data: {
+            ...resource,
+            status: "AVAILABLE",
+          },
+        });
+        console.log(`✓ Created resource: ${resource.name}`);
+      } else {
+        console.log(`• Resource already exists: ${resource.name}`);
+      }
+    } catch (err) {
+      console.error(`✗ Error creating resource ${resource.name}:`, err);
+    }
+  }
+
   console.log("Database seeding completed");
 }
 

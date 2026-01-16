@@ -295,15 +295,51 @@ model Payment {
 }
 
 //
+// -------------------- RESOURCE --------------------
+// Represents a specific resource (e.g., Hall 1, Hall 2, Hall 3).
+// Used for tracking availability and preventing double-booking.
+//
+
+model Resource {
+  id              String            @id @default(uuid())
+  name            String            // "Hall 1", "Hall 2", "Hall 3"
+  type            String            // "marriage_hall", "community_center", etc.
+  description     String?
+  capacity        Int?              // Seating capacity if applicable
+  status          ResourceStatus    @default(AVAILABLE)
+  resourceRequests ResourceRequest[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([name, type])
+}
+
+//
+// -------------------- RESOURCE STATUS ENUM --------------------
+// Defines resource availability states.
+//
+
+enum ResourceStatus {
+  AVAILABLE
+  BOOKED
+  MAINTENANCE
+  UNAVAILABLE
+}
+
+//
 // -------------------- RESOURCE REQUEST --------------------
 // Tracks user requests and admin approvals for community resources.
+// Now links to specific Resource instances with date ranges.
 //
 
 model ResourceRequest {
   id           String                    @id @default(uuid())
   user         User                      @relation("RequestedBy", fields: [userId], references: [id])
   userId       String
-  resource     String
+  resource     Resource                  @relation(fields: [resourceId], references: [id])
+  resourceId   String
+  startDate    DateTime?                 // Booking start date
+  endDate      DateTime?                 // Booking end date
   status       ApprovalStatus // request's overall status
   // keep optional last-approver snapshot for quick access
   approver     User?                     @relation("ApprovedBy", fields: [approverId], references: [id])
