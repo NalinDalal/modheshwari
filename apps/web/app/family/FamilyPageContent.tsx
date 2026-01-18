@@ -79,8 +79,9 @@ export default function FamilyPageContent() {
         if (!res.ok) throw new Error("Failed to fetch members");
 
         const data = await res.json();
-        setFamilyName(data.data.family.name);
-        setMembers(data.data.members);
+        setFamilyName(data.data?.family?.name || "");
+        // Extract members from new pagination response format
+        setMembers(data.data?.members || []);
       } catch (err) {
         console.error("Error fetching members:", err);
       } finally {

@@ -3,6 +3,10 @@ import { success, failure } from "@modheshwari/utils/response";
 import { requireAuth } from "./authMiddleware";
 import { isRateLimited } from "@modheshwari/utils/rate-limit";
 import type { ApprovalStatus } from "@prisma/client";
+import {
+  parsePagination,
+  buildPaginationResponse,
+} from "@modheshwari/utils/pagination";
 
 /* =========================================================
    CREATE RESOURCE REQUEST (RATE LIMITED)
@@ -145,6 +149,16 @@ export async function handleListResourceRequests(
     const url = new URL(req.url);
     const status = url.searchParams.get("status") || undefined;
 
+    // Parse pagination
+    const { skip, take, page, limit } = parsePagination(
+      {
+        page: url.searchParams.get("page"),
+        limit: url.searchParams.get("limit"),
+      },
+      20,
+      100,
+    );
+
     const adminRoles = ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"];
     const where: any = {};
 
@@ -153,13 +167,23 @@ export async function handleListResourceRequests(
       where.userId = payload.userId ?? payload.id;
     }
 
+    // Get total count
+    const total = await prisma.resourceRequest.count({ where });
+
+    // Get paginated results
     const list = await prisma.resourceRequest.findMany({
       where,
       include: { approvals: true, user: true },
       orderBy: { createdAt: "desc" },
+      skip,
+      take,
     });
 
-    return success("Requests fetched", { requests: list }, 200);
+    return success(
+      "Requests fetched",
+      buildPaginationResponse(list, total, page, limit),
+      200,
+    );
   } catch (err) {
     console.error("List ResourceRequests Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);

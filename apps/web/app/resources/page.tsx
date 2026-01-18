@@ -2,14 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Package,
-  Plus,
-  Check,
-  X,
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
+import { Package, Plus, Check, X, Loader2, AlertCircle } from "lucide-react";
 
 /**
  * Represents a single resource request.
@@ -135,7 +128,8 @@ export default function ResourceRequestsPage(): React.JSX.Element {
         return;
       }
       const json = await res.json();
-      setRequests(json.data?.requests || []);
+      // Extract data from new pagination response format
+      setRequests(json.data?.data || []);
     } catch {
       setRequests([]);
     } finally {

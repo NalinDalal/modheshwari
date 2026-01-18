@@ -123,8 +123,8 @@ export default function SearchInput({
         if (!res.ok) throw new Error("Search failed");
         const body = await res.json();
 
-        // backend returns: { success: true, message, data: [...] }
-        const items: SearchResult[] = body?.data || [];
+        // backend returns: { success: true, message, data: { data: [...], pagination: {...} } }
+        const items: SearchResult[] = body?.data?.data || [];
 
         cacheRef.current.set(query, items);
         setResults(items);

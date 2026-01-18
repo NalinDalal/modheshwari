@@ -10,6 +10,10 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import {
+  parsePagination,
+  buildPaginationResponse,
+} from "@modheshwari/utils/pagination";
+import {
   parseQuery,
   SearchMode,
   isValidBloodGroup,
@@ -35,6 +39,11 @@ const cache = new Map<string, CacheEntry>();
  * - ?q=profession:doctor (substring, case-insensitive)
  * - ?q=location:Mumbai  (exact and substring, case-insensitive)
  * - ?q=rahul            (fallback: searches name, email, profession, gotra, location)
+ *
+ *
+ * Pagination:
+ * - ?page=1&limit=20
+ * - Default limit: 20, max limit: 100
  *
  * Cache behavior:
  * - Cached per search mode (blood:O+ != blood:A+)
@@ -67,6 +76,16 @@ export async function handleSearch(req: Request): Promise<Response> {
     // Parse structured query
     const parsed = parseQuery(q);
 
+    // Parse pagination
+    const { skip, take, page, limit } = parsePagination(
+      {
+        page: url.searchParams.get("page"),
+        limit: url.searchParams.get("limit"),
+      },
+      20,
+      100,
+    );
+
     // Create cache key that includes search mode (highly specific)
     const cacheKey = `${parsed.mode}:${parsed.value.toLowerCase()}`;
     const now = Date.now();
@@ -74,7 +93,18 @@ export async function handleSearch(req: Request): Promise<Response> {
     // Check cache first (avoid DB hit if possible)
     const cached = cache.get(cacheKey);
     if (cached && now - cached.ts < CACHE_TTL) {
-      return success("Search results", cached.data);
+      const cachedUsers = cached.data;
+      // Apply pagination to cached results
+      const paginatedUsers = cachedUsers.slice(skip, skip + take);
+      return success(
+        "Search results",
+        buildPaginationResponse(
+          paginatedUsers,
+          cachedUsers.length,
+          page,
+          limit,
+        ),
+      );
     }
 
     // Validate mode-specific requirements before DB query
@@ -110,18 +140,26 @@ export async function handleSearch(req: Request): Promise<Response> {
     const where = buildWhereClause(parsed.mode, parsed.value);
     const select = buildSelectClause();
 
-    // Execute search query
+    // Get total count
+    const total = await prisma.user.count({ where });
+
+    // Execute search query with pagination
     const users = await prisma.user.findMany({
       where,
       select,
-      take: 20,
+      skip,
+      take,
+      orderBy: { createdAt: "desc" },
     });
 
     // Cache results with mode-aware key
     // Important: TTL is short (60s) to avoid stale data for fast-changing fields
     cache.set(cacheKey, { ts: now, data: users });
 
-    return success("Search results", users);
+    return success(
+      "Search results",
+      buildPaginationResponse(users, total, page, limit),
+    );
   } catch (err) {
     console.error("Search Error:", err);
     return failure("Internal Server Error", "Unexpected", 500);

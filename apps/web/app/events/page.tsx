@@ -69,7 +69,8 @@ export default function EventsPage() {
       if (!response.ok) throw new Error("Failed to fetch events");
 
       const data = await response.json();
-      setEvents(data.data.events || []);
+      // Extract data from new pagination response format
+      setEvents(data.data?.data || []);
     } catch (error) {
       console.error("Error fetching events:", error);
     } finally {

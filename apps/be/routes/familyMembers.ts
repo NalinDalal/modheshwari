@@ -1,11 +1,16 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
+import {
+  parsePagination,
+  buildPaginationResponse,
+} from "@modheshwari/utils/pagination";
 import { extractAndVerifyToken } from "../utils/auth";
 
 /**
  * GET /api/family/members
  * Returns all (or only alive) members of the family the head belongs to
  * Add `?all=true` to include dead members.
+ * Supports pagination with `?page=1&limit=50`
  */
 export async function handleGetFamilyMembers(req: Request): Promise<Response> {
   try {
@@ -21,8 +26,23 @@ export async function handleGetFamilyMembers(req: Request): Promise<Response> {
     const url = new URL(req.url);
     const includeAll = url.searchParams.get("all") === "true";
 
+    // Parse pagination
+    const { skip, take, page, limit } = parsePagination(
+      {
+        page: url.searchParams.get("page"),
+        limit: url.searchParams.get("limit"),
+      },
+      50,
+      100,
+    );
+
     // If not all, only fetch alive members
     const userFilter = includeAll ? {} : { status: true };
+
+    // Get total count
+    const total = await prisma.familyMember.count({
+      where: { familyId: family.id, user: userFilter },
+    });
 
     const members = await prisma.familyMember.findMany({
       where: { familyId: family.id, user: userFilter },
@@ -37,6 +57,9 @@ export async function handleGetFamilyMembers(req: Request): Promise<Response> {
           },
         },
       },
+      skip,
+      take,
+      orderBy: { joinedAt: "desc" },
     });
 
     // Filter out null users (dead ones when all=false)
@@ -46,7 +69,16 @@ export async function handleGetFamilyMembers(req: Request): Promise<Response> {
       includeAll
         ? "All family members fetched"
         : "Alive family members fetched",
-      { family, members: filteredMembers },
+      {
+        family,
+        members: filteredMembers,
+        pagination: buildPaginationResponse(
+          filteredMembers,
+          total,
+          page,
+          limit,
+        ),
+      },
     );
   } catch (err) {
     console.error(" handleGetFamilyMembers error:", err);

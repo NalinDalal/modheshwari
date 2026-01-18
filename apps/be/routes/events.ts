@@ -5,6 +5,10 @@
 
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
+import {
+  parsePagination,
+  buildPaginationResponse,
+} from "@modheshwari/utils/pagination";
 import { requireAuth } from "./authMiddleware";
 
 /**
@@ -81,12 +85,22 @@ export async function handleCreateEvent(req: Request): Promise<Response> {
 /**
  * GET /api/events
  * List all approved events (public)
- * Query params: status (optional filter)
+ * Query params: status (optional filter), page, limit (pagination)
  */
 export async function handleListEvents(req: Request): Promise<Response> {
   try {
     const url = new URL(req.url);
     const statusFilter = url.searchParams.get("status");
+
+    // Parse pagination
+    const { skip, take, page, limit } = parsePagination(
+      {
+        page: url.searchParams.get("page"),
+        limit: url.searchParams.get("limit"),
+      },
+      10,
+      100,
+    );
 
     const where: any = {};
     if (
@@ -101,6 +115,9 @@ export async function handleListEvents(req: Request): Promise<Response> {
       where.status = "APPROVED";
     }
 
+    // Get total count
+    const total = await prisma.event.count({ where });
+
     const events = await prisma.event.findMany({
       where,
       include: {
@@ -112,9 +129,14 @@ export async function handleListEvents(req: Request): Promise<Response> {
         },
       },
       orderBy: { date: "asc" },
+      skip,
+      take,
     });
 
-    return success("Events fetched", { events });
+    return success(
+      "Events fetched",
+      buildPaginationResponse(events, total, page, limit),
+    );
   } catch (err) {
     console.error("ListEvents Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
