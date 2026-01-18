@@ -1,0 +1,2089 @@
+openapi: 3.0.0
+info:
+  title: Modheshwari Backend API
+  description: Community management system API for managing families, resources, and member communications
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.modheshwari.com
+    description: Production server
+  - url: https://staging.modheshwari.com
+    description: Staging server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        '400':
+          description: Bad request
+
+  # ==================== AUTH ENDPOINTS ====================
+
+  /api/signup/communityhead:
+    post:
+      tags:
+        - Authentication
+      summary: Signup as Community Head
+      operationId: signupCommunityHead
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: "Raj Kumar"
+                email:
+                  type: string
+                  format: email
+                  example: "raj@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "securePassword123"
+                gotra:
+                  type: string
+                  example: "Sharma"
+      responses:
+        '201':
+          description: Community Head account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already registered
+
+  /api/signup/communitysubhead:
+    post:
+      tags:
+        - Authentication
+      summary: Signup as Community Subhead
+      operationId: signupCommunitySubhead
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                gotra:
+                  type: string
+      responses:
+        '201':
+          description: Community Subhead account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/signup/gotrahead:
+    post:
+      tags:
+        - Authentication
+      summary: Signup as Gotra Head
+      operationId: signupGotraHead
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - gotra
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                gotra:
+                  type: string
+                  description: Gotra name (required for Gotra Head)
+      responses:
+        '201':
+          description: Gotra Head account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/signup/familyhead:
+    post:
+      tags:
+        - Authentication
+      summary: Signup as Family Head
+      operationId: signupFamilyHead
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - familyId
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                familyId:
+                  type: string
+                  description: Family ID to associate with
+      responses:
+        '201':
+          description: Family Head account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/signup/member:
+    post:
+      tags:
+        - Authentication
+      summary: Signup as Family Member
+      operationId: signupMember
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                familyId:
+                  type: string
+                  description: Family ID (optional)
+      responses:
+        '201':
+          description: Member account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/login/communityhead:
+    post:
+      tags:
+        - Authentication
+      summary: Login as Community Head
+      operationId: loginCommunityHead
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/login/communitysubhead:
+    post:
+      tags:
+        - Authentication
+      summary: Login as Community Subhead
+      operationId: loginCommunitySubhead
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/login/gotrahead:
+    post:
+      tags:
+        - Authentication
+      summary: Login as Gotra Head
+      operationId: loginGotraHead
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/login/familyhead:
+    post:
+      tags:
+        - Authentication
+      summary: Login as Family Head
+      operationId: loginFamilyHead
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/login/member:
+    post:
+      tags:
+        - Authentication
+      summary: Login as Family Member
+      operationId: loginMember
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ==================== FAMILY ENDPOINTS ====================
+
+  /api/families:
+    post:
+      tags:
+        - Families
+      summary: Create a new family
+      operationId: createFamily
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Family name
+                  example: "Patel Family"
+                uniqueId:
+                  type: string
+                  description: Unique identifier for the family (auto-generated if not provided)
+                  example: "FAM-ABC123"
+      responses:
+        '201':
+          description: Family created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      family:
+                        $ref: '#/components/schemas/Family'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/families/{familyId}/members:
+    post:
+      tags:
+        - Families
+      summary: Add member to family (Family Head only)
+      operationId: addFamilyMember
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/familyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: User ID to add
+                email:
+                  type: string
+                  format: email
+                  description: Email of user to add
+                role:
+                  type: string
+                  enum: [FAMILY_HEAD, MEMBER]
+                  default: MEMBER
+      responses:
+        '200':
+          description: Member added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Only Family Head can add members
+
+  /api/families/{familyId}/invites:
+    patch:
+      tags:
+        - Families
+      summary: List family invites
+      operationId: listFamilyInvites
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/familyId'
+      responses:
+        '200':
+          description: Invites retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invite'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/families/{familyId}/invites/{inviteId}:
+    patch:
+      tags:
+        - Families
+      summary: Review family invite (Accept/Reject)
+      operationId: reviewFamilyInvite
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/familyId'
+        - $ref: '#/components/parameters/inviteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [accept, reject]
+      responses:
+        '200':
+          description: Invite processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Invite not found
+
+  # ==================== PROFILE ENDPOINTS ====================
+
+  /api/me:
+    get:
+      tags:
+        - Profile
+      summary: Get authenticated user profile
+      operationId: getProfile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/family/members:
+    get:
+      tags:
+        - Profile
+      summary: Get family members
+      operationId: getFamilyMembers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: familyId
+          in: query
+          schema:
+            type: string
+          description: Family ID (if not in auth context)
+      responses:
+        '200':
+          description: Family members retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FamilyMember'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/profile/medical:
+    patch:
+      tags:
+        - Profile
+      summary: Update medical information
+      operationId: updateMedical
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bloodGroup:
+                  type: string
+                  enum: [O+, O-, A+, A-, B+, B-, AB+, AB-]
+                medicalHistory:
+                  type: string
+                allergies:
+                  type: string
+                emergencyContact:
+                  type: string
+      responses:
+        '200':
+          description: Medical information updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==================== SEARCH ENDPOINTS ====================
+
+  /api/search:
+    get:
+      tags:
+        - Search
+      summary: Search members with structured queries
+      operationId: searchMembers
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: |
+            Search query supporting multiple modes:
+            - blood:O+ (exact blood group match)
+            - gotra:Shandilya (substring search)
+            - role:FAMILY_HEAD (role search)
+            - family:Patel (family name search)
+            - profession:doctor (profession search)
+            - location:Mumbai (location search)
+            - text search (falls back to name/email/profession/gotra/location)
+          example: "blood:O+"
+      responses:
+        '200':
+          description: Search results retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '400':
+          description: Query too short (minimum 2 characters)
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/medical/search:
+    get:
+      tags:
+        - Search
+      summary: Search members by blood group
+      operationId: searchByBloodGroup
+      security: []
+      parameters:
+        - name: bloodGroup
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [O+, O-, A+, A-, B+, B-, AB+, AB-]
+      responses:
+        '200':
+          description: Members with matching blood group
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ==================== RESOURCE REQUEST ENDPOINTS ====================
+
+  /api/resource-requests:
+    post:
+      tags:
+        - Resource Requests
+      summary: Create resource request
+      operationId: createResourceRequest
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - resource
+              properties:
+                resource:
+                  type: string
+                  description: Description of resource needed
+                  example: "Food for family of 5 for one week"
+                urgency:
+                  type: string
+                  enum: [LOW, MEDIUM, HIGH, CRITICAL]
+                  default: MEDIUM
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Resource request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ResourceRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          description: Too many requests (rate limited to 5 per 5 minutes)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      tags:
+        - Resource Requests
+      summary: List resource requests
+      operationId: listResourceRequests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, APPROVED, REJECTED]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Resource requests retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ResourceRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/resource-requests/{requestId}:
+    get:
+      tags:
+        - Resource Requests
+      summary: Get resource request details
+      operationId: getResourceRequest
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestId'
+      responses:
+        '200':
+          description: Resource request details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ResourceRequest'
+        '404':
+          description: Resource request not found
+
+  /api/resource-requests/{requestId}/review:
+    post:
+      tags:
+        - Resource Requests
+      summary: Review resource request (approve/reject)
+      operationId: reviewResourceRequest
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [APPROVED, REJECTED]
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Request reviewed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==================== NOTIFICATIONS ENDPOINTS ====================
+
+  /api/notifications:
+    get:
+      tags:
+        - Notifications
+      summary: List notifications for user
+      operationId: listNotifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Notifications retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Notifications
+      summary: Create and broadcast notification
+      operationId: createNotification
+      security:
+        - BearerAuth: []
+      description: Only admins (COMMUNITY_HEAD, COMMUNITY_SUBHEAD, GOTRA_HEAD, FAMILY_HEAD) can create notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  description: Notification message
+                type:
+                  type: string
+                  enum: [GENERIC, EVENT_APPROVAL, EVENT_REGISTRATION, RESOURCE_REQUEST, PAYMENT_RECEIPT, STATUS_UPDATE_REQUEST]
+                  default: GENERIC
+                channel:
+                  type: string
+                  enum: [IN_APP, EMAIL, PUSH]
+                  default: IN_APP
+                targetRole:
+                  type: string
+                  description: Optional - specify target role for broadcast
+      responses:
+        '201':
+          description: Notification created and broadcasted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Only admins can create notifications
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ==================== STATUS UPDATE REQUEST ENDPOINTS ====================
+
+  /api/status-update-requests:
+    post:
+      tags:
+        - Status Updates
+      summary: Create status update request
+      operationId: createStatusUpdateRequest
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetUserId
+              properties:
+                targetUserId:
+                  type: string
+                  description: User ID to update status for
+                reason:
+                  type: string
+                  description: Reason for status update (e.g., death notification)
+      responses:
+        '201':
+          description: Status update request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/StatusUpdateRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      tags:
+        - Status Updates
+      summary: List status update requests
+      operationId: listStatusUpdateRequests
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Status update requests retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StatusUpdateRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/status-update-requests/{requestId}/review:
+    post:
+      tags:
+        - Status Updates
+      summary: Review status update request
+      operationId: reviewStatusUpdateRequest
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/requestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject]
+      responses:
+        '200':
+          description: Status update request reviewed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==================== ADMIN ENDPOINTS ====================
+
+  /api/admin/requests:
+    get:
+      tags:
+        - Admin
+      summary: List all requests (resource requests and events)
+      operationId: listAllRequests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [resource, status, all]
+            default: all
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, APPROVED, REJECTED]
+      responses:
+        '200':
+          description: All requests retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      resourceRequests:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ResourceRequest'
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+        '403':
+          description: Forbidden - Admin access required
+
+  /api/admin/event/{eventId}/status:
+    post:
+      tags:
+        - Admin
+      summary: Update event status
+      operationId: updateEventStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [PENDING, APPROVED, REJECTED, CANCELLED]
+      responses:
+        '200':
+          description: Event status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Admin access required
+        '404':
+          description: Event not found
+
+  # ==================== FAMILY TRANSFER ENDPOINTS ====================
+
+  /api/family/transfer:
+    post:
+      tags:
+        - Family Transfer
+      summary: Transfer family head to another member
+      operationId: transferFamily
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - familyId
+                - newHeadId
+              properties:
+                familyId:
+                  type: string
+                newHeadId:
+                  type: string
+                  description: User ID of the new family head
+      responses:
+        '200':
+          description: Family transferred successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '403':
+          description: Only current family head can transfer
+
+  # ==================== FAMILY TREE ENDPOINTS ====================
+
+  /api/family/tree:
+    get:
+      tags:
+        - Family Tree
+      summary: Get family tree for user
+      operationId: getFamilyTree
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+          description: Target user ID (defaults to authenticated user)
+        - name: view
+          in: query
+          schema:
+            type: string
+            enum: [ancestors, descendants, full]
+            default: full
+          description: Tree view type
+        - name: depth
+          in: query
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+            maximum: 10
+          description: Number of levels to show
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [tree, graph]
+            default: tree
+          description: Response format
+      responses:
+        '200':
+          description: Family tree retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      tree:
+                        $ref: '#/components/schemas/TreeNode'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: User not found
+
+  /api/family/tree/relations:
+    post:
+      tags:
+        - Family Tree
+      summary: Create user relationship
+      operationId: createRelationship
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetUserId
+                - relationType
+              properties:
+                targetUserId:
+                  type: string
+                  description: User ID to relate to
+                relationType:
+                  type: string
+                  enum: [SPOUSE, PARENT, CHILD, SIBLING]
+                  description: Type of relationship
+                reciprocal:
+                  type: boolean
+                  default: true
+                  description: Auto-create reverse relation
+      responses:
+        '201':
+          description: Relationship created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      relation:
+                        $ref: '#/components/schemas/Relationship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: User not found
+
+  /api/family/tree/relations/{relationId}:
+    delete:
+      tags:
+        - Family Tree
+      summary: Delete relationship
+      operationId: deleteRelationship
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: relationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Relationship ID
+      responses:
+        '200':
+          description: Relationship deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - not authorized to delete
+        '404':
+          description: Relationship not found
+
+  # ==================== EVENTS ENDPOINTS ====================
+
+  /api/events:
+    post:
+      tags:
+        - Events
+      summary: Create a new event
+      operationId: createEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - date
+              properties:
+                name:
+                  type: string
+                  description: Event name
+                description:
+                  type: string
+                date:
+                  type: string
+                  format: date-time
+                  description: Event date/time
+                venue:
+                  type: string
+      responses:
+        '201':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      event:
+                        $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      tags:
+        - Events
+      summary: List events
+      operationId: listEvents
+      security: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, APPROVED, REJECTED, CANCELLED]
+          description: Optional status filter (defaults to APPROVED)
+      responses:
+        '200':
+          description: Events retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/events/{id}:
+    get:
+      tags:
+        - Events
+      summary: Get event details
+      operationId: getEvent
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      event:
+                        $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Event not found
+
+  /api/events/{id}/register:
+    post:
+      tags:
+        - Events
+      summary: Register for an event
+      operationId: registerForEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Registration created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      registration:
+                        $ref: '#/components/schemas/EventRegistration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Event not approved for registration
+        '404':
+          description: Event not found
+        '409':
+          description: Already registered
+
+    delete:
+      tags:
+        - Events
+      summary: Unregister from an event
+      operationId: unregisterFromEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Unregistered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Registration not found
+
+  /api/events/{id}/registrations:
+    get:
+      tags:
+        - Events
+      summary: List registrations for an event (admin only)
+      operationId: listEventRegistrations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registrations retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      registrations:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/EventRegistration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Admin roles only
+
+  /api/events/{id}/approve:
+    post:
+      tags:
+        - Events
+      summary: Approve or reject an event (admin only)
+      operationId: approveEvent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [APPROVED, REJECTED]
+                remarks:
+                  type: string
+      responses:
+        '200':
+          description: Approval recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      eventStatus:
+                        $ref: '#/components/schemas/EventStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Approval record or event not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  parameters:
+    familyId:
+      name: familyId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Family ID
+
+    inviteId:
+      name: inviteId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Invite ID
+
+    requestId:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Request ID
+
+  responses:
+    BadRequest:
+      description: Bad request - validation error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+
+    Unauthorized:
+      description: Unauthorized - missing or invalid token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+                example: "Unauthorized"
+
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+                example: "Too many requests"
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [COMMUNITY_HEAD, COMMUNITY_SUBHEAD, GOTRA_HEAD, FAMILY_HEAD, MEMBER]
+        gotra:
+          type: string
+        status:
+          type: boolean
+          description: Active/Inactive status
+        createdAt:
+          type: string
+          format: date-time
+        bloodGroup:
+          type: string
+          enum: [O+, O-, A+, A-, B+, B-, AB+, AB-]
+        profession:
+          type: string
+        location:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+              description: JWT authentication token
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    Family:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        uniqueId:
+          type: string
+        headId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyMember'
+
+    FamilyMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        familyId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [FAMILY_HEAD, MEMBER]
+        joinedAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+
+    Invite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        familyId:
+          type: string
+          format: uuid
+        invitedEmail:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [PENDING, ACCEPTED, REJECTED]
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    ResourceRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        requestedBy:
+          type: string
+          format: uuid
+        resource:
+          type: string
+        description:
+          type: string
+        urgency:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        approvals:
+          type: array
+          items:
+            type: object
+            properties:
+              approverId:
+                type: string
+              approverName:
+                type: string
+              role:
+                type: string
+              status:
+                type: string
+                enum: [PENDING, APPROVED, REJECTED]
+
+    StatusUpdateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        targetUserId:
+          type: string
+          format: uuid
+        requestedById:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        finalStatus:
+          type: string
+          enum: [deceased, inactive, relocated]
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED]
+        createdAt:
+          type: string
+          format: date-time
+        approvals:
+          type: array
+          items:
+            type: object
+            properties:
+              approverId:
+                type: string
+              approverName:
+                type: string
+              role:
+                type: string
+              status:
+                type: string
+                enum: [PENDING, APPROVED, REJECTED]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [GENERIC, EVENT_APPROVAL, EVENT_REGISTRATION, RESOURCE_REQUEST, PAYMENT_RECEIPT, STATUS_UPDATE_REQUEST]
+        channel:
+          type: string
+          enum: [IN_APP, EMAIL, PUSH]
+        message:
+          type: string
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        eventId:
+          type: string
+          format: uuid
+        resourceRequestId:
+          type: string
+          format: uuid
+        paymentId:
+          type: string
+          format: uuid
+        statusUpdateRequestId:
+          type: string
+          format: uuid
+
+    TreeNode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [COMMUNITY_HEAD, COMMUNITY_SUBHEAD, GOTRA_HEAD, FAMILY_HEAD, MEMBER]
+        relationshipToUser:
+          type: string
+          description: Relationship type to authenticated user
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/TreeNode'
+        spouse:
+          $ref: '#/components/schemas/TreeNode'
+        parents:
+          type: array
+          items:
+            $ref: '#/components/schemas/TreeNode'
+        siblings:
+          type: array
+          items:
+            $ref: '#/components/schemas/TreeNode'
+
+    Relationship:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fromUserId:
+          type: string
+          format: uuid
+        toUserId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [SPOUSE, PARENT, CHILD, SIBLING]
+        createdAt:
+          type: string
+          format: date-time
+
+    EventStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED, CANCELLED]
+
+    ApprovalStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED, CHANGES_REQUESTED]
+
+    EventApproval:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        approverId:
+          type: string
+          format: uuid
+        approverName:
+          type: string
+        role:
+          type: string
+          enum: [COMMUNITY_HEAD, COMMUNITY_SUBHEAD, GOTRA_HEAD, FAMILY_HEAD, MEMBER]
+        status:
+          $ref: '#/components/schemas/ApprovalStatus'
+        remarks:
+          type: string
+        reviewedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    EventRegistration:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        registeredAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date-time
+        venue:
+          type: string
+        status:
+          $ref: '#/components/schemas/EventStatus'
+        createdById:
+          type: string
+          format: uuid
+        createdBy:
+          $ref: '#/components/schemas/User'
+        approvals:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventApproval'
+        registrations:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventRegistration'
+        _count:
+          type: object
+          properties:
+            registrations:
+              type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    GraphData:
+      type: object
+      description: Deprecated - GraphData schema is no longer used in the API
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+              title:
+                type: string
+              color:
+                type: string
+              shape:
+                type: string
+        edges:
+          type: array
+          items:
+            type: object
+            properties:
+              from:
+                type: string
+              to:
+                type: string
+              label:
+                type: string
+              arrows:
+                type: string
+

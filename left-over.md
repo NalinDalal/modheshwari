@@ -153,8 +153,6 @@ model Profile {
 
 **Estimated Effort:** 3-4 days
 
----
-
 ### 7. Fan-Out services
 
 **Expected:** What if want to fan out message to group of people
@@ -192,32 +190,15 @@ i.e. a profile having status as admin/sub-admin/sub-comm admin can be trasnferre
 
 ### 1. Event Management Features
 
-**Status:** Scaffolded but not fully connected
+**API Endpoints:**
 
-**What's Working:**
-
-- ✅ Event creation API exists
-- ✅ Event approval workflow implemented
-- ✅ Multi-role review system
-- ✅ Event status tracking
-
-**What's Missing:**
-
-- ❌ Frontend event creation form
-- ❌ Event listing/browsing UI
-- ❌ Event registration UI
-- ❌ Event details page
-
-**Files to Complete:**
-
-- `apps/web/app/events/page.tsx` (list events)
-- `apps/web/app/events/create/page.tsx` (create event)
-- `apps/web/app/events/[id]/page.tsx` (event details)
-- `apps/web/app/events/[id]/register/page.tsx` (registration form)
-
-**Estimated Effort:** 2-3 days
-
----
+- `POST /api/events` - Create event
+- `GET /api/events` - List events (with status filter)
+- `GET /api/events/:id` - Get event details
+- `POST /api/events/:id/register` - Register for event
+- `DELETE /api/events/:id/register` - Unregister from event
+- `GET /api/events/:id/registrations` - List registrations (admin only)
+- `POST /api/events/:id/approve` - Approve/reject event (admin only)
 
 ### 2. Payment Gateway Integration
 
@@ -247,34 +228,6 @@ i.e. a profile having status as admin/sub-admin/sub-comm admin can be trasnferre
 - `apps/web/components/PaymentForm.tsx`
 
 **Estimated Effort:** 3-4 days
-
----
-
-### 3. User Relationships (Family Tree)
-
-**Status:** Schema ready, no API or UI
-
-**What's Working:**
-
-- ✅ `UserRelation` model with types (SPOUSE, PARENT, CHILD, SIBLING)
-- ✅ Unique constraints to prevent duplicates
-
-**What's Missing:**
-
-- ❌ API endpoints to create/update/delete relations
-- ❌ Family tree building logic
-- ❌ UI for managing relationships
-- ❌ Reciprocal relationship logic
-
-**Files Needed:**
-
-- `apps/be/routes/user-relations.ts`
-- Reciprocal relationship creation logic
-- `apps/web/app/family/relationships/page.tsx`
-
-**Estimated Effort:** 2-3 days
-
----
 
 ### 4. User Profile Management
 
@@ -312,8 +265,6 @@ i.e. a profile having status as admin/sub-admin/sub-comm admin can be trasnferre
 **Impact:** Critical for user experience
 
 need to visualise complete profile at `/me` endpoint mind-you
-
----
 
 ### 5. Medical Information
 
@@ -356,8 +307,6 @@ model MedicalRecord {
 - `apps/web/app/medical/page.tsx` (UI)
 
 **Estimated Effort:** 1-2 days
-
----
 
 ### 6. Email Notifications
 
@@ -405,8 +354,6 @@ system design, it's a lot of people, single server handling it , it will be dest
 **Estimated Time:** 3-4 hours  
 **Impact:** Enables family tree building
 
----
-
 ### 3. Email Notification Sending
 
 **Setup Steps:**
@@ -418,8 +365,6 @@ system design, it's a lot of people, single server handling it , it will be dest
 
 **Estimated Time:** 4-6 hours  
 **Impact:** Users get actual email updates
-
----
 
 ### 4. Pagination Support
 
@@ -433,8 +378,6 @@ system design, it's a lot of people, single server handling it , it will be dest
 **Estimated Time:** 2-3 hours  
 **Impact:** Handles large datasets
 
----
-
 ### 5. Medical Information Recording
 
 **Files to Create:**
@@ -445,22 +388,6 @@ system design, it's a lot of people, single server handling it , it will be dest
 
 **Estimated Time:** 4-5 hours  
 **Impact:** Completes medical module
-
----
-
-### 6. Advanced Search Filters
-
-**Extend Search Endpoint:**
-
-- Add gotra filter
-- Add profession filter
-- Add location filter (when geolocation added)
-- Update UI with filter dropdowns
-
-**Estimated Time:** 3-4 hours  
-**Impact:** Better user discovery
-
----
 
 ## Medium Effort Tasks
 
@@ -511,34 +438,6 @@ system design, it's a lot of people, single server handling it , it will be dest
 
 **Estimated Time:** 4-5 days  
 **Impact:** Community engagement
-
----
-
-### 4. Polls & Voting System
-
-**Components:**
-
-- Poll creation
-- Vote UI
-- Results visualization
-- Poll history
-
-**Estimated Time:** 2-3 days  
-**Impact:** Community decision-making
-
----
-
-### 5. Family Tree Visualization
-
-**Implementation:**
-
-- API endpoint to build tree from relations
-- Graph visualization (D3.js or vis-network)
-- Interactive tree view
-- Relationship editing from tree
-
-**Estimated Time:** 3-4 days  
-**Impact:** Visual family overview
 
 ---
 
@@ -725,12 +624,6 @@ Admin change logic check it please
 What is wanna change admins
 
 Need to reach out people not in state/country
-
-Need to put logic for
-
-Uhh, once do like complete db drop, then seed as per schema, so that everything exists all at once, so can actually see in db upon visualise
-
-——
 
 To do as developer:
 
