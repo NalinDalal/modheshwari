@@ -14,6 +14,8 @@ import { handleAdminLogin, handleAdminSignup } from "./routes/auth/admin";
 import { handleFHLogin, handleFHSignup } from "./routes/auth/fh";
 import { handleMemberLogin, handleMemberSignup } from "./routes/auth/fm";
 
+import { handleGetMe } from "./routes/me";
+
 // Family
 import {
   handleCreateFamily,
@@ -21,8 +23,14 @@ import {
   handleListInvites,
   handleReviewInvite,
 } from "./routes/families";
-import { handleGetMe } from "./routes/me";
 import { handleGetFamilyMembers } from "./routes/familyMembers";
+
+// Family Tree
+import {
+  handleGetFamilyTree,
+  handleCreateRelationship,
+  handleDeleteRelationship,
+} from "./routes/familyTree";
 
 // Search
 import { handleSearch } from "./routes/search";
@@ -53,6 +61,18 @@ import {
   handleSearchByBloodGroup,
 } from "./routes/medical";
 import { handleFamilyTransfer } from "./routes/familyTransfer";
+
+// Events
+import {
+  handleCreateEvent,
+  handleListEvents,
+  handleGetEvent,
+  handleRegisterForEvent,
+  handleUnregisterFromEvent,
+  handleGetEventRegistrations,
+  handleApproveEvent,
+} from "./routes/events";
+
 import { match } from "@modheshwari/utils/match";
 
 // ------------------ Auth Route Table ------------------
@@ -265,6 +285,31 @@ const server = serve({
         );
       }
 
+      if (url.pathname === "/api/family/tree" && method === "GET") {
+        return withCorsHeaders(await handleGetFamilyTree(req));
+      }
+
+      if (url.pathname === "/api/family/tree/relations" && method === "POST") {
+        return withCorsHeaders(await handleCreateRelationship(req));
+      }
+
+      const mDeleteRelation = match(
+        url.pathname,
+        "/api/family/tree/relations/:id",
+      );
+      if (mDeleteRelation && method === "DELETE") {
+        const id = mDeleteRelation.id;
+        if (!id) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "id required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return withCorsHeaders(await handleDeleteRelationship(req, id));
+      }
+
       // ------------------ Profile / Members ------------------
 
       if (url.pathname === "/api/me" && method === "GET") {
@@ -405,6 +450,88 @@ const server = serve({
 
       if (url.pathname === "/api/resource-requests" && method === "POST") {
         return withCorsHeaders(await handleCreateResourceRequest(req));
+      }
+
+      // ------------------ Events ------------------
+
+      if (url.pathname === "/api/events" && method === "POST") {
+        return withCorsHeaders(await handleCreateEvent(req));
+      }
+
+      if (url.pathname === "/api/events" && method === "GET") {
+        return withCorsHeaders(await handleListEvents(req));
+      }
+
+      const mEvent = match(url.pathname, "/api/events/:id");
+      if (mEvent && method === "GET") {
+        const id = mEvent.id;
+        if (!id) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "id required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return withCorsHeaders(await handleGetEvent(req, id));
+      }
+
+      const mEventRegister = match(url.pathname, "/api/events/:id/register");
+      if (mEventRegister && method === "POST") {
+        const id = mEventRegister.id;
+        if (!id) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "id required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return withCorsHeaders(await handleRegisterForEvent(req, id));
+      }
+
+      if (mEventRegister && method === "DELETE") {
+        const id = mEventRegister.id;
+        if (!id) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "id required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return withCorsHeaders(await handleUnregisterFromEvent(req, id));
+      }
+
+      const mEventRegistrations = match(
+        url.pathname,
+        "/api/events/:id/registrations",
+      );
+      if (mEventRegistrations && method === "GET") {
+        const id = mEventRegistrations.id;
+        if (!id) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "id required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return withCorsHeaders(await handleGetEventRegistrations(req, id));
+      }
+
+      const mEventApprove = match(url.pathname, "/api/events/:id/approve");
+      if (mEventApprove && method === "POST") {
+        const id = mEventApprove.id;
+        if (!id) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "id required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return withCorsHeaders(await handleApproveEvent(req, id));
       }
 
       // ------------------ 404 ------------------
