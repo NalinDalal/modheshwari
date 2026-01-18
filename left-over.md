@@ -38,8 +38,6 @@
 
 **Estimated Effort:** 3-4 days
 
----
-
 ### 2. Event Pass Generation with QR Codes
 
 **Requirement:** FR4 in design doc  
@@ -65,8 +63,6 @@
 - S3 client configuration
 
 **Estimated Effort:** 3-4 days
-
----
 
 ### 3. Forum & Discussion Features
 
@@ -124,8 +120,6 @@ model Post {
 - `apps/web/components/ForumThread.tsx`
 
 **Estimated Effort:** 4-5 days
-
----
 
 ### 5. Location-Based Services
 
@@ -185,6 +179,37 @@ model Profile {
 - `apps/web/app/family/tree/page.tsx`
 
 **Estimated Effort:** 3-4 days
+
+### 7. Fan-Out services
+
+**Expected:** What if want to fan out message to group of people
+
+Message to gotra or whole body/community, family
+
+**What's Missing:**
+
+- No way to broadcast messages
+
+### 8. Admin(Community Head, Community Sub Head, Gotra Head) Auth
+
+**Expected:** SignUp endpoints for admins
+
+Community head i think should be left with dev as it is only one
+
+**What's Missing:**
+
+- SignUp Page for admins
+
+### 9. Admin Change
+
+**Expected:** Change a profile i.e. edit the admin powers from a profile
+admin can edit sub admin and sub-comm admin
+3/more sub-comm admin can edit admin, sub admin
+i.e. a profile having status as admin/sub-admin/sub-comm admin can be trasnferred or changed
+
+### 10. OpenAPI Spec
+
+**Expected:** OpenAPI Spec of all routes
 
 ---
 
@@ -300,6 +325,19 @@ model Profile {
 
 **Estimated Effort:** 1-2 days
 
+### 1. Complete Profile Management
+
+**Files to Create:**
+
+- [x] `apps/be/routes/profile.ts` — PATCH `/api/profile`
+- [ ] `apps/web/app/profile/page.tsx` — Profile edit form
+- [ ] `apps/web/app/profile/[userId]/page.tsx` — Profile view
+
+**Estimated Time:** 4-6 hours  
+**Impact:** Critical for user experience
+
+need to visualise complete profile at `/me` endpoint mind-you
+
 ---
 
 ### 5. Medical Information
@@ -376,46 +414,7 @@ system design, it's a lot of people, single server handling it , it will be dest
 
 ---
 
-### 7. Advanced Search Filters
-
-**Status:** Basic search working, filters missing
-
-**What's Working:**
-
-- ✅ Search by name and email
-- ✅ Rate limiting
-- ✅ Caching
-
-**What's Missing:**
-
-- ❌ Search by gotra
-- ❌ Search by profession
-- ❌ Search by location
-- ❌ Advanced filtering UI
-
-**Files to Update:**
-
-- `apps/be/routes/search.ts` (add filters)
-- `apps/web/components/SearchForm.tsx` (add filter inputs)
-
-**Estimated Effort:** 1 day
-
----
-
 ## Quick Wins (Easy, High Impact)
-
-### 1. Complete Profile Management
-
-**Files to Create:**
-
-- [x] `apps/be/routes/profile.ts` — PATCH `/api/profile`
-- [ ] `apps/web/app/profile/page.tsx` — Profile edit form
-- [ ] `apps/web/app/profile/[userId]/page.tsx` — Profile view
-
-**Estimated Time:** 4-6 hours  
-**Impact:** Critical for user experience
-
----
 
 ### 2. User Relationships API
 
@@ -582,6 +581,9 @@ system design, it's a lot of people, single server handling it , it will be dest
 **Estimated Time:** 1 week  
 **Impact:** High visibility, important for community
 
+[link1](https://github.com/karthikraman/panchangam)
+[link2](https://gist.github.com/hrishikeshrt/0090a0460608728f32381164ea54865c)
+
 ---
 
 ### 2. Location-Based Services
@@ -644,36 +646,12 @@ system design, it's a lot of people, single server handling it , it will be dest
 
 ## Documentation Issues to Fix
 
-### 1. **SRS.md**
-
-- [ ] Update `MemberInvite` references to `FamilyJoinRequest`
-- [ ] Document actual implemented API endpoints
-- [ ] Remove unimplemented features or mark as "Future"
-- [ ] Add implementation status badges
-
 ### 2. **Design.md**
 
 - [ ] Mark FR4 (Event Management) as "Partially Complete"
 - [ ] Mark FR6 (Community Features) as "Future"
 - [ ] Add Hindu calendar to "Future Enhancements"
 - [ ] Remove/clarify location-based services
-
-### 3. **README.md**
-
-- [ ] Remove "Community forums, polls" from features list (or mark Future)
-- [ ] Add "In Development" section
-- [ ] Update quick start if APIs changed
-
-### 4. **Steps.md**
-
-- [ ] Remove TODO items
-- [ ] Add implementation dates
-- [ ] Update with remaining tasks
-
-### 5. **Auth.md**
-
-- [ ] Update with any new authentication features
-- [ ] Document role-based access for new endpoints
 
 ---
 
@@ -777,10 +755,30 @@ Need to put logic for
 
 Uhh, once do like complete db drop, then seed as per schema, so that everything exists all at once, so can actually see in db upon visualise
 
-Hmm, generate openapi spec of all of routes of the backend to easily debug
-
 ——
 
 To do as developer:
 
 Admin signup logic to see,
+
+---
+
+4. **Location-Based Rendering**
+   - Filter and display families based on location (city, state).
+
+5. **Event Management**
+   - View upcoming events.
+   - Register for events and make payments online.
+   - Download event passes with unique IDs.
+
+6. **Notification System**
+   - Push notifications for important updates and reminders.
+   - Email notifications for event registrations and other alerts.
+   - Use Kafka Service
+
+7. **Search Functionality**
+   - Search for families and members based on various criteria.
+   - Use Elasticsearch for fast and efficient searches.
+
+8. **Storage**
+   - Store things like user profile pic, etc on AWS S3

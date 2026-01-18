@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Search, Loader2, User, Mail, Users, X } from "lucide-react";
+import { Search, Loader2, User, Mail, Users, X, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
@@ -14,12 +14,27 @@ interface SearchResult {
   name?: string;
   email?: string;
   role?: string;
+  profile?: {
+    gotra?: string;
+    profession?: string;
+    bloodGroup?: string;
+    location?: string;
+  };
+  families?: Array<{ name?: string }>;
 
   [key: string]: unknown;
 }
 
+type FilterMode =
+  | "text"
+  | "gotra"
+  | "profession"
+  | "location"
+  | "blood"
+  | "role";
+
 /**
- * A debounced search input component that queries `/api/search`.
+ * A debounced search input component with advanced filters that queries `/api/search`.
  * @param {{ placeholder?: string }} props - Optional placeholder text.
  * @returns {React.JSX.Element} The rendered search input with results.
  */
@@ -33,6 +48,8 @@ export default function SearchInput({
 }) {
   const [q, setQ] = useState("");
   const debouncedQ = useDebouncedValue(q, 350);
+  const [filterMode, setFilterMode] = useState<FilterMode>("text");
+  const [showFilters, setShowFilters] = useState(false);
 
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +67,25 @@ export default function SearchInput({
       "",
     ) + "/api/search";
 
+  // Build query string based on filter mode
+  const buildQuery = (input: string, mode: FilterMode): string => {
+    if (!input.trim()) return "";
+    switch (mode) {
+      case "gotra":
+        return `gotra:${input}`;
+      case "profession":
+        return `profession:${input}`;
+      case "location":
+        return `location:${input}`;
+      case "blood":
+        return `blood:${input}`;
+      case "role":
+        return `role:${input}`;
+      default:
+        return input;
+    }
+  };
+
   // Focus when parent triggers (for Cmd+K / Ctrl+K)
   useEffect(() => {
     if (focusSignal !== undefined) {
@@ -66,7 +102,7 @@ export default function SearchInput({
       return;
     }
 
-    const query = raw.toLowerCase(); // normalize to match backend
+    const query = buildQuery(raw, filterMode).toLowerCase(); // normalize to match backend
 
     const cached = cacheRef.current.get(query);
     if (cached) {
@@ -103,7 +139,7 @@ export default function SearchInput({
       if (abortRef.current) abortRef.current.abort();
       abortRef.current = null;
     };
-  }, [debouncedQ, base]);
+  }, [debouncedQ, filterMode, base]);
 
   const getRoleBadgeColor = (role?: string) => {
     switch (role) {
@@ -129,7 +165,7 @@ export default function SearchInput({
   };
   return (
     <div className="w-full relative">
-      {/* Search Input */}
+      {/* Search Input with Filter Selector */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
 
@@ -142,8 +178,15 @@ export default function SearchInput({
           aria-label="Search"
         />
 
-        {/* Loading Spinner or Clear Button */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+        {/* Filter & Clear Buttons */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="text-gray-500 hover:text-white transition-colors p-1"
+            title="Toggle filters"
+          >
+            <Filter className="w-5 h-5" />
+          </button>
           {loading ? (
             <Loader2 className="w-5 h-5 text-gray-500 animate-spin" />
           ) : q ? (
@@ -160,6 +203,45 @@ export default function SearchInput({
           ) : null}
         </div>
       </div>
+
+      {/* Filter Buttons */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="absolute top-full mt-1 left-0 right-0 flex flex-wrap gap-2 p-3 bg-white/5 border border-white/10 rounded-lg backdrop-blur-xl z-40"
+          >
+            {(
+              [
+                "text",
+                "gotra",
+                "profession",
+                "location",
+                "blood",
+                "role",
+              ] as FilterMode[]
+            ).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => {
+                  setFilterMode(mode);
+                  setQ("");
+                  inputRef.current?.focus();
+                }}
+                className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+                  filterMode === mode
+                    ? "bg-blue-500/50 text-white border border-blue-400/50"
+                    : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Results Dropdown */}
       <AnimatePresence>
@@ -225,10 +307,10 @@ export default function SearchInput({
                       className="group"
                     >
                       <button className="w-full p-4 hover:bg-white/5 transition-all duration-200 text-left">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-start gap-4">
                           {/* Avatar */}
                           <div
-                            className={`flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${getRoleBadgeColor(r.role)} text-white font-bold shadow-lg`}
+                            className={`flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${getRoleBadgeColor(r.role)} text-white font-bold shadow-lg flex-shrink-0`}
                           >
                             {r.name?.charAt(0).toUpperCase() || "?"}
                           </div>
@@ -236,28 +318,51 @@ export default function SearchInput({
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
                               <p className="text-sm font-medium text-white truncate">
                                 {r.name || "Unknown"}
                               </p>
+                              <span
+                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getRoleBadgeColor(r.role)} text-white`}
+                              >
+                                {formatRole(r.role)}
+                              </span>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                              <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                              <p className="text-xs text-gray-400 truncate">
-                                {r.email || "No email"}
+                            <p className="text-xs text-gray-400 truncate mb-2">
+                              {r.email || "No email"}
+                            </p>
+
+                            {/* Profile Info */}
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              {r.profile?.gotra && (
+                                <span className="px-2 py-1 bg-white/5 text-gray-300 rounded">
+                                  Gotra: {r.profile.gotra}
+                                </span>
+                              )}
+                              {r.profile?.profession && (
+                                <span className="px-2 py-1 bg-white/5 text-gray-300 rounded">
+                                  {r.profile.profession}
+                                </span>
+                              )}
+                              {r.profile?.location && (
+                                <span className="px-2 py-1 bg-white/5 text-gray-300 rounded">
+                                  📍 {r.profile.location}
+                                </span>
+                              )}
+                              {r.profile?.bloodGroup && (
+                                <span className="px-2 py-1 bg-red-500/10 text-red-300 rounded">
+                                  🩸 {r.profile.bloodGroup}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Family */}
+                            {r.families && r.families.length > 0 && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                Family:{" "}
+                                {r.families.map((f) => f.name).join(", ")}
                               </p>
-                            </div>
-                          </div>
-
-                          {/* Role Badge */}
-                          <div className="flex-shrink-0">
-                            <span
-                              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getRoleBadgeColor(r.role)} text-white shadow-lg`}
-                            >
-                              <Users className="w-3 h-3" />
-                              {formatRole(r.role)}
-                            </span>
+                            )}
                           </div>
                         </div>
                       </button>
