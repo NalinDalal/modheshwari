@@ -155,31 +155,6 @@ model Profile {
 
 ---
 
-### 6. Family Tree Visualization
-
-**Requirement:** FR2 in design doc  
-**Expected:** Visualize family relationships (spouse, parent, child, sibling)
-
-**What's Missing:**
-
-- No family tree building logic
-- No graph visualization library
-- No frontend component to display tree
-- API endpoints exist but no tree-building endpoint
-
-**Code References:**
-
-- `UserRelation` model exists with SPOUSE, PARENT, CHILD, SIBLING types
-- No endpoints to fetch/build tree structure
-
-**Files Needed:**
-
-- `apps/be/routes/family-tree.ts` (build tree from UserRelation)
-- Graph visualization library (e.g., `react-d3-library`, `vis-network`)
-- `apps/web/app/family/tree/page.tsx`
-
-**Estimated Effort:** 3-4 days
-
 ### 7. Fan-Out services
 
 **Expected:** What if want to fan out message to group of people

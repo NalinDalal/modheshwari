@@ -136,17 +136,7 @@ export default function FamilyPageContent() {
   if (loading) return <LoaderOne />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white px-6 py-10">
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">
-          {familyName || "Family"}
-        </h1>
-        <p className="text-sm text-gray-400 mt-1">
-          View and manage members linked to your family
-        </p>
-      </div>
-
+    <div>
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h2 className="text-lg font-semibold text-gray-200">
