@@ -53,7 +53,7 @@ import {
   handleCreateStatusUpdateRequest,
   handleListStatusUpdateRequests,
   handleReviewStatusUpdateRequest,
-} from "./routes/status-update-request";
+} from "./routes/statusUpdate";
 
 // Medical & Family Transfer
 import {
