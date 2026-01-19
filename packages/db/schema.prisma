@@ -120,6 +120,10 @@ model Profile {
   allergies    String?     // Add this for medical info
   medicalNotes String?     // Add this for medical info
   
+  // Notification preferences
+  fcmToken                  String? // Firebase Cloud Messaging token for push notifications
+  notificationPreferences   Json?   // JSON object with email/push/sms preferences
+  
   // Search indexes
   @@index([profession])
   @@index([gotra])
@@ -393,6 +397,12 @@ model Notification {
 
   statusUpdateRequest   StatusUpdateRequest? @relation("StatusUpdateRequestNotifications", fields: [statusUpdateRequestId], references: [id])
   statusUpdateRequestId String?
+
+  // Additional metadata for rich notifications
+  metadata  Json?  // Store event-specific data, action URLs, etc.
+
+  @@index([userId, read])
+  @@index([createdAt])
 }
 
 // Centralized enums for approval lifecycle and notifications

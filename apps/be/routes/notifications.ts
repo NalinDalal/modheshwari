@@ -2,6 +2,7 @@ import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import { requireAuth } from "./authMiddleware";
 import { Role, NotificationType, NotificationChannel } from "@prisma/client";
+import { broadcastNotification } from "../services/notificationProducer";
 
 /**
  * Shape of create notification request body
@@ -9,14 +10,16 @@ import { Role, NotificationType, NotificationChannel } from "@prisma/client";
 interface CreateNotificationBody {
   message: string;
   type?: NotificationType;
-  channel?: NotificationChannel;
+  channels?: NotificationChannel[];
   targetRole?: Role;
+  subject?: string;
+  priority?: "low" | "normal" | "high" | "urgent";
 }
 
 /**
  * Broadcast a notification to users based on sender's role and scope
  * POST /api/notifications
- * Body: { message: string, type?: string, channel?: string, targetRole?: Role }
+ * Body: { message: string, type?: string, channels?: string[], targetRole?: Role, subject?: string, priority?: string }
  */
 export async function handleCreateNotification(
   req: Request,
@@ -50,8 +53,10 @@ export async function handleCreateNotification(
     const {
       message,
       type = NotificationType.GENERIC,
-      channel = NotificationChannel.IN_APP,
+      channels = [NotificationChannel.IN_APP],
       targetRole,
+      subject,
+      priority = "normal",
     } = rawBody as CreateNotificationBody;
 
     const senderId = auth.payload.id;
@@ -164,18 +169,28 @@ export async function handleCreateNotification(
     }
 
     /**
-     * Bulk create notifications
+     * Use Kafka pub/sub to broadcast notifications
+     * This decouples notification creation from delivery
      */
-    await prisma.notification.createMany({
-      data: users.map((u) => ({
-        userId: u.id,
-        message,
-        type,
-        channel,
-      })),
+    const result = await broadcastNotification({
+      message,
+      type,
+      channels,
+      subject,
+      recipientIds: users.map((u) => u.id),
+      senderId,
+      priority,
     });
 
-    return success("Notifications broadcasted", { count: users.length }, 201);
+    return success(
+      "Notifications queued for delivery",
+      {
+        eventId: result.eventId,
+        recipientCount: result.recipientCount,
+        channels,
+      },
+      202, // Accepted (async processing)
+    );
   } catch (err) {
     console.error("Create Notification Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);

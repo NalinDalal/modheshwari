@@ -11,7 +11,8 @@
   },
   "scripts": {
     "dev": "bun run index.ts",
-    "build": "tsc --outDir dist --module esnext --target esnext"
+    "build": "tsc --outDir dist --module esnext --target esnext",
+    "worker:notifications": "bun run worker.ts"
   },
   "dependencies": {
     "elysia": "^1.4.13"
