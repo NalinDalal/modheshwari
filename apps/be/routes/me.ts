@@ -5,6 +5,7 @@ import { verifyJWT } from "@modheshwari/utils/jwt";
 import type { AuthPayload } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 import { extractAndVerifyToken } from "../utils/auth";
+
 /**
  * GET /api/me
  * Returns the authenticated user's details and the families they belong to.
@@ -17,7 +18,7 @@ export async function handleGetMe(req: Request): Promise<Response> {
 
     if (!token) return failure("Missing token", "Auth Error", 401);
 
-    let decoded;
+    let decoded: AuthPayload | null = null;
     try {
       decoded = verifyJWT(token);
     } catch {
@@ -81,7 +82,7 @@ export async function handleGetMe(req: Request): Promise<Response> {
       role: user.role,
       status: user.status,
       profile: user.profile,
-      families: user.families.map((fm: any) => ({
+      families: user.families.map((fm) => ({
         id: fm.id,
         familyId: fm.familyId,
         role: fm.role,
@@ -96,12 +97,12 @@ export async function handleGetMe(req: Request): Promise<Response> {
       updatedAt: user.updatedAt,
     };
 
-    console.log(` /me fetched for userId=${user.id}`);
+    console.log(`/me fetched for userId=${user.id}`);
 
     // --- Step 4: Send success response ---
     return success("Fetched profile", formatted);
   } catch (err) {
-    console.error(" GetMe Error:", err);
+    console.error("GetMe Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -123,7 +124,7 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
     if (!userId) return failure("Unauthorized", "Auth Error", 401);
 
     // --- Step 2: Parse and validate input ---
-    const body = await req.json();
+    const body = (await req.json()) as UpdateProfileBody;
     const { bloodGroup, gotra, profession } = body;
 
     if (!bloodGroup && !gotra && !profession) {
@@ -144,7 +145,7 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
     // --- Step 4: Send success response ---
     return success("Profile updated successfully", updatedProfile);
   } catch (err) {
-    console.error(" UpdateMe Error:", err);
+    console.error("UpdateMe Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
