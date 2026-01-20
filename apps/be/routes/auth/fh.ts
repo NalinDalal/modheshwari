@@ -4,10 +4,9 @@
  */
 
 import prisma from "@modheshwari/db";
-import { comparePassword } from "@modheshwari/utils/hash";
+import { comparePassword, hashPassword } from "@modheshwari/utils/hash";
 import { signJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
-import { hashPassword } from "@modheshwari/utils/hash";
 import type { Role as PrismaRole } from "@prisma/client";
 
 /**
@@ -36,7 +35,7 @@ export async function handleFHLogin(
   expectedRole: string,
 ): Promise<Response> {
   try {
-    const body: any = await (req as Request).json().catch(() => null);
+    const body: any = await req.json().catch(() => null);
     const { email, password } = body;
 
     // --- Basic input validation ---
@@ -84,10 +83,7 @@ export async function handleFHLogin(
     );
   } catch (err) {
     console.error("Login Error:", err);
-    return new Response(JSON.stringify({ error: "Server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return failure("Internal server error", "Unexpected Error", 500);
   }
 }
 
@@ -128,7 +124,7 @@ export async function handleFHSignup(
   try {
     console.log("signup endpoint for family-head");
     // Validate role early and create a typed prismaRole before any await
-    const rawRole = role && role.toUpperCase();
+    const rawRole = role?.toUpperCase();
     if (rawRole !== "FAMILY_HEAD") {
       return failure(
         "Invalid role for this signup endpoint",
@@ -156,33 +152,38 @@ export async function handleFHSignup(
     // --- Step 3: Hash password securely ---
     const hashedPassword = await hashPassword(password);
 
-    // --- Step 4: Create Family Head user ---
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: prismaRole,
-        status: true,
-      },
-    });
+    // --- Step 4-6: Create user + family + link as FamilyMember atomically{transaction} ---
+    const { user, family } = await prisma.$transaction(async (tx) => {
+      // --- Step 4: Create Family Head user ---
+      const u = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: prismaRole,
+          status: true,
+        },
+      });
 
-    // --- Step 5: Create Family entry ---
-    const family = await prisma.family.create({
-      data: {
-        name: familyName,
-        uniqueId: `FAM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-        headId: user.id,
-      },
-    });
+      // --- Step 5: Create Family entry ---
+      const f = await tx.family.create({
+        data: {
+          name: familyName,
+          uniqueId: `FAM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+          headId: u.id,
+        },
+      });
 
-    // --- Step 6: Link Family Head as FamilyMember ---
-    await prisma.familyMember.create({
-      data: {
-        familyId: family.id,
-        userId: user.id,
-        role: prismaRole,
-      },
+      // --- Step 6: Link Family Head as FamilyMember ---
+      await tx.familyMember.create({
+        data: {
+          familyId: f.id,
+          userId: u.id,
+          role: prismaRole,
+        },
+      });
+
+      return { user: u, family: f };
     });
 
     // --- Step 7: Generate JWT token ---
