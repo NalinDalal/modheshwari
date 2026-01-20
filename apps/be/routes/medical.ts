@@ -26,13 +26,15 @@ export async function handleUpdateMedical(req: Request) {
   const user = await verifyAuth(req);
   if (!user) return failure("Unauthorized", null, 401);
 
-  const body = (await req.json().catch(() => null)) as MedicalBody;
+  const userId = user.userId ?? user.id;
+  if (!userId) return failure("Unauthorized: missing userId", null, 401);
 
+  const body = (await req.json().catch(() => null)) as MedicalBody;
   if (!body || (!body.bloodGroup && !body.allergies && !body.medicalNotes)) {
     return failure("No medical info provided", null, 400);
   }
 
-  // Validate blood group if provided
+  // Validate blood group
   const validBloodGroups = [
     "A_POS",
     "A_NEG",
@@ -49,7 +51,7 @@ export async function handleUpdateMedical(req: Request) {
 
   try {
     const updated = await prisma.profile.upsert({
-      where: { userId: user.id },
+      where: { userId },
       update: {
         ...(body.bloodGroup && { bloodGroup: body.bloodGroup }),
         ...(body.allergies !== undefined && { allergies: body.allergies }),
@@ -58,7 +60,7 @@ export async function handleUpdateMedical(req: Request) {
         }),
       },
       create: {
-        userId: user.id,
+        userId,
         bloodGroup: body.bloodGroup || null,
         allergies: body.allergies || null,
         medicalNotes: body.medicalNotes || null,
