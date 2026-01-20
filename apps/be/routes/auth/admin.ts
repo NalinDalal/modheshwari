@@ -85,7 +85,6 @@ export async function handleAdminSignup(
     const token = signJWT({
       userId: user.id,
       role: user.role,
-      name: user.name,
     });
 
     return success(
@@ -141,7 +140,6 @@ export async function handleAdminLogin(
     const token = signJWT({
       userId: user.id,
       role: user.role,
-      name: user.name,
     });
 
     return success(

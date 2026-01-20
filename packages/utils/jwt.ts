@@ -15,7 +15,8 @@ if (!process.env.JWT_SECRET) {
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 export interface AuthPayload {
-  id: string;
+  userId?: string;
+  id?: string;
   email?: string;
   role?: string;
 }
@@ -25,7 +26,7 @@ export interface AuthPayload {
  * @param payload - The data to embed in the token.
  * @returns A signed JWT valid for 7 days.
  */
-export function signJWT(payload: any) {
+export function signJWT(payload: AuthPayload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 }
 
@@ -34,10 +35,9 @@ export function signJWT(payload: any) {
  * @param token - The JWT string to verify.
  * @returns Decoded payload or null on failure.
  */
-export function verifyJWT(token: string) {
+export function verifyJWT(token: string): AuthPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    return decoded as AuthPayload;
+    return jwt.verify(token, JWT_SECRET) as AuthPayload;
   } catch {
     return null;
   }
@@ -46,13 +46,12 @@ export function verifyJWT(token: string) {
 /**
  * Verifies Authorization header and returns decoded user payload, or null.
  */
-export async function verifyAuth(req: Request) {
+export async function verifyAuth(req: Request): Promise<AuthPayload | null> {
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.split(" ")[1];
 
+  const token = authHeader.split(" ")[1];
   if (!token) return null;
 
-  const decoded = verifyJWT(token);
-  return decoded || null;
+  return verifyJWT(token);
 }
