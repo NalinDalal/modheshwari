@@ -4,6 +4,11 @@ import { join } from "path";
 
 // Load env first
 config({ path: join(process.cwd(), "../../.env") });
+
+// Initialize Notification PubSub Manager
+import { NotificationPubSubManager } from "./services/NotificationPubSubManager";
+NotificationPubSubManager.getInstance().initialize();
+
 // CORS
 import { handleCors, withCorsHeaders } from "./utils/cors";
 
@@ -556,5 +561,12 @@ const server = serve({
 });
 
 console.log(`Server running at http://localhost:${server.port}`);
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  console.log("\n⚠️ Shutting down gracefully...");
+  await NotificationPubSubManager.getInstance().disconnect();
+  process.exit(0);
+});
 
 await new Promise(() => {});
