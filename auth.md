@@ -1,6 +1,6 @@
-## 🧩 **Auth Module — Family System (v1)**
+## **Auth Module — Family System (v1)**
 
-### ✅ Completed Authentication Flows
+### Completed Authentication Flows
 
 #### 1. 👑 Family Head
 

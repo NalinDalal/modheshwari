@@ -163,26 +163,12 @@ Message to gotra or whole body/community, family
 
 - No way to broadcast messages
 
-### 8. Admin(Community Head, Community Sub Head, Gotra Head) Auth
-
-**Expected:** SignUp endpoints for admins
-
-Community head i think should be left with dev as it is only one
-
-**What's Missing:**
-
-- SignUp Page for admins
-
 ### 9. Admin Change
 
 **Expected:** Change a profile i.e. edit the admin powers from a profile
 admin can edit sub admin and sub-comm admin
 3/more sub-comm admin can edit admin, sub admin
 i.e. a profile having status as admin/sub-admin/sub-comm admin can be trasnferred or changed
-
-### 10. OpenAPI Spec
-
-**Expected:** OpenAPI Spec of all routes
 
 ---
 
@@ -242,7 +228,6 @@ i.e. a profile having status as admin/sub-admin/sub-comm admin can be trasnferre
 
 - ❌ Profile update endpoints
 - ❌ Profile viewing UI
-- ❌ Gotra selection interface
 - ❌ Profession/skill listing
 
 **Files Needed:**
@@ -518,17 +503,6 @@ system design, it's a lot of people, single server handling it , it will be dest
 
 ---
 
-## Documentation Issues to Fix
-
-### 2. **Design.md**
-
-- [ ] Mark FR4 (Event Management) as "Partially Complete"
-- [ ] Mark FR6 (Community Features) as "Future"
-- [ ] Add Hindu calendar to "Future Enhancements"
-- [ ] Remove/clarify location-based services
-
----
-
 ## Implementation Priority Matrix
 
 ### Phase 1: Foundation (Weeks 1-2)
@@ -613,17 +587,11 @@ system design, it's a lot of people, single server handling it , it will be dest
 Modheshwari:
 Hall wise resource should be visible,
 
-Someone wanna notify everyone/or particular gotra
-
-Booking
-
-Message to gotra or whole body/community, family
+Someone wanna Notify/Message to gotra or whole body/community, family
 Notification to admins only
 
 Admin change logic check it please
-What is wanna change admins
-
-Need to reach out people not in state/country
+What if wanna change admins
 
 To do as developer:
 
@@ -644,9 +612,5 @@ Admin signup logic to see,
    - Email notifications for event registrations and other alerts.
    - Use Kafka Service
 
-7. **Search Functionality**
-   - Search for families and members based on various criteria.
-   - Use Elasticsearch for fast and efficient searches.
-
-8. **Storage**
+7. **Storage**
    - Store things like user profile pic, etc on AWS S3

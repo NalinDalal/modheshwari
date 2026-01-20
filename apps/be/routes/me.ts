@@ -1,10 +1,10 @@
 // apps/be/routes/me.ts
-// @ts-nocheck
 
 import prisma from "@modheshwari/db";
 import { verifyJWT } from "@modheshwari/utils/jwt";
+import type { AuthPayload } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
-
+import { extractAndVerifyToken } from "../utils/auth";
 /**
  * GET /api/me
  * Returns the authenticated user's details and the families they belong to.
@@ -38,6 +38,21 @@ export async function handleGetMe(req: Request): Promise<Response> {
         status: true,
         createdAt: true,
         updatedAt: true,
+
+        profile: {
+          select: {
+            phone: true,
+            address: true,
+            profession: true,
+            gotra: true,
+            location: true,
+            status: true,
+            bloodGroup: true,
+            allergies: true,
+            medicalNotes: true,
+          },
+        },
+
         families: {
           select: {
             id: true,
@@ -65,6 +80,7 @@ export async function handleGetMe(req: Request): Promise<Response> {
       email: user.email,
       role: user.role,
       status: user.status,
+      profile: user.profile,
       families: user.families.map((fm: any) => ({
         id: fm.id,
         familyId: fm.familyId,
@@ -82,26 +98,6 @@ export async function handleGetMe(req: Request): Promise<Response> {
 
     console.log(` /me fetched for userId=${user.id}`);
 
-    if (
-      user.role === "COMMUNITY_HEAD" ||
-      user.role === "COMMUNITY_SUBHEAD" ||
-      user.role === "GOTRA_HEAD"
-    ) {
-      const profile = await prisma.profile.findUnique({
-        where: { userId: user.id },
-        select: {
-          userId: true,
-          gotra: true,
-          user: {
-            select: { name: true },
-          },
-        },
-      });
-      if (profile) {
-        formatted.profile = profile;
-      }
-      formatted.usersCount = await prisma.user.count();
-    }
     // --- Step 4: Send success response ---
     return success("Fetched profile", formatted);
   } catch (err) {
@@ -114,6 +110,12 @@ export async function handleGetMe(req: Request): Promise<Response> {
  * PUT /api/me
  * Updates the authenticated user's profile details.
  */
+type UpdateProfileBody = {
+  bloodGroup?: string;
+  gotra?: string;
+  profession?: string;
+};
+
 export async function handleUpdateMe(req: Request): Promise<Response> {
   try {
     // --- Step 1: Extract and validate JWT ---

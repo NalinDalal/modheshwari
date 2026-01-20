@@ -46,9 +46,9 @@ export async function handleAdminSignup(
       );
 
     // keep a stable, typed prismaRole before any awaits so narrowing isn't lost
-    const prismaRole: PrismaRole = r as unknown as PrismaRole;
+    const prismaRole: PrismaRole = r as PrismaRole;
 
-    const body: any = await (req as Request).json().catch(() => null);
+    const body: any = await req.json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
     const { name, email, password, gotra } = body;
@@ -58,24 +58,29 @@ export async function handleAdminSignup(
     const existing = await prisma.user.findFirst({ where: { email } });
     if (existing) return failure("Email already registered", "Conflict", 409);
 
-    const hashed = await hashPassword(password);
-
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashed,
-        role: prismaRole,
-        status: true,
-      },
-    });
+    const hashedPWD = await hashPassword(password);
 
     // If gotra provided, create/update profile
-    if (gotra) {
-      await prisma.profile
-        .create({ data: { userId: user.id, gotra } })
-        .catch(() => {});
-    }
+    const user = await prisma.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPWD,
+          role: prismaRole,
+          status: true,
+        },
+      });
+
+      await tx.profile.create({
+        data: {
+          userId: u.id,
+          gotra: gotra ?? null,
+        },
+      });
+
+      return u;
+    });
 
     const token = signJWT({
       userId: user.id,
