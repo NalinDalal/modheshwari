@@ -13,6 +13,9 @@ export async function handleCreateStatusUpdateRequest(req: Request) {
   const user = await verifyAuth(req);
   if (!user) return failure("Unauthorized", null, 401);
 
+  const userId = user.userId ?? user.id;
+  if (!userId) return failure("Unauthorized: missing userId", null, 401);
+
   const body = (await req.json()) as {
     targetUserId?: string;
     reason?: string;
@@ -25,7 +28,7 @@ export async function handleCreateStatusUpdateRequest(req: Request) {
   const request = await prisma.statusUpdateRequest.create({
     data: {
       targetUserId,
-      requestedById: user.id,
+      requestedById: userId,
       reason,
       finalStatus: "deceased",
       approvals: {
