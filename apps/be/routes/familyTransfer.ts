@@ -13,6 +13,9 @@ export async function handleFamilyTransfer(req: Request) {
   const user = await verifyAuth(req);
   if (!user) return failure("Unauthorized", null, 401);
 
+  const userId = user.userId ?? user.id;
+  if (!userId) return failure("Unauthorized: missing userId", null, 401);
+
   const body = (await req.json()) as { newFamilyId?: string };
   const { newFamilyId } = body;
   if (!newFamilyId) return failure("newFamilyId is required", null, 400);
@@ -21,7 +24,7 @@ export async function handleFamilyTransfer(req: Request) {
     // Create membership in the new family
     const membership = await prisma.familyMember.create({
       data: {
-        userId: user.id,
+        userId,
         familyId: newFamilyId,
         role: "MEMBER",
         joinedAt: new Date(),
