@@ -2,6 +2,7 @@ import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import { requireAuth } from "./authMiddleware";
 import { Role, NotificationType, NotificationChannel } from "@prisma/client";
+import { broadcastNotification } from "../kafka/notification-producer";
 
 /**
  * Shape of create notification request body
@@ -169,8 +170,7 @@ export async function handleCreateNotification(req: Request) {
      * Use Kafka pub/sub to broadcast notifications
      * This decouples notification creation from delivery
      */
-
-    /*const result = await broadcastNotification({
+    const result = await broadcastNotification({
       message,
       type,
       channels,
@@ -189,7 +189,6 @@ export async function handleCreateNotification(req: Request) {
       },
       202, // Accepted (async processing)
     );
-            */
   } catch (err) {
     console.error("Create Notification Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
