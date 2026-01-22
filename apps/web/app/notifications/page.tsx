@@ -52,6 +52,7 @@ function getToken(): string | null {
 export default function NotificationsPage(): React.ReactElement {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [message, setMessage] = useState("");
+  const [subject, setSubject] = useState("");
   const [targetRole, setTargetRole] = useState("ALL");
   const [me, setMe] = useState<Me | null>(null);
   const [filterRead, setFilterRead] = useState<"all" | "read" | "unread">(
@@ -61,6 +62,12 @@ export default function NotificationsPage(): React.ReactElement {
     "newest",
   );
   const [selectedType, setSelectedType] = useState<string>("all");
+  const [priority, setPriority] = useState<
+    "low" | "normal" | "high" | "urgent"
+  >("normal");
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([
+    "IN_APP",
+  ]);
 
   useEffect(() => {
     void fetchMe();
@@ -130,7 +137,12 @@ export default function NotificationsPage(): React.ReactElement {
     if (!message.trim()) return;
 
     try {
-      const body: Record<string, string> = { message };
+      const body: Record<string, any> = {
+        message,
+        subject: subject.trim() || undefined,
+        priority,
+        channels: selectedChannels,
+      };
       if (targetRole !== "ALL") body.targetRole = targetRole;
 
       const res = await fetch(
@@ -147,7 +159,10 @@ export default function NotificationsPage(): React.ReactElement {
 
       if (res.ok) {
         setMessage("");
+        setSubject("");
         setTargetRole("ALL");
+        setPriority("normal");
+        setSelectedChannels(["IN_APP"]);
         await fetchNotifications();
         alert("Broadcast sent");
       } else {
@@ -175,6 +190,17 @@ export default function NotificationsPage(): React.ReactElement {
   useEffect(() => {
     setTargetRole("ALL");
   }, [me?.role]);
+
+  /**
+   * Toggle channel selection
+   */
+  function toggleChannel(channel: string) {
+    setSelectedChannels((prev) =>
+      prev.includes(channel)
+        ? prev.filter((c) => c !== channel)
+        : [...prev, channel],
+    );
+  }
 
   /**
    * Mark notification as read/unread
@@ -270,6 +296,13 @@ export default function NotificationsPage(): React.ReactElement {
           </p>
 
           <form onSubmit={handleBroadcast} className="space-y-4">
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Subject (optional)"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -278,7 +311,7 @@ export default function NotificationsPage(): React.ReactElement {
               className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <select
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
@@ -316,6 +349,21 @@ export default function NotificationsPage(): React.ReactElement {
                 )}
               </select>
 
+              <select
+                value={priority}
+                onChange={(e) =>
+                  setPriority(
+                    e.target.value as "low" | "normal" | "high" | "urgent",
+                  )
+                }
+                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="low">Low</option>
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+
               <button
                 type="submit"
                 disabled={!message.trim()}
@@ -324,6 +372,55 @@ export default function NotificationsPage(): React.ReactElement {
                 Send
               </button>
             </div>
+
+            {/* Channels */}
+            <div className="flex flex-wrap gap-3 text-xs text-gray-200">
+              {[
+                { label: "In-App", value: "IN_APP" },
+                { label: "Email", value: "EMAIL" },
+                { label: "Push", value: "PUSH" },
+              ].map((c) => (
+                <label
+                  key={c.value}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition ${
+                    selectedChannels.includes(c.value)
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-white/10 bg-black/40"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedChannels.includes(c.value)}
+                    onChange={() => toggleChannel(c.value)}
+                    className="accent-blue-500"
+                  />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+
+            {/* Preview */}
+            {(subject.trim() || message.trim()) && (
+              <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-sm text-gray-200 space-y-2">
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <span className="px-2 py-1 rounded bg-blue-600/20 text-blue-100 font-semibold uppercase">
+                    {priority}
+                  </span>
+                  <span className="text-gray-400">
+                    Channels: {selectedChannels.join(", ") || "None"}
+                  </span>
+                  {targetRole !== "ALL" && (
+                    <span className="text-gray-400">
+                      • Target: {targetRole}
+                    </span>
+                  )}
+                </div>
+                {subject.trim() && (
+                  <p className="font-semibold text-white">{subject}</p>
+                )}
+                <p>{message}</p>
+              </div>
+            )}
           </form>
         </section>
       )}
