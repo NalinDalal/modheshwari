@@ -2,14 +2,19 @@ import { serve } from "bun";
 import { config } from "dotenv";
 import { join } from "path";
 
+import type { ServerWebSocket } from "bun";
+
 // Load env first
 config({ path: join(process.cwd(), "../../.env") });
 
 // CORS
 import { handleCors, withCorsHeaders } from "./utils/cors";
 
-// Rate limiting
+// utility functions
+import { match } from "@modheshwari/utils/match";
+
 import { isRateLimited } from "@modheshwari/utils/rate-limit";
+
 // Auth
 import { handleAdminLogin, handleAdminSignup } from "./routes/auth/admin";
 import { handleFHLogin, handleFHSignup } from "./routes/auth/fh";
@@ -25,6 +30,7 @@ import {
   handleReviewInvite,
 } from "./routes/families";
 import { handleGetFamilyMembers } from "./routes/familyMembers";
+import { handleFamilyTransfer } from "./routes/familyTransfer";
 
 // Family Tree
 import {
@@ -43,6 +49,8 @@ import {
   handleGetResourceRequest,
   handleReviewResourceRequest,
 } from "./routes/resourceReq";
+
+//Notifications
 import {
   handleCreateNotification,
   handleListNotifications,
@@ -64,7 +72,6 @@ import {
   handleUpdateMedical,
   handleSearchByBloodGroup,
 } from "./routes/medical";
-import { handleFamilyTransfer } from "./routes/familyTransfer";
 
 // Events
 import {
@@ -76,8 +83,6 @@ import {
   handleGetEventRegistrations,
   handleApproveEvent,
 } from "./routes/events";
-
-import { match } from "@modheshwari/utils/match";
 
 // ------------------ Auth Route Table ------------------
 
@@ -137,17 +142,91 @@ const authRouteTable = [
   },
 ];
 
-// -----------------------------------------------------
-// ------------------ SERVER LOGIC ---------------------
-// -----------------------------------------------------
+//-------- WS Server --------
+//TODO: move this logic to separate websocket server
+type WSNotificationMessage = {
+  type: "notification";
+  notification: {
+    id: string;
+    title: string;
+    body: string;
+    createdAt: string;
+    read: boolean;
+  };
+};
 
+type WSData = {
+  userId: string;
+};
+
+const userSockets = new Map<string, Set<ServerWebSocket<WSData>>>();
+
+/*function getUserId(ws: WebSocket): string | null {
+  if (
+    typeof ws.data === "object" &&
+    ws.data !== null &&
+    "userId" in ws.data &&
+    typeof (ws.data as any).userId === "string"
+  ) {
+    return (ws.data as WSData).userId;
+  }
+  return null;
+}*/
+
+function addSocket(userId: string, ws: ServerWebSocket<WSData>) {
+  if (!userSockets.has(userId)) {
+    userSockets.set(userId, new Set());
+  }
+  userSockets.get(userId)!.add(ws);
+}
+
+function removeSocket(userId: string, ws: ServerWebSocket<WSData>) {
+  const set = userSockets.get(userId);
+  if (!set) return;
+
+  set.delete(ws);
+  if (set.size === 0) {
+    userSockets.delete(userId);
+  }
+}
+
+export function pushNotification(userId: string, notification: any) {
+  const sockets = userSockets.get(userId);
+  if (!sockets) return;
+
+  const payload = JSON.stringify({
+    type: "notification",
+    notification,
+  });
+
+  for (const ws of sockets) {
+    ws.send(payload);
+  }
+}
+
+// --- SERVER ---
 const PORT = process.env.PORT ?? 3001;
 
-const server = serve({
+const server = serve<WSData>({
   port: PORT,
 
   async fetch(req: Request) {
     try {
+      if (req.headers.get("upgrade") === "websocket") {
+        const meRes = await handleGetMe(req);
+        if (meRes.status !== 200) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+
+        const me = (await meRes.json()) as { id: string };
+
+        server.upgrade(req, {
+          data: { userId: me.id } satisfies WSData,
+        });
+
+        return;
+      }
+
       const url = new URL(req.url);
       const method = req.method.toUpperCase();
 
@@ -547,23 +626,36 @@ const server = serve({
         }),
       );
     } catch (err) {
-      console.error("Unhandled Error:", err);
-
+      console.error(err);
       return withCorsHeaders(
         new Response(JSON.stringify({ error: "Internal server error" }), {
           status: 500,
-          headers: { "Content-Type": "application/json" },
         }),
       );
     }
   },
+
+  websocket: {
+    open(ws) {
+      addSocket(ws.data.userId, ws);
+      console.log("WS connected:", ws.data.userId);
+    },
+
+    message() {
+      // ignore client messages for now
+    },
+
+    close(ws) {
+      removeSocket(ws.data.userId, ws);
+      console.log("WS disconnected:", ws.data.userId);
+    },
+  },
 });
 
-console.log(`Server running at http://localhost:${server.port}`);
+console.log(`Server running on http://localhost:${PORT}`);
 
-// Graceful shutdown
-process.on("SIGINT", async () => {
-  console.log("\n Shutting down gracefully...");
+process.on("SIGINT", () => {
+  console.log("Shutting down...");
   process.exit(0);
 });
 
