@@ -10,6 +10,7 @@ interface Notification {
   type: string;
   message: string;
   createdAt: string;
+  read: boolean;
 }
 
 /**
@@ -53,6 +54,13 @@ export default function NotificationsPage(): React.ReactElement {
   const [message, setMessage] = useState("");
   const [targetRole, setTargetRole] = useState("ALL");
   const [me, setMe] = useState<Me | null>(null);
+  const [filterRead, setFilterRead] = useState<"all" | "read" | "unread">(
+    "all",
+  );
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "unread-first">(
+    "newest",
+  );
+  const [selectedType, setSelectedType] = useState<string>("all");
 
   useEffect(() => {
     void fetchMe();
@@ -168,6 +176,81 @@ export default function NotificationsPage(): React.ReactElement {
     setTargetRole("ALL");
   }, [me?.role]);
 
+  /**
+   * Mark notification as read/unread
+   */
+  async function handleToggleRead(
+    notificationId: string,
+    currentReadStatus: boolean,
+  ): Promise<void> {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/notifications/${notificationId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ read: !currentReadStatus }),
+        },
+      );
+
+      if (res.ok) {
+        // Update local state
+        setNotifications((prevs) =>
+          prevs.map((n) =>
+            n.id === notificationId ? { ...n, read: !n.read } : n,
+          ),
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update notification", err);
+    }
+  }
+
+  /**
+   * Get unique notification types for filter dropdown
+   */
+  const notificationTypes = Array.from(
+    new Set(notifications.map((n) => n.type)),
+  ).sort();
+
+  /**
+   * Apply filters and sorting
+   */
+  const filteredNotifications = notifications
+    .filter((n) => {
+      // Filter by read status
+      if (filterRead === "read" && !n.read) return false;
+      if (filterRead === "unread" && n.read) return false;
+      // Filter by type
+      if (selectedType !== "all" && n.type !== selectedType) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "newest") {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      } else if (sortBy === "oldest") {
+        return (
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      } else {
+        // unread-first
+        if (a.read === b.read) {
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        }
+        return a.read ? 1 : -1;
+      }
+    });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white px-6 py-10">
       {/* Header */}
@@ -248,25 +331,106 @@ export default function NotificationsPage(): React.ReactElement {
       {/* Notifications List */}
       <section className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl">
         <div className="px-5 py-4 border-b border-white/5">
-          <h2 className="text-lg font-semibold">Your Notifications</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Your Notifications</h2>
+            {notifications.length > 0 && (
+              <span className="text-xs text-gray-400">
+                {notifications.filter((n) => !n.read).length} unread
+              </span>
+            )}
+          </div>
+
+          {/* Filters and Sorting */}
+          {notifications.length > 0 && (
+            <div className="flex flex-wrap gap-3 text-sm">
+              {/* Filter by Read Status */}
+              <select
+                value={filterRead}
+                onChange={(e) =>
+                  setFilterRead(e.target.value as "all" | "read" | "unread")
+                }
+                className="bg-black/40 border border-white/10 rounded px-2 py-1 text-xs"
+              >
+                <option value="all">All</option>
+                <option value="unread">Unread</option>
+                <option value="read">Read</option>
+              </select>
+
+              {/* Filter by Type */}
+              {notificationTypes.length > 0 && (
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="bg-black/40 border border-white/10 rounded px-2 py-1 text-xs"
+                >
+                  <option value="all">All types</option>
+                  {notificationTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {/* Sort By */}
+              <select
+                value={sortBy}
+                onChange={(e) =>
+                  setSortBy(
+                    e.target.value as "newest" | "oldest" | "unread-first",
+                  )
+                }
+                className="bg-black/40 border border-white/10 rounded px-2 py-1 text-xs"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="unread-first">Unread first</option>
+              </select>
+            </div>
+          )}
         </div>
 
-        {notifications.length === 0 ? (
+        {filteredNotifications.length === 0 ? (
           <p className="text-center text-gray-500 py-10 text-sm">
-            No notifications yet
+            {notifications.length === 0
+              ? "No notifications yet"
+              : "No notifications match your filters"}
           </p>
         ) : (
           <ul className="divide-y divide-white/5">
-            {notifications.map((n) => (
-              <li key={n.id} className="px-5 py-4 hover:bg-white/5 transition">
+            {filteredNotifications.map((n) => (
+              <li
+                key={n.id}
+                className={`px-5 py-4 transition ${
+                  n.read
+                    ? "hover:bg-white/5 opacity-60"
+                    : "hover:bg-white/10 bg-white/[0.03]"
+                }`}
+              >
                 <div className="flex justify-between items-start gap-4">
-                  <div>
-                    <p className="text-sm font-medium">{n.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{n.type}</p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">{n.message}</p>
+                      {!n.read && (
+                        <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs text-gray-500">{n.type}</span>
+                      <span className="text-xs text-gray-500">•</span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(n.createdAt).toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-500 whitespace-nowrap">
-                    {new Date(n.createdAt).toLocaleString()}
-                  </span>
+
+                  {/* Mark as Read/Unread */}
+                  <button
+                    onClick={() => handleToggleRead(n.id, n.read)}
+                    className="text-xs px-3 py-1 rounded border border-white/10 hover:border-white/30 transition whitespace-nowrap"
+                  >
+                    {n.read ? "Mark unread" : "Mark read"}
+                  </button>
                 </div>
               </li>
             ))}

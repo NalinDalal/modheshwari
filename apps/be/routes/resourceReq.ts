@@ -340,27 +340,3 @@ export async function handleReviewResourceRequest(
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
-
-/* =========================================================
-   LIST NOTIFICATIONS
-   GET /api/notifications
-   ========================================================= */
-
-export async function handleListNotifications(req: Request): Promise<Response> {
-  try {
-    const auth = requireAuth(req);
-    if (!auth.ok) return auth.response as Response;
-
-    const userId = auth.payload.userId ?? auth.payload.id;
-
-    const list = await prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return success("Notifications fetched", { notifications: list }, 200);
-  } catch (err) {
-    console.error("List Notifications Error:", err);
-    return failure("Internal server error", "Unexpected Error", 500);
-  }
-}

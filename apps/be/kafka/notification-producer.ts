@@ -8,8 +8,8 @@ export interface NotificationEvent {
   type: NotificationType;
   channels: NotificationChannel[];
   subject?: string;
-  recipientIds: number[];
-  senderId: number;
+  recipientIds: string[];
+  senderId: string;
   priority: "low" | "normal" | "high" | "urgent";
   timestamp: string;
 }
@@ -69,14 +69,13 @@ export async function broadcastNotification(
  */
 export async function publishToChannel(
   channel: NotificationChannel,
-  recipientId: number,
+  recipientId: string,
   event: NotificationEvent,
 ) {
   const topicMap: Record<NotificationChannel, string> = {
     IN_APP: TOPICS.NOTIFICATION_EVENTS, // In-app handled by router directly
     EMAIL: TOPICS.NOTIFICATION_EMAIL,
     PUSH: TOPICS.NOTIFICATION_PUSH,
-    SMS: TOPICS.NOTIFICATION_SMS,
   };
 
   const topic = topicMap[channel];

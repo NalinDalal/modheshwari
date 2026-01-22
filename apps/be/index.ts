@@ -42,9 +42,12 @@ import {
   handleListResourceRequests,
   handleGetResourceRequest,
   handleReviewResourceRequest,
-  handleListNotifications,
 } from "./routes/resourceReq";
-import { handleCreateNotification } from "./routes/notifications";
+import {
+  handleCreateNotification,
+  handleListNotifications,
+  handleMarkNotificationRead,
+} from "./routes/notifications";
 
 // Admin endpoints
 import { handleListAllRequests, handleUpdateEventStatus } from "./routes/admin";
@@ -394,9 +397,9 @@ const server = serve({
         return withCorsHeaders(await handleListNotifications(req));
       }
 
-      /*  if (url.pathname === "/api/notifications" && method === "POST") {
+      if (url.pathname === "/api/notifications" && method === "POST") {
         return withCorsHeaders(await handleCreateNotification(req));
-      }*/
+      }
 
       // ------------------ Status Update Requests ------------------
 

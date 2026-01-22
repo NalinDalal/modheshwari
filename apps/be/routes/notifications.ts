@@ -57,7 +57,7 @@ export async function handleCreateNotification(req: Request) {
       priority = "normal",
     } = rawBody as CreateNotificationBody;
 
-    const senderId = auth.payload.id;
+    const senderId = auth.payload.userId;
     const senderRole = auth.payload.role as Role;
 
     /**
@@ -191,6 +191,79 @@ export async function handleCreateNotification(req: Request) {
     );
   } catch (err) {
     console.error("Create Notification Error:", err);
+    return failure("Internal server error", "Unexpected Error", 500);
+  }
+}
+
+/* =========================================================
+   LIST NOTIFICATIONS
+   GET /api/notifications
+   ========================================================= */
+
+export async function handleListNotifications(req: Request): Promise<Response> {
+  try {
+    const auth = requireAuth(req);
+    if (!auth.ok) return auth.response as Response;
+
+    const userId = auth.payload.userId ?? auth.payload.id;
+
+    const list = await prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return success("Notifications fetched", { notifications: list }, 200);
+  } catch (err) {
+    console.error("List Notifications Error:", err);
+    return failure("Internal server error", "Unexpected Error", 500);
+  }
+}
+
+/**
+ * Mark a notification as read or unread
+ * PATCH /api/notifications/:id
+ */
+export async function handleMarkNotificationRead(
+  req: Request,
+  notificationId: string,
+): Promise<Response> {
+  try {
+    const auth = requireAuth(req);
+    if (!auth.ok) return auth.response as Response;
+
+    const userId = auth.payload.userId ?? auth.payload.id;
+
+    const rawBody: unknown = await req.json().catch(() => null);
+    const read =
+      typeof rawBody === "object" &&
+      rawBody !== null &&
+      "read" in rawBody &&
+      typeof (rawBody as any).read === "boolean"
+        ? (rawBody as any).read
+        : undefined;
+
+    if (read === undefined) {
+      return failure("Missing read status", "Validation Error", 400);
+    }
+
+    // Verify notification belongs to user
+    const notif = await prisma.notification.findUnique({
+      where: { id: notificationId },
+    });
+
+    if (!notif || notif.userId !== userId) {
+      return failure("Notification not found", "Not Found", 404);
+    }
+
+    // Update read status
+    const updated = await prisma.notification.update({
+      where: { id: notificationId },
+      data: { read },
+    });
+
+    return success("Notification updated", { notification: updated }, 200);
+  } catch (err) {
+    console.error("Mark Notification Read Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
