@@ -41,7 +41,7 @@ export default function RootLayout({
       >
         <ThemeInitializer />
         <NavBar />
-        <main>{children}</main>
+        <main className="pt-16">{children}</main>
       </body>
     </html>
   );
