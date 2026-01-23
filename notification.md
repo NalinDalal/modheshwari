@@ -231,3 +231,11 @@ Workers will:
 - [ ] Analytics dashboard
 
 - use kafka, and pub-sub architecture
+
+---
+
+Modheswari me eesa kro
+Ki when admins put up for a notification, then they need to choose whether it will go to whom
+Cause agar mene gotraHead liya say
+Ab usne bola ki bhai meri family yaha aao
+To ye to sabko uske gotra me chla jyega na

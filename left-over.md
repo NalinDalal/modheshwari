@@ -614,3 +614,13 @@ Admin signup logic to see,
 
 7. **Storage**
    - Store things like user profile pic, etc on AWS S3
+
+---
+
+Add priority selector, channel chooser, preview before sending
+
+WebSocket(new server in apps) to refresh notifications without page reload
+
+---
+
+blend [this](https://patterncraft.fun/) into ui
