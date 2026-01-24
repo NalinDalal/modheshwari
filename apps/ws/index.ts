@@ -4,13 +4,15 @@ import { config } from "dotenv";
 import { join } from "path";
 import { NotificationChannel } from "@prisma/client";
 import { verifyJWT } from "@modheshwari/utils/jwt";
+import prisma from "@modheshwari/db";
 
 // Load env from monorepo root
 config({ path: join(process.cwd(), "../../.env") });
 
 const KAFKA_BROKER = process.env.KAFKA_BROKER || "localhost:9092";
 const WS_PORT = Number(process.env.WS_PORT || 3002);
-const NOTIFICATION_TOPIC = process.env.NOTIFICATION_TOPIC || "notification.events";
+const NOTIFICATION_TOPIC =
+  process.env.NOTIFICATION_TOPIC || "notification.events";
 const WS_CONSUMER_GROUP = process.env.WS_CONSUMER_GROUP || "notifications-ws";
 
 type WSData = { userId: string };
@@ -25,6 +27,23 @@ type NotificationEvent = {
   senderId: string;
   priority: "low" | "normal" | "high" | "urgent";
   timestamp: string;
+};
+
+type ChatMessage = {
+  type: "chat";
+  messageId: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: string;
+};
+
+type IncomingMessage = {
+  type: "chat" | "typing";
+  conversationId?: string;
+  content?: string;
+  recipientIds?: string[];
 };
 
 const userSockets = new Map<string, Set<ServerWebSocket<WSData>>>();
@@ -68,7 +87,10 @@ function pushToUser(userId: string, payload: unknown) {
   }
 }
 
-const kafka = new Kafka({ clientId: "modheshwari-ws", brokers: [KAFKA_BROKER] });
+const kafka = new Kafka({
+  clientId: "modheshwari-ws",
+  brokers: [KAFKA_BROKER],
+});
 const consumer = kafka.consumer({ groupId: WS_CONSUMER_GROUP });
 
 async function handleNotificationEvent({ message }: EachMessagePayload) {
@@ -133,8 +155,135 @@ const server = serve<WSData>({
       addSocket(ws.data.userId, ws);
       console.log("[WS] connected", ws.data.userId);
     },
-    message(_ws, _message) {
-      // Intentionally ignore client messages for now.
+    async message(ws, message) {
+      try {
+        const data = JSON.parse(message.toString()) as IncomingMessage;
+
+        if (data.type === "chat" && data.conversationId && data.content) {
+          // Verify user is part of conversation
+          const conversation = await prisma.conversation.findFirst({
+            where: {
+              id: data.conversationId,
+              participants: {
+                has: ws.data.userId,
+              },
+            },
+          });
+
+          if (!conversation) {
+            console.error("[WS] User not in conversation");
+            return;
+          }
+
+          // Get sender details
+          const sender = await prisma.user.findUnique({
+            where: { id: ws.data.userId },
+            select: { name: true },
+          });
+
+          if (!sender) {
+            console.error("[WS] Sender not found");
+            return;
+          }
+
+          // Save message to database
+          const savedMessage = await prisma.message.create({
+            data: {
+              conversationId: data.conversationId,
+              senderId: ws.data.userId,
+              senderName: sender.name,
+              content: data.content,
+              readBy: [ws.data.userId], // Mark as read by sender
+            },
+          });
+
+          // Update conversation's last message
+          await prisma.conversation.update({
+            where: { id: data.conversationId },
+            data: {
+              lastMessage: data.content,
+              lastMessageAt: savedMessage.createdAt,
+            },
+          });
+
+          // Send to all participants including sender
+          const chatPayload: ChatMessage = {
+            type: "chat",
+            messageId: savedMessage.id,
+            conversationId: data.conversationId,
+            senderId: ws.data.userId,
+            senderName: sender.name,
+            content: data.content,
+            timestamp: savedMessage.createdAt.toISOString(),
+          };
+
+          // Push to all recipients
+          for (const recipientId of conversation.participants) {
+            pushToUser(recipientId, chatPayload);
+          }
+        } else if (
+          data.type === "typing" &&
+          data.conversationId &&
+          data.recipientIds
+        ) {
+          // Broadcast typing indicator
+          const typingPayload = {
+            type: "typing",
+            conversationId: data.conversationId,
+            userId: ws.data.userId,
+            timestamp: new Date().toISOString(),
+          };
+
+          for (const recipientId of data.recipientIds) {
+            if (recipientId !== ws.data.userId) {
+              pushToUser(recipientId, typingPayload);
+            }
+          }
+        } else if (data.type === "read" && data.messageIds) {
+          // Mark messages as read
+          await prisma.message.updateMany({
+            where: {
+              id: {
+                in: data.messageIds,
+              },
+              senderId: {
+                not: ws.data.userId,
+              },
+            },
+            data: {
+              readBy: {
+                push: ws.data.userId,
+              },
+            },
+          });
+
+          // Send read receipt to senders
+          const messages = await prisma.message.findMany({
+            where: {
+              id: {
+                in: data.messageIds,
+              },
+            },
+            select: {
+              id: true,
+              senderId: true,
+              conversationId: true,
+            },
+          });
+
+          for (const msg of messages) {
+            pushToUser(msg.senderId, {
+              type: "read",
+              messageIds: [msg.id],
+              conversationId: msg.conversationId,
+              userId: ws.data.userId,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }
+      } catch (err) {
+        console.error("[WS] Failed to handle message", err);
+      }
     },
     close(ws) {
       removeSocket(ws.data.userId, ws);

@@ -57,6 +57,14 @@ import {
   handleMarkNotificationRead,
 } from "./routes/notifications";
 
+// Messages
+import {
+  handleGetConversations,
+  handleCreateConversation,
+  handleGetMessages,
+  handleSearchUsersForChat,
+} from "./routes/messages";
+
 // Admin endpoints
 import { handleListAllRequests, handleUpdateEventStatus } from "./routes/admin";
 
@@ -478,6 +486,45 @@ const server = serve<WSData>({
 
       if (url.pathname === "/api/notifications" && method === "POST") {
         return withCorsHeaders(await handleCreateNotification(req));
+      }
+
+      // ------------------ Messages/Chat ------------------
+
+      if (url.pathname === "/api/messages/conversations" && method === "GET") {
+        return withCorsHeaders(await handleGetConversations(req));
+      }
+
+      if (url.pathname === "/api/messages/conversations" && method === "POST") {
+        return withCorsHeaders(await handleCreateConversation(req));
+      }
+
+      const mGetMessages = match(
+        url.pathname,
+        "/api/messages/conversations/:conversationId/messages",
+      );
+      if (mGetMessages && method === "GET") {
+        const conversationId = mGetMessages.conversationId;
+        if (!conversationId) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "conversationId required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return withCorsHeaders(await handleGetMessages(req, conversationId));
+      }
+
+      if (url.pathname === "/api/messages" && method === "POST") {
+        return withCorsHeaders(await handleSendMessage(req));
+      }
+
+      if (url.pathname === "/api/messages/read" && method === "POST") {
+        return withCorsHeaders(await handleMarkMessagesRead(req));
+      }
+
+      if (url.pathname === "/api/messages/users/search" && method === "GET") {
+        return withCorsHeaders(await handleSearchUsersForChat(req));
       }
 
       // ------------------ Status Update Requests ------------------
