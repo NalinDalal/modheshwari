@@ -372,6 +372,40 @@ model ResourceRequestApproval {
   @@unique([requestId, approverId])
 }
 
+
+//
+// -------------------- MESSAGING --------------------
+// Direct messaging between users
+//
+
+model Conversation {
+  id           String    @id @default(uuid())
+  participants String[]  // Array of user IDs
+  lastMessage  String?
+  lastMessageAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  messages     Message[]
+
+  @@index([participants])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  senderId       String
+  senderName     String
+  content        String       @db.Text
+  readBy         String[]     @default([]) // Array of user IDs who have read the message
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
 //
 // -------------------- NOTIFICATION --------------------
 // System-generated user alerts.
