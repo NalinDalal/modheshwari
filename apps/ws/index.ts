@@ -40,10 +40,11 @@ type ChatMessage = {
 };
 
 type IncomingMessage = {
-  type: "chat" | "typing";
+  type: "chat" | "typing" | "read";
   conversationId?: string;
   content?: string;
   recipientIds?: string[];
+  messageIds?: string[];
 };
 
 const userSockets = new Map<string, Set<ServerWebSocket<WSData>>>();

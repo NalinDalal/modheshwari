@@ -11,5 +11,10 @@
   },
   "dependencies": {
     "ws": "^8.19.0"
+  },
+  "scripts": {
+    "dev": "bun run index.ts",
+    "build": "tsc --outDir dist --module esnext --target esnext",
+    "worker:notifications": "bun run worker.ts"
   }
 }

@@ -63,6 +63,8 @@ import {
   handleCreateConversation,
   handleGetMessages,
   handleSearchUsersForChat,
+  handleSendMessage,
+  handleMarkMessagesRead,
 } from "./routes/messages";
 
 // Admin endpoints
