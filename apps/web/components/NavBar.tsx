@@ -13,6 +13,7 @@ import {
   Package,
   Bell,
   Phone,
+  MessageSquare
 } from "lucide-react";
 
 interface User {
@@ -160,6 +161,7 @@ export default function NavBar() {
               <NavItem href="/family" label="Family" Icon={Users} />
               <NavItem href="/resources" label="Resources" Icon={Package} />
               <NavItem href="/notifications" label="Alerts" Icon={Bell} />
+              <NavItem href='/chat' label='Chat' Icon={MessageSquare} />
               <NavItem href="/me" label={user.name} />
             </>
           ) : (
