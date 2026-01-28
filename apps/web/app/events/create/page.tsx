@@ -189,7 +189,7 @@ export default function CreateEventPage() {
           <div className="p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
             <p className="text-sm text-blue-200">
               <strong>Note:</strong> Your event will be sent for approval to
-              community admins. You'll be notified once it's reviewed.
+              community admins. You&apos;ll be notified once it&apos;s reviewed.
             </p>
           </div>
 

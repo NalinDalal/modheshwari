@@ -43,7 +43,6 @@ export default function FamilyPageContent() {
   const [hydrated, setHydrated] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
-  const [familyName, setFamilyName] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -79,7 +78,8 @@ export default function FamilyPageContent() {
         if (!res.ok) throw new Error("Failed to fetch members");
 
         const data = await res.json();
-        setFamilyName(data.data?.family?.name || "");
+        // family name is available in response but not used in this component
+        // const familyName = data.data?.family?.name || "";
         // Extract members from new pagination response format
         setMembers(data.data?.members || []);
       } catch (err) {
