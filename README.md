@@ -40,6 +40,13 @@ This project is a full-stack platform for managing local community operations, i
 
    put it into `.env`
 
+6. **Run the Dependencies:**
+
+   ```bash
+   docker compose -f docker-compose.kafka.yml up -d zookeeper kafka  #start kafka & zookeeper
+   docker exec -it kafka kafka-topics --create --topic notification.events --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 # verify topics exists
+   ```
+
 6. **Run the app:**
 
    ```bash

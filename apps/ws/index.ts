@@ -5,6 +5,7 @@ import { join } from "path";
 import { NotificationChannel } from "@prisma/client";
 import { verifyJWT } from "@modheshwari/utils/jwt";
 import prisma from "@modheshwari/db";
+import { logger } from "./logger";
 
 // Load env from monorepo root
 config({ path: join(process.cwd(), "../../.env") });
@@ -83,7 +84,7 @@ function pushToUser(userId: string, payload: unknown) {
     try {
       ws.send(data);
     } catch (err) {
-      console.error("Failed to send WS message", err);
+      logger.error("Failed to send WS message", err instanceof Error ? err : String(err));
     }
   }
 }
@@ -91,6 +92,36 @@ function pushToUser(userId: string, payload: unknown) {
 const kafka = new Kafka({
   clientId: "modheshwari-ws",
   brokers: [KAFKA_BROKER],
+  logCreator: () => ({ namespace, level, label, log }) => {
+    try {
+      const lvl = (log && (log.level || log.levelName))
+        ? String(log.level || log.levelName).toUpperCase()
+        : String(level || "INFO").toUpperCase();
+
+      const msgParts: any = { namespace };
+      if (log && log.message) msgParts.message = log.message;
+      if (log && log.error) msgParts.error = log.error;
+      // include other useful fields
+      for (const k of ["groupId", "memberId", "clientId", "broker"]) {
+        if (log && (log as any)[k]) (msgParts as any)[k] = (log as any)[k];
+      }
+
+      let text: string;
+      try {
+        text = msgParts.message ? `${msgParts.message}` : JSON.stringify(msgParts);
+      } catch (_) {
+        text = String(msgParts);
+      }
+
+      if (lvl.includes("ERROR")) logger.error(text, msgParts.error || msgParts);
+      else if (lvl.includes("WARN")) logger.warn(text, msgParts);
+      else if (lvl.includes("DEBUG")) logger.debug(text, msgParts);
+      else logger.info(text, msgParts);
+    } catch (e) {
+      // fallback
+      logger.info(String(log) || "kafkajs log", log);
+    }
+  },
 });
 const consumer = kafka.consumer({ groupId: WS_CONSUMER_GROUP });
 
@@ -102,7 +133,7 @@ async function handleNotificationEvent({ message }: EachMessagePayload) {
   try {
     parsed = JSON.parse(raw) as NotificationEvent;
   } catch (err) {
-    console.error("[WS] Failed to parse event", err);
+    logger.error("Failed to parse event", err instanceof Error ? err : String(err));
     return;
   }
 
@@ -128,7 +159,7 @@ async function startKafkaConsumer() {
   await consumer.run({
     eachMessage: handleNotificationEvent,
   });
-  console.log(`[WS] Kafka consumer connected → ${NOTIFICATION_TOPIC}`);
+  logger.info(`Kafka consumer connected → ${NOTIFICATION_TOPIC}`);
 }
 
 const server = serve<WSData>({
@@ -154,7 +185,7 @@ const server = serve<WSData>({
   websocket: {
     open(ws) {
       addSocket(ws.data.userId, ws);
-      console.log("[WS] connected", ws.data.userId);
+      logger.info("connected", { userId: ws.data.userId });
     },
     async message(ws, message) {
       try {
@@ -282,30 +313,30 @@ const server = serve<WSData>({
             });
           }
         }
-      } catch (err) {
-        console.error("[WS] Failed to handle message", err);
-      }
+        } catch (err) {
+          logger.error("Failed to handle message", err instanceof Error ? err : String(err));
+        }
     },
     close(ws) {
       removeSocket(ws.data.userId, ws);
-      console.log("[WS] disconnected", ws.data.userId);
+      logger.info("disconnected", { userId: ws.data.userId });
     },
   },
 });
 
 startKafkaConsumer().catch((err) => {
-  console.error("[WS] Failed to start consumer", err);
+  logger.error("Failed to start consumer", err instanceof Error ? err : String(err));
   process.exit(1);
 });
 
-console.log(`[WS] server running on ws://localhost:${WS_PORT}`);
+logger.info(`server running on ws://localhost:${WS_PORT}`);
 
 async function shutdown() {
-  console.log("[WS] shutting down...");
+  logger.info("shutting down...");
   try {
     await consumer.disconnect();
   } catch (err) {
-    console.error("[WS] consumer disconnect failed", err);
+    logger.error("consumer disconnect failed", err instanceof Error ? err : String(err));
   }
   server.stop(true);
   process.exit(0);
@@ -313,4 +344,3 @@ async function shutdown() {
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
-
