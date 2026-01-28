@@ -51,8 +51,9 @@ export default function CreateEventPage() {
 
       // Success - redirect to events list
       router.push("/events");
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || "An error occurred");
     } finally {
       setLoading(false);
     }

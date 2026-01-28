@@ -26,7 +26,8 @@ export default function SigninPage() {
   const [loading, setLoading] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleLogin(e?: React.FormEvent) {
+    if (e) e.preventDefault();
     setLoading(true);
     try {
       const base =
@@ -157,7 +158,7 @@ export default function SigninPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && email && password) {
-                      handleLogin(e as any);
+                      void handleLogin();
                     }
                   }}
                   required

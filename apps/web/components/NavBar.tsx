@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { API_BASE } from "../lib/config";
@@ -59,7 +59,7 @@ export default function NavBar() {
   }: {
     href: string;
     label: string;
-    Icon?: any;
+    Icon?: ComponentType<{ className?: string }>;
   }) => (
     <Link
       href={href}

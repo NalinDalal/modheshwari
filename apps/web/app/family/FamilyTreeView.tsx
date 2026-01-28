@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, ChangeEvent } from "react";
 import { Network } from "vis-network";
-import { Users, Plus, Loader } from "lucide-react";
+import { Plus, Loader } from "lucide-react";
 
 interface TreeNode {
   id: string;
@@ -285,10 +285,10 @@ export default function FamilyTreeView() {
                 </label>
                 <select
                   value={relationshipForm.relationType}
-                  onChange={(e) =>
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                     setRelationshipForm({
                       ...relationshipForm,
-                      relationType: e.target.value as any,
+                      relationType: e.target.value as "SPOUSE" | "PARENT" | "CHILD" | "SIBLING",
                     })
                   }
                   className="w-full px-3 py-2 bg-[#1a1f2e] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"

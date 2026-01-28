@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   Calendar,
@@ -92,13 +92,7 @@ export default function EventDetailsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (hydrated && eventId) {
-      fetchEvent();
-    }
-  }, [hydrated, eventId]);
-
-  const fetchEvent = async () => {
+  const fetchEvent = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/events/${eventId}`, {
@@ -108,12 +102,13 @@ export default function EventDetailsPage() {
       if (!response.ok) throw new Error("Failed to fetch event");
 
       const data = await response.json();
-      setEvent(data.data.event);
+      const fetchedEvent = data.data.event as EventDetails;
+      setEvent(fetchedEvent);
 
       // Check if user is registered
-      if (userId && data.data.event.registrations) {
-        const userRegistration = data.data.event.registrations.find(
-          (r: any) => r.userId === userId,
+      if (userId && fetchedEvent.registrations) {
+        const userRegistration = fetchedEvent.registrations.find(
+          (r) => r.userId === userId,
         );
         setIsRegistered(!!userRegistration);
       }
@@ -122,7 +117,13 @@ export default function EventDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE, eventId, token, userId]);
+
+  useEffect(() => {
+    if (hydrated && eventId) {
+      fetchEvent();
+    }
+  }, [hydrated, eventId, fetchEvent]);
 
   const handleRegister = async () => {
     if (!token) return;
@@ -144,8 +145,9 @@ export default function EventDetailsPage() {
 
       setIsRegistered(true);
       fetchEvent(); // Refresh to get updated registration count
-    } catch (error: any) {
-      alert(error.message || "Failed to register for event");
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      alert(msg || "Failed to register for event");
     } finally {
       setRegistering(false);
     }
@@ -169,8 +171,9 @@ export default function EventDetailsPage() {
 
       setIsRegistered(false);
       fetchEvent(); // Refresh to get updated registration count
-    } catch (error: any) {
-      alert(error.message || "Failed to unregister from event");
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      alert(msg || "Failed to unregister from event");
     } finally {
       setRegistering(false);
     }

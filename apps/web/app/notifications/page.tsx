@@ -137,7 +137,15 @@ export default function NotificationsPage(): React.ReactElement {
     if (!message.trim()) return;
 
     try {
-      const body: Record<string, any> = {
+      interface BroadcastBody {
+        message: string;
+        subject?: string;
+        priority: "low" | "normal" | "high" | "urgent";
+        channels: string[];
+        targetRole?: string;
+      }
+
+      const body: BroadcastBody = {
         message,
         subject: subject.trim() || undefined,
         priority,

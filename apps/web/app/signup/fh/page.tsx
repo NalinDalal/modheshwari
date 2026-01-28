@@ -54,8 +54,8 @@ export default function SignupPage() {
 
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    if (e) e.preventDefault();
     setLoading(true);
 
     try {
@@ -205,7 +205,7 @@ export default function SignupPage() {
                   }
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && isFormValid) {
-                      handleSubmit(e as any);
+                      void handleSubmit();
                     }
                   }}
                   required

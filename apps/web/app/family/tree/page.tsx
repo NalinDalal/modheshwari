@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, ChangeEvent } from "react";
 import { Network } from "vis-network";
 import { Users, Plus, Trash2, Loader } from "lucide-react";
 
@@ -293,12 +293,12 @@ export default function FamilyTreePage() {
                   </label>
                   <select
                     value={relationshipForm.relationType}
-                    onChange={(e) =>
-                      setRelationshipForm({
-                        ...relationshipForm,
-                        relationType: e.target.value as any,
-                      })
-                    }
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                        setRelationshipForm({
+                          ...relationshipForm,
+                          relationType: e.target.value as "SPOUSE" | "PARENT" | "CHILD" | "SIBLING",
+                        })
+                      }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="SPOUSE">Spouse</option>

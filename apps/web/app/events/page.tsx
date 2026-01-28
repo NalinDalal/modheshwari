@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
@@ -53,13 +53,7 @@ export default function EventsPage() {
     setToken(savedToken);
   }, []);
 
-  useEffect(() => {
-    if (hydrated) {
-      fetchEvents();
-    }
-  }, [hydrated, filter]);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
       const statusParam =
@@ -71,12 +65,18 @@ export default function EventsPage() {
       const data = await response.json();
       // Extract data from new pagination response format
       setEvents(data.data?.data || []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching events:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE, filter]);
+
+  useEffect(() => {
+    if (hydrated) {
+      fetchEvents();
+    }
+  }, [hydrated, fetchEvents]);
 
   const getStatusBadge = (status: string) => {
     const config = {
@@ -156,13 +156,13 @@ export default function EventsPage() {
         {/* Filters */}
         <div className="flex gap-2 mb-6">
           {[
-            { label: "Approved", value: "approved" },
-            { label: "Pending", value: "pending" },
-            { label: "All", value: "all" },
+            { label: "Approved", value: "approved" as const },
+            { label: "Pending", value: "pending" as const },
+            { label: "All", value: "all" as const },
           ].map((f) => (
             <button
               key={f.value}
-              onClick={() => setFilter(f.value as any)}
+              onClick={() => setFilter(f.value)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 filter === f.value
                   ? "bg-blue-600 text-white shadow-[0_0_12px_rgba(59,130,246,0.5)]"
