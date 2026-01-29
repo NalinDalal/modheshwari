@@ -23,6 +23,10 @@ interface User {
   role: string;
 }
 
+/**
+ * Performs  nav bar operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();

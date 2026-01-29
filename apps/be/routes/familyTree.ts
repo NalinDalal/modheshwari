@@ -130,7 +130,7 @@ async function buildAncestorTree(
   depth: number,
   currentDepth = 0,
   visited = new Set<string>(),
-): Promise<TreeNode> {
+): Promise<TreeNode | null> {
   // Prevent infinite loops
   if (visited.has(userId)) {
     return null;
@@ -224,7 +224,7 @@ async function buildDescendantTree(
   depth: number,
   currentDepth = 0,
   visited = new Set<string>(),
-): Promise<TreeNode> {
+): Promise<TreeNode | null> {
   // Prevent infinite loops
   if (visited.has(userId)) {
     return null;
@@ -234,7 +234,7 @@ async function buildDescendantTree(
 
   // Stop at max depth
   if (currentDepth >= depth) {
-    return { id: "", name: "", email: "", role: "" };
+    return null;
   }
 
   const user = await prisma.user.findUnique({
@@ -579,6 +579,7 @@ export async function handleCreateRelationship(
         select: { id: true },
       }),
     ]);
+
     if (!userExists) {
       return failure("Authenticated user not found", "Not Found", 404);
     }
@@ -677,7 +678,7 @@ export async function handleDeleteRelationship(
     // Verify relation exists and user has permission
     const relation = await prisma.userRelation.findUnique({
       where: { id: relationId },
-      select: { fromUserId: true },
+      select: { fromUserId: true, toUserId: true },
     });
 
     if (!relation) {
@@ -685,6 +686,7 @@ export async function handleDeleteRelationship(
     }
 
     const userId = auth.payload.userId || auth.payload.id;
+
     // Allow deletion if user is either side of the relationship
     if (relation.fromUserId !== userId && relation.toUserId !== userId) {
       return failure(

@@ -21,6 +21,10 @@ type Message = {
   status?: "sending" | "sent" | "failed";
 };
 
+/**
+ * Performs  chat page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function ChatPage() {
   const [personal, setPersonal] = useState<Conversation[]>([]);
   const [familyChat, setFamilyChat] = useState<Conversation | null>(null);

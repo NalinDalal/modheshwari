@@ -10,7 +10,12 @@ export const kafka = new Kafka({
 export const producer = kafka.producer();
 
 // Create consumer instance with a consumer group
-export const createConsumer = (groupId: string) => {
+export const createConsumer = /**
+ * Executes create consumer operation.
+ * @param {string} groupId - Description of groupId
+ * @returns {import("/Users/nalindalal/modheshwari/node_modules/kafkajs/types/index").Consumer} Description of return value
+ */
+(groupId: string) => {
   return kafka.consumer({ groupId });
 };
 

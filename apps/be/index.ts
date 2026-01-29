@@ -182,6 +182,11 @@ const RATE_LIMIT_MAX = 25; // max messages per window per user
 const TYPING_DEBOUNCE_MS = 3000;
 const typingTimers = new Map<string, Map<string, number>>();
 
+/**
+ * Performs check and increment ws rate operation.
+ * @param {string} userId - Description of userId
+ * @returns {boolean} Description of return value
+ */
 function checkAndIncrementWsRate(userId: string) {
   const now = Date.now();
   const state = wsRateLimits.get(userId);
@@ -195,6 +200,12 @@ function checkAndIncrementWsRate(userId: string) {
   return true;
 }
 
+/**
+ * Performs add socket operation.
+ * @param {string} userId - Description of userId
+ * @param {Bun.ServerWebSocket<WSData>} ws - Description of ws
+ * @returns {void} Description of return value
+ */
 function addSocket(userId: string, ws: ServerWebSocket<WSData>) {
   if (!userSockets.has(userId)) {
     userSockets.set(userId, new Set());
@@ -202,6 +213,12 @@ function addSocket(userId: string, ws: ServerWebSocket<WSData>) {
   userSockets.get(userId)!.add(ws);
 }
 
+/**
+ * Performs remove socket operation.
+ * @param {string} userId - Description of userId
+ * @param {Bun.ServerWebSocket<WSData>} ws - Description of ws
+ * @returns {void} Description of return value
+ */
 function removeSocket(userId: string, ws: ServerWebSocket<WSData>) {
   const set = userSockets.get(userId);
   if (!set) return;
@@ -212,6 +229,12 @@ function removeSocket(userId: string, ws: ServerWebSocket<WSData>) {
   }
 }
 
+/**
+ * Performs push notification operation.
+ * @param {string} userId - Description of userId
+ * @param {any} notification - Description of notification
+ * @returns {void} Description of return value
+ */
 export function pushNotification(userId: string, notification: any) {
   const sockets = userSockets.get(userId);
   if (!sockets) return;

@@ -1,5 +1,9 @@
 import { producer, TOPICS } from "./config";
 
+/**
+ * Performs main operation.
+ * @returns {Promise<void>} Description of return value
+ */
 async function main() {
   try {
     // Connect the producer

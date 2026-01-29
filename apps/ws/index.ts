@@ -50,6 +50,11 @@ type IncomingMessage = {
 
 const userSockets = new Map<string, Set<ServerWebSocket<WSData>>>();
 
+/**
+ * Performs authenticate operation.
+ * @param {Request} req - Description of req
+ * @returns {string} Description of return value
+ */
 function authenticate(req: Request): string | null {
   const authHeader = req.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "").trim();
@@ -60,6 +65,12 @@ function authenticate(req: Request): string | null {
   return typeof userId === "string" && userId ? userId : null;
 }
 
+/**
+ * Performs add socket operation.
+ * @param {string} userId - Description of userId
+ * @param {Bun.ServerWebSocket<WSData>} ws - Description of ws
+ * @returns {void} Description of return value
+ */
 function addSocket(userId: string, ws: ServerWebSocket<WSData>) {
   if (!userSockets.has(userId)) {
     userSockets.set(userId, new Set());
@@ -67,6 +78,12 @@ function addSocket(userId: string, ws: ServerWebSocket<WSData>) {
   userSockets.get(userId)!.add(ws);
 }
 
+/**
+ * Performs remove socket operation.
+ * @param {string} userId - Description of userId
+ * @param {Bun.ServerWebSocket<WSData>} ws - Description of ws
+ * @returns {void} Description of return value
+ */
 function removeSocket(userId: string, ws: ServerWebSocket<WSData>) {
   const set = userSockets.get(userId);
   if (!set) return;
@@ -76,6 +93,12 @@ function removeSocket(userId: string, ws: ServerWebSocket<WSData>) {
   }
 }
 
+/**
+ * Performs push to user operation.
+ * @param {string} userId - Description of userId
+ * @param {unknown} payload - Description of payload
+ * @returns {void} Description of return value
+ */
 function pushToUser(userId: string, payload: unknown) {
   const sockets = userSockets.get(userId);
   if (!sockets) return;
@@ -125,6 +148,11 @@ const kafka = new Kafka({
 });
 const consumer = kafka.consumer({ groupId: WS_CONSUMER_GROUP });
 
+/**
+ * Performs handle notification event operation.
+ * @param {import("/Users/nalindalal/modheshwari/node_modules/kafkajs/types/index").EachMessagePayload} { message } - Description of { message }
+ * @returns {Promise<void>} Description of return value
+ */
 async function handleNotificationEvent({ message }: EachMessagePayload) {
   const raw = message.value?.toString();
   if (!raw) return;
@@ -153,6 +181,10 @@ async function handleNotificationEvent({ message }: EachMessagePayload) {
   }
 }
 
+/**
+ * Performs start kafka consumer operation.
+ * @returns {Promise<void>} Description of return value
+ */
 async function startKafkaConsumer() {
   await consumer.connect();
   await consumer.subscribe({ topic: NOTIFICATION_TOPIC, fromBeginning: false });
@@ -331,6 +363,10 @@ startKafkaConsumer().catch((err) => {
 
 logger.info(`server running on ws://localhost:${WS_PORT}`);
 
+/**
+ * Performs shutdown operation.
+ * @returns {Promise<void>} Description of return value
+ */
 async function shutdown() {
   logger.info("shutting down...");
   try {

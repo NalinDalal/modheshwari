@@ -2,6 +2,10 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import yaml from "js-yaml";
 
+/**
+ * Performs  g e t operation.
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function GET() {
   try {
     // Read the OpenAPI YAML file from the repo root

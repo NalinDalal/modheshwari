@@ -12,6 +12,10 @@ import {
   Calendar,
 } from "lucide-react";
 
+/**
+ * Performs  home operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function Home() {
   const router = useRouter();
 

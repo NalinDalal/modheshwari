@@ -21,6 +21,7 @@ project.addSourceFilesAtPaths([
   "packages/ui/**/*.tsx",
   "apps/web/**/**/*.tsx",
   "apps/web/**/**/*.ts",
+  "apps/ws/**/*.ts",
 ]);
 
 const files = project.getSourceFiles();
@@ -31,7 +32,7 @@ const files = project.getSourceFiles();
 function generateDocs(
   entity: FunctionDeclaration | ArrowFunction,
   name: string,
-  isArrow = false
+  isArrow = false,
 ) {
   const params = entity.getParameters().map((p: ParameterDeclaration) => ({
     name: p.getName(),

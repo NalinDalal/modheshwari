@@ -10,7 +10,6 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Loader,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { LoaderOne } from "@repo/ui/loading";

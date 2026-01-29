@@ -19,6 +19,11 @@ const COLORS: Record<LogLevel, string> = {
 };
 const RESET = "\u001b[0m";
 
+/**
+ * Performs safe stringify operation.
+ * @param {unknown} v - Description of v
+ * @returns {string} Description of return value
+ */
 function safeStringify(v: unknown) {
   try {
     return typeof v === "string" ? v : JSON.stringify(v);
@@ -27,6 +32,13 @@ function safeStringify(v: unknown) {
   }
 }
 
+/**
+ * Performs format j s o n operation.
+ * @param {LogLevel} level - Description of level
+ * @param {unknown} msg - Description of msg
+ * @param {unknown} meta - Description of meta
+ * @returns {string} Description of return value
+ */
 function formatJSON(level: LogLevel, msg: unknown, meta?: unknown) {
   const ts = new Date().toISOString();
   const base: Record<string, unknown> = { timestamp: ts, service: "ws", level };
@@ -39,6 +51,13 @@ function formatJSON(level: LogLevel, msg: unknown, meta?: unknown) {
   return JSON.stringify({ ...base, message: String(msg), meta });
 }
 
+/**
+ * Performs format pretty operation.
+ * @param {LogLevel} level - Description of level
+ * @param {unknown} msg - Description of msg
+ * @param {unknown} meta - Description of meta
+ * @returns {string} Description of return value
+ */
 function formatPretty(level: LogLevel, msg: unknown, meta?: unknown) {
   const ts = new Date().toISOString();
   const color = COLORS[level] || "";
@@ -57,10 +76,22 @@ function formatPretty(level: LogLevel, msg: unknown, meta?: unknown) {
   return `[${ts}] ${header} — ${message}${metaStr}`;
 }
 
+/**
+ * Performs should log operation.
+ * @param {LogLevel} level - Description of level
+ * @returns {boolean} Description of return value
+ */
 function shouldLog(level: LogLevel) {
   return (LEVEL_ORDER[level] ?? 0) >= minLevel;
 }
 
+/**
+ * Performs write operation.
+ * @param {LogLevel} level - Description of level
+ * @param {unknown} msg - Description of msg
+ * @param {unknown} meta - Description of meta
+ * @returns {void} Description of return value
+ */
 function write(level: LogLevel, msg: unknown, meta?: unknown) {
   if (!shouldLog(level)) return;
   const out = envPretty ? formatPretty(level, msg, meta) : formatJSON(level, msg, meta);

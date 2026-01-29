@@ -23,6 +23,11 @@ const hits: HitStore = new Map();
    IP Resolution
 ------------------------------------------- */
 
+/**
+ * Performs get client ip operation.
+ * @param {Request} req - Description of req
+ * @returns {string} Description of return value
+ */
 export function getClientIp(req: Request): string {
   const header =
     req.headers.get("x-forwarded-for") ||
@@ -38,6 +43,12 @@ export function getClientIp(req: Request): string {
    Rate Limiter
 ------------------------------------------- */
 
+/**
+ * Performs is rate limited operation.
+ * @param {Request} req - Description of req
+ * @param {RateLimitOptions} { max, windowMs, scope = "global" } - Description of { max, windowMs, scope = "global" }
+ * @returns {boolean} Description of return value
+ */
 export function isRateLimited(
   req: Request,
   { max, windowMs, scope = "global" }: RateLimitOptions,

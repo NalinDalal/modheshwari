@@ -1,6 +1,10 @@
 import { createConsumer, TOPICS } from "../config";
 import type { EachMessagePayload } from "kafkajs";
 
+/**
+ * Performs start sms consumer operation.
+ * @returns {Promise<void>} Description of return value
+ */
 export async function startSmsConsumer(): Promise<void> {
   const consumer = createConsumer("notifications-sms");
 

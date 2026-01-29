@@ -1,6 +1,10 @@
 import { createConsumer, TOPICS } from "../config";
 import type { EachMessagePayload } from "kafkajs";
 
+/**
+ * Performs start email consumer operation.
+ * @returns {Promise<void>} Description of return value
+ */
 export async function startEmailConsumer(): Promise<void> {
   const consumer = createConsumer("notifications-email");
 

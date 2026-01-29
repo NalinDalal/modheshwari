@@ -187,12 +187,6 @@ export default function FamilyTreePage() {
       }
 
       networkRef.current = new Network(containerRef.current, treeData, options);
-
-      // Handle network errors
-      networkRef.current.on("error", (error: any) => {
-        console.error("Network visualization error:", error);
-        setError("Failed to render family tree visualization");
-      });
     } catch (err) {
       console.error("Failed to initialize network:", err);
       setError("Failed to initialize family tree visualization");
