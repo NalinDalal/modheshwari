@@ -70,6 +70,7 @@ This project is a full-stack platform for managing local community operations, i
 
 - Automated with GitHub Actions (`.github/workflows/ci.yml`)
 - Builds, tests, and deploys Docker images to AWS (ECR + ECS)
+- For detailed AWS deployment instructions, see [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)
 
 ## Documentation
 
