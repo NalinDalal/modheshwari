@@ -34,6 +34,10 @@ interface Event {
   createdAt: string;
 }
 
+/**
+ * Performs  events page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function EventsPage() {
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);

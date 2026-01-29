@@ -44,6 +44,11 @@ interface FamilyMembership {
    Small Helpers
 ======================= */
 
+/**
+ * Performs  meta operation.
+ * @param {{ label: string; value: string; }} { label, value } - Description of { label, value }
+ * @returns {React.JSX.Element} Description of return value
+ */
 function Meta({ label, value }: { label: string; value: string }) {
   return (
     <div className="p-3 border rounded-lg">
@@ -53,6 +58,17 @@ function Meta({ label, value }: { label: string; value: string }) {
   );
 }
 
+/**
+ * Performs  profile field operation.
+ * @param {{ label: string; value?: string; }} {
+ *   label,
+ *   value,
+ * } - Description of {
+ *   label,
+ *   value,
+ * }
+ * @returns {React.JSX.Element} Description of return value
+ */
 function ProfileField({
   label,
   value,

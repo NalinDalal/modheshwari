@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { Calendar, MapPin, FileText, ArrowLeft, Loader } from "lucide-react";
 import { NotAuthenticated } from "@repo/ui/not-authenticated";
 
+/**
+ * Performs  create event page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function CreateEventPage() {
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);

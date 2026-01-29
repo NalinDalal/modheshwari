@@ -1,5 +1,3 @@
-// apps/be/routes/me.ts
-
 import prisma from "@modheshwari/db";
 import { verifyJWT } from "@modheshwari/utils/jwt";
 import type { AuthPayload } from "@modheshwari/utils/jwt";
@@ -117,6 +115,11 @@ type UpdateProfileBody = {
   profession?: string;
 };
 
+/**
+ * Performs handle update me operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleUpdateMe(req: Request): Promise<Response> {
   try {
     // --- Step 1: Extract and validate JWT ---

@@ -200,6 +200,11 @@ export async function handleCreateNotification(req: Request) {
    GET /api/notifications
    ========================================================= */
 
+/**
+ * Performs handle list notifications operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleListNotifications(req: Request): Promise<Response> {
   try {
     const auth = requireAuth(req);

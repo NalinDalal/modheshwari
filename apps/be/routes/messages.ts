@@ -4,6 +4,11 @@ import { success, failure } from "@modheshwari/utils/response";
 import { z } from "zod";
 
 // Helper to extract userId from JWT
+/**
+ * Performs get user id from request operation.
+ * @param {Request} req - Description of req
+ * @returns {string} Description of return value
+ */
 function getUserIdFromRequest(req: Request): string | null {
   const authHeader = req.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "").trim();
@@ -17,6 +22,11 @@ function getUserIdFromRequest(req: Request): string | null {
 }
 
 // Get all conversations for the current user
+/**
+ * Performs handle get conversations operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleGetConversations(req: Request) {
   const userId = getUserIdFromRequest(req);
   if (!userId) {
@@ -95,6 +105,11 @@ export async function handleGetConversations(req: Request) {
 }
 
 // Get or create a conversation
+/**
+ * Performs handle create conversation operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleCreateConversation(req: Request) {
   const userId = getUserIdFromRequest(req);
   if (!userId) {
@@ -149,6 +164,12 @@ export async function handleCreateConversation(req: Request) {
 }
 
 // Get messages for a conversation
+/**
+ * Performs handle get messages operation.
+ * @param {Request} req - Description of req
+ * @param {string} conversationId - Description of conversationId
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleGetMessages(req: Request, conversationId: string) {
   const userId = getUserIdFromRequest(req);
   if (!userId) {
@@ -202,6 +223,11 @@ export async function handleGetMessages(req: Request, conversationId: string) {
 }
 
 // Search users to start a conversation with
+/**
+ * Performs handle search users for chat operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleSearchUsersForChat(req: Request) {
   const url = new URL(req.url);
   const query = url.searchParams.get("q") || "";
@@ -248,6 +274,11 @@ export async function handleSearchUsersForChat(req: Request) {
 }
 
 // Send a message
+/**
+ * Performs handle send message operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleSendMessage(req: Request) {
   const userId = getUserIdFromRequest(req);
   if (!userId) {
@@ -313,6 +344,11 @@ export async function handleSendMessage(req: Request) {
 }
 
 // Mark messages as read
+/**
+ * Performs handle mark messages read operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleMarkMessagesRead(req: Request) {
   const userId = getUserIdFromRequest(req);
   if (!userId) {

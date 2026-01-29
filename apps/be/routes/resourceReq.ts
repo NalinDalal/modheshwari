@@ -13,6 +13,11 @@ import {
    POST /api/resource-requests
    ========================================================= */
 
+/**
+ * Performs handle create resource request operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleCreateResourceRequest(
   req: Request,
 ): Promise<Response> {
@@ -138,6 +143,11 @@ export async function handleCreateResourceRequest(
    GET /api/resource-requests
    ========================================================= */
 
+/**
+ * Performs handle list resource requests operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleListResourceRequests(
   req: Request,
 ): Promise<Response> {
@@ -194,6 +204,12 @@ export async function handleListResourceRequests(
    GET SINGLE RESOURCE REQUEST
    ========================================================= */
 
+/**
+ * Performs handle get resource request operation.
+ * @param {Request} req - Description of req
+ * @param {string} id - Description of id
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleGetResourceRequest(
   req: Request,
   id: string,
@@ -231,6 +247,12 @@ export async function handleGetResourceRequest(
    POST /api/resource-requests/:id/review
    ========================================================= */
 
+/**
+ * Performs handle review resource request operation.
+ * @param {Request} req - Description of req
+ * @param {string} id - Description of id
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleReviewResourceRequest(
   req: Request,
   id: string,

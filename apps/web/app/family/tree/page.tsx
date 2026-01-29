@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, ChangeEvent } from "react";
 import { Network } from "vis-network";
-import { Users, Plus, Trash2, Loader } from "lucide-react";
+import { Users, Plus, Trash2, Loader, AlertCircle } from "lucide-react";
 
 interface TreeNode {
   id: string;
@@ -34,11 +34,15 @@ interface GraphData {
 
 type ViewType = "ancestors" | "descendants" | "full";
 
+/**
+ * Performs  family tree page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function FamilyTreePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const networkRef = useRef<Network | null>(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<ViewType>("full");
   const [depth, setDepth] = useState(5);
@@ -51,10 +55,29 @@ export default function FamilyTreePage() {
   });
   const [showRelationshipForm, setShowRelationshipForm] = useState(false);
 
+  // Get userId from token
+  const getUserIdFromToken = (): string | null => {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+
+    try {
+      const parts = token.split(".");
+      if (parts.length < 2) return null;
+      const payload = JSON.parse(atob(parts[1]!));
+      return payload.userId || payload.id || null;
+    } catch (err) {
+      console.error("Failed to decode token:", err);
+      return null;
+    }
+  };
+
   // Fetch family tree
-  const fetchFamilyTree = async () => {
-    if (!userId) {
-      setError("User ID not available");
+  const fetchFamilyTree = async (targetUserId?: string) => {
+    const userIdToUse = targetUserId || userId;
+
+    if (!userIdToUse) {
+      setError("User ID not available. Please sign in again.");
+      setLoading(false);
       return;
     }
 
@@ -63,26 +86,43 @@ export default function FamilyTreePage() {
 
     try {
       const params = new URLSearchParams({
-        userId,
+        userId: userIdToUse,
         view,
         depth: depth.toString(),
         format: "graph",
       });
 
-      const response = await fetch(`/api/family/tree?${params}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No authentication token found. Please sign in.");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/family/tree?${params}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch family tree");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Failed to fetch family tree");
       }
 
       const data = await response.json();
-      setTreeData(data.data.tree);
+
+      if (data.status === "success" && data.data?.tree) {
+        setTreeData(data.data.tree);
+      } else {
+        setError("No family tree data available");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : "Unknown error occurred");
+      console.error("Fetch family tree error:", err);
     } finally {
       setLoading(false);
     }
@@ -92,70 +132,111 @@ export default function FamilyTreePage() {
   useEffect(() => {
     if (!treeData || !containerRef.current) return;
 
-    const options = {
-      physics: {
-        enabled: true,
-        stabilization: {
-          iterations: 200,
-        },
-      },
-      layout: {
-        hierarchical: {
-          enabled: true,
-          levelSeparation: 200,
-          nodeSpacing: 150,
-          direction: "UD",
-        },
-      },
-      nodes: {
-        font: {
-          size: 14,
-          face: "Tahoma",
-        },
-        borderWidth: 2,
-        borderWidthSelected: 4,
-      },
-      edges: {
-        font: {
-          size: 12,
-          align: "middle",
-        },
-        smooth: {
-          enabled: true,
-          type: "continuous",
-          roundness: 0.5,
-        },
-        arrows: {
-          to: {
-            enabled: true,
-            scaleFactor: 0.5,
-          },
-        },
-      },
-    };
-
-    networkRef.current = new Network(containerRef.current, treeData, options);
-  }, [treeData]);
-
-  // Get userId on mount
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    // Check if there are any nodes
+    if (!treeData.nodes || treeData.nodes.length === 0) {
+      setError("No family members found in the tree");
+      return;
+    }
 
     try {
-      // Decode JWT to get user info
-      const parts = token.split(".");
-      if (parts.length < 2) return;
-      const payload = JSON.parse(atob(parts[1]!));
-      setUserId(payload.userId || payload.id);
+      const options = {
+        physics: {
+          enabled: true,
+          stabilization: {
+            iterations: 200,
+          },
+        },
+        layout: {
+          hierarchical: {
+            enabled: true,
+            levelSeparation: 200,
+            nodeSpacing: 150,
+            direction: "UD",
+          },
+        },
+        nodes: {
+          font: {
+            size: 14,
+            face: "Tahoma",
+          },
+          borderWidth: 2,
+          borderWidthSelected: 4,
+        },
+        edges: {
+          font: {
+            size: 12,
+            align: "middle",
+          },
+          smooth: {
+            enabled: true,
+            type: "continuous",
+            roundness: 0.5,
+          },
+          arrows: {
+            to: {
+              enabled: true,
+              scaleFactor: 0.5,
+            },
+          },
+        },
+      };
+
+      // Clean up previous network instance
+      if (networkRef.current) {
+        networkRef.current.destroy();
+      }
+
+      networkRef.current = new Network(containerRef.current, treeData, options);
+
+      // Handle network errors
+      networkRef.current.on("error", (error: any) => {
+        console.error("Network visualization error:", error);
+        setError("Failed to render family tree visualization");
+      });
     } catch (err) {
-      console.error("Failed to decode token:", err);
+      console.error("Failed to initialize network:", err);
+      setError("Failed to initialize family tree visualization");
     }
+
+    // Cleanup on unmount
+    return () => {
+      if (networkRef.current) {
+        networkRef.current.destroy();
+        networkRef.current = null;
+      }
+    };
+  }, [treeData]);
+
+  // Initialize: Get userId and fetch tree on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Please sign in to view your family tree");
+      setLoading(false);
+      return;
+    }
+
+    const extractedUserId = getUserIdFromToken();
+    if (!extractedUserId) {
+      setError("Invalid authentication token. Please sign in again.");
+      setLoading(false);
+      return;
+    }
+
+    setUserId(extractedUserId);
+    fetchFamilyTree(extractedUserId);
   }, []);
+
+  // Refetch when view or depth changes
+  useEffect(() => {
+    if (userId) {
+      fetchFamilyTree();
+    }
+  }, [view, depth]);
 
   // Create relationship
   const handleCreateRelationship = async () => {
-    if (!relationshipForm.targetUserId) {
+    if (!relationshipForm.targetUserId.trim()) {
       setError("Please enter target user ID");
       return;
     }
@@ -164,19 +245,32 @@ export default function FamilyTreePage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/family/tree/relations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(relationshipForm),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create relationship");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No authentication token found");
+        setLoading(false);
+        return;
       }
 
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/family/tree/relations`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(relationshipForm),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create relationship");
+      }
+
+      // Reset form and hide it
       setRelationshipForm({
         targetUserId: "",
         relationType: "SPOUSE",
@@ -186,8 +280,11 @@ export default function FamilyTreePage() {
 
       // Refresh tree
       await fetchFamilyTree();
+
+      alert("Relationship created successfully!");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : "Unknown error occurred");
+      console.error("Create relationship error:", err);
     } finally {
       setLoading(false);
     }
@@ -218,7 +315,8 @@ export default function FamilyTreePage() {
               <select
                 value={view}
                 onChange={(e) => setView(e.target.value as ViewType)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="full">Full Tree</option>
                 <option value="ancestors">Ancestors</option>
@@ -229,7 +327,7 @@ export default function FamilyTreePage() {
             {/* Depth */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Depth: {depth}
+                Depth: {depth} {depth === 1 ? "generation" : "generations"}
               </label>
               <input
                 type="range"
@@ -237,19 +335,20 @@ export default function FamilyTreePage() {
                 max="10"
                 value={depth}
                 onChange={(e) => setDepth(parseInt(e.target.value))}
-                className="w-full"
+                disabled={loading}
+                className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
 
             {/* Refresh Button */}
             <div className="flex items-end">
               <button
-                onClick={fetchFamilyTree}
+                onClick={() => fetchFamilyTree()}
                 disabled={loading || !userId}
                 className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? <Loader className="w-4 h-4 animate-spin" /> : null}
-                Refresh Tree
+                {loading ? "Loading..." : "Refresh Tree"}
               </button>
             </div>
 
@@ -257,7 +356,8 @@ export default function FamilyTreePage() {
             <div className="flex items-end">
               <button
                 onClick={() => setShowRelationshipForm(!showRelationshipForm)}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                disabled={loading}
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4" />
                 Add Relation
@@ -283,7 +383,8 @@ export default function FamilyTreePage() {
                       })
                     }
                     placeholder="Enter user ID"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    disabled={loading}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   />
                 </div>
 
@@ -294,12 +395,17 @@ export default function FamilyTreePage() {
                   <select
                     value={relationshipForm.relationType}
                     onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                        setRelationshipForm({
-                          ...relationshipForm,
-                          relationType: e.target.value as "SPOUSE" | "PARENT" | "CHILD" | "SIBLING",
-                        })
-                      }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      setRelationshipForm({
+                        ...relationshipForm,
+                        relationType: e.target.value as
+                          | "SPOUSE"
+                          | "PARENT"
+                          | "CHILD"
+                          | "SIBLING",
+                      })
+                    }
+                    disabled={loading}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                   >
                     <option value="SPOUSE">Spouse</option>
                     <option value="PARENT">Parent</option>
@@ -314,34 +420,74 @@ export default function FamilyTreePage() {
                     disabled={loading}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                   >
-                    Add
+                    {loading ? "Adding..." : "Add"}
                   </button>
                   <button
                     onClick={() => setShowRelationshipForm(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                    disabled={loading}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
                 </div>
+              </div>
+
+              <div className="mt-3">
+                <label className="flex items-center gap-2 text-sm text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={relationshipForm.reciprocal}
+                    onChange={(e) =>
+                      setRelationshipForm({
+                        ...relationshipForm,
+                        reciprocal: e.target.checked,
+                      })
+                    }
+                    disabled={loading}
+                    className="rounded"
+                  />
+                  Create reciprocal relationship automatically
+                </label>
               </div>
             </div>
           )}
 
           {/* Error Message */}
           {error && (
-            <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700">
-              {error}
+            <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
           )}
         </div>
 
         {/* Tree Visualization */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div
-            ref={containerRef}
-            className="w-full h-screen"
-            style={{ minHeight: "600px" }}
-          />
+          {loading && !treeData ? (
+            <div className="flex items-center justify-center h-96">
+              <div className="text-center">
+                <Loader className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
+                <p className="text-gray-600">Loading family tree...</p>
+              </div>
+            </div>
+          ) : treeData && treeData.nodes.length > 0 ? (
+            <div
+              ref={containerRef}
+              className="w-full h-screen"
+              style={{ minHeight: "600px" }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-96">
+              <div className="text-center text-gray-500">
+                <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium mb-2">No family tree data</p>
+                <p className="text-sm">
+                  Start by adding family relationships using the &quot;Add
+                  Relation&quot; button above
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Legend */}

@@ -97,12 +97,19 @@ export async function handleGetFamilyTree(req: Request): Promise<Response> {
     }
 
     // Build tree based on view
-    let treeNode: TreeNode;
+    let treeNode: TreeNode | null = null;
 
-    if (view === "ancestors" || view === "full") {
+    if (view === "ancestors") {
       treeNode = await buildAncestorTree(userId, depth);
-    } else {
+    } else if (view === "descendants") {
       treeNode = await buildDescendantTree(userId, depth);
+    } else {
+      // Full tree: combine ancestors and descendants
+      treeNode = await buildFullTree(userId, depth);
+    }
+
+    if (!treeNode) {
+      return failure("Failed to build family tree", "Server Error", 500);
     }
 
     // Convert to requested format
@@ -122,9 +129,18 @@ async function buildAncestorTree(
   userId: string,
   depth: number,
   currentDepth = 0,
+  visited = new Set<string>(),
 ): Promise<TreeNode> {
+  // Prevent infinite loops
+  if (visited.has(userId)) {
+    return null;
+  }
+
+  visited.add(userId);
+
+  // Stop at max depth
   if (currentDepth >= depth) {
-    return { id: "", name: "", email: "", role: "" };
+    return null;
   }
 
   const user = await prisma.user.findUnique({
@@ -133,7 +149,7 @@ async function buildAncestorTree(
   });
 
   if (!user) {
-    return { id: "", name: "", email: "", role: "" };
+    return null;
   }
 
   const node: TreeNode = {
@@ -157,11 +173,21 @@ async function buildAncestorTree(
   });
 
   if (parentRelations.length > 0) {
-    node.parents = await Promise.all(
-      parentRelations.map((rel) =>
-        buildAncestorTree(rel.fromUserId, depth, currentDepth + 1),
-      ),
-    );
+    const parents: TreeNode[] = [];
+    for (const rel of parentRelations) {
+      const parent = await buildAncestorTree(
+        rel.fromUserId,
+        depth,
+        currentDepth + 1,
+        new Set(visited),
+      );
+      if (parent) {
+        parents.push(parent);
+      }
+    }
+    if (parents.length > 0) {
+      node.parents = parents;
+    }
   }
 
   // Find spouse
@@ -177,7 +203,7 @@ async function buildAncestorTree(
     },
   });
 
-  if (spouseRelation) {
+  if (spouseRelation && !visited.has(spouseRelation.toUserId)) {
     node.spouse = {
       id: spouseRelation.toUser.id,
       name: spouseRelation.toUser.name,
@@ -197,7 +223,16 @@ async function buildDescendantTree(
   userId: string,
   depth: number,
   currentDepth = 0,
+  visited = new Set<string>(),
 ): Promise<TreeNode> {
+  // Prevent infinite loops
+  if (visited.has(userId)) {
+    return null;
+  }
+
+  visited.add(userId);
+
+  // Stop at max depth
   if (currentDepth >= depth) {
     return { id: "", name: "", email: "", role: "" };
   }
@@ -208,7 +243,7 @@ async function buildDescendantTree(
   });
 
   if (!user) {
-    return { id: "", name: "", email: "", role: "" };
+    return null;
   }
 
   const node: TreeNode = {
@@ -232,14 +267,127 @@ async function buildDescendantTree(
   });
 
   if (childRelations.length > 0) {
-    node.children = await Promise.all(
-      childRelations.map((rel) =>
-        buildDescendantTree(rel.toUserId, depth, currentDepth + 1),
-      ),
-    );
+    const children: TreeNode[] = [];
+    for (const rel of childRelations) {
+      const child = await buildDescendantTree(
+        rel.toUserId,
+        depth,
+        currentDepth + 1,
+        new Set(visited),
+      );
+      if (child) {
+        children.push(child);
+      }
+    }
+    if (children.length > 0) {
+      node.children = children;
+    }
   }
 
   // Find spouse
+  const spouseRelation = await prisma.userRelation.findFirst({
+    where: {
+      fromUserId: userId,
+      type: "SPOUSE",
+    },
+    include: {
+      toUser: {
+        select: { id: true, name: true, email: true, role: true },
+      },
+    },
+  });
+
+  if (spouseRelation && !visited.has(spouseRelation.toUserId)) {
+    node.spouse = {
+      id: spouseRelation.toUser.id,
+      name: spouseRelation.toUser.name,
+      email: spouseRelation.toUser.email,
+      role: spouseRelation.toUser.role,
+      relationshipToUser: "spouse",
+    };
+  }
+
+  return node;
+}
+
+/**
+ * Build full tree (both ancestors and descendants)
+ */
+async function buildFullTree(
+  userId: string,
+  depth: number,
+): Promise<TreeNode | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, role: true },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  const node: TreeNode = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const visited = new Set<string>([userId]);
+
+  // Get parents
+  const parentRelations = await prisma.userRelation.findMany({
+    where: {
+      toUserId: userId,
+      type: "PARENT",
+    },
+  });
+
+  if (parentRelations.length > 0) {
+    const parents: TreeNode[] = [];
+    for (const rel of parentRelations) {
+      const parent = await buildAncestorTree(
+        rel.fromUserId,
+        depth,
+        1,
+        new Set(visited),
+      );
+      if (parent) {
+        parents.push(parent);
+      }
+    }
+    if (parents.length > 0) {
+      node.parents = parents;
+    }
+  }
+
+  // Get children
+  const childRelations = await prisma.userRelation.findMany({
+    where: {
+      fromUserId: userId,
+      type: "CHILD",
+    },
+  });
+
+  if (childRelations.length > 0) {
+    const children: TreeNode[] = [];
+    for (const rel of childRelations) {
+      const child = await buildDescendantTree(
+        rel.toUserId,
+        depth,
+        1,
+        new Set(visited),
+      );
+      if (child) {
+        children.push(child);
+      }
+    }
+    if (children.length > 0) {
+      node.children = children;
+    }
+  }
+
+  // Get spouse
   const spouseRelation = await prisma.userRelation.findFirst({
     where: {
       fromUserId: userId,
@@ -262,6 +410,29 @@ async function buildDescendantTree(
     };
   }
 
+  // Get siblings
+  const siblingRelations = await prisma.userRelation.findMany({
+    where: {
+      fromUserId: userId,
+      type: "SIBLING",
+    },
+    include: {
+      toUser: {
+        select: { id: true, name: true, email: true, role: true },
+      },
+    },
+  });
+
+  if (siblingRelations.length > 0) {
+    node.siblings = siblingRelations.map((rel) => ({
+      id: rel.toUser.id,
+      name: rel.toUser.name,
+      email: rel.toUser.email,
+      role: rel.toUser.role,
+      relationshipToUser: "sibling",
+    }));
+  }
+
   return node;
 }
 
@@ -271,16 +442,28 @@ async function buildDescendantTree(
 function buildGraphData(node: TreeNode): GraphData {
   const nodes: Map<string, any> = new Map();
   const edges: Array<any> = [];
+  const processedEdges = new Set<string>();
 
-  function traverseAndBuild(current: TreeNode, parentId?: string) {
-    if (!current.id) return;
+  function addEdge(from: string, to: string, label: string, arrows?: string) {
+    const edgeKey = `${from}-${to}-${label}`;
+    const reverseEdgeKey = `${to}-${from}-${label}`;
+
+    // Avoid duplicate edges
+    if (!processedEdges.has(edgeKey) && !processedEdges.has(reverseEdgeKey)) {
+      edges.push({ from, to, label, arrows });
+      processedEdges.add(edgeKey);
+    }
+  }
+
+  function traverseAndBuild(current: TreeNode | null, parentId?: string) {
+    if (!current || !current.id) return;
 
     // Add node
     if (!nodes.has(current.id)) {
       nodes.set(current.id, {
         id: current.id,
         label: current.name,
-        title: `${current.name} (${current.role})`,
+        title: `${current.name}\n${current.email}\nRole: ${current.role}`,
         color: getRoleColor(current.role),
         shape: "box",
       });
@@ -288,52 +471,38 @@ function buildGraphData(node: TreeNode): GraphData {
 
     // Add parent edge
     if (parentId) {
-      edges.push({
-        from: current.id,
-        to: parentId,
-        label: current.relationshipToUser || "relation",
-        arrows: "to",
-      });
+      addEdge(current.id, parentId, "child of", "to");
     }
 
     // Process spouse
-    if (current.spouse) {
-      traverseAndBuild(current.spouse, undefined);
-      if (current.id && current.spouse.id) {
-        edges.push({
-          from: current.id,
-          to: current.spouse.id,
-          label: "spouse",
-          arrows: "to;from",
-        });
-      }
+    if (current.spouse && current.spouse.id) {
+      traverseAndBuild(current.spouse);
+      addEdge(current.id, current.spouse.id, "spouse", "to;from");
     }
 
     // Process parents
     if (current.parents?.length) {
       current.parents.forEach((parent) => {
-        traverseAndBuild(parent, current.id);
+        if (parent && parent.id) {
+          traverseAndBuild(parent, current.id);
+        }
       });
     }
 
     // Process children
     if (current.children?.length) {
       current.children.forEach((child) => {
-        traverseAndBuild(child, current.id);
+        if (child && child.id) {
+          traverseAndBuild(child, current.id);
+        }
       });
     }
-
     // Process siblings
     if (current.siblings?.length) {
       current.siblings.forEach((sibling) => {
-        traverseAndBuild(sibling, undefined);
-        if (current.id && sibling.id) {
-          edges.push({
-            from: current.id,
-            to: sibling.id,
-            label: "sibling",
-            arrows: "to;from",
-          });
+        if (sibling && sibling.id) {
+          traverseAndBuild(sibling);
+          addEdge(current.id, sibling.id, "sibling", "to;from");
         }
       });
     }
@@ -410,9 +579,25 @@ export async function handleCreateRelationship(
         select: { id: true },
       }),
     ]);
+    if (!userExists) {
+      return failure("Authenticated user not found", "Not Found", 404);
+    }
 
-    if (!userExists || !targetExists) {
-      return failure("One or both users not found", "Not Found", 404);
+    if (!targetExists) {
+      return failure("Target user not found", "Not Found", 404);
+    }
+
+    // Check if relation already exists
+    const existingRelation = await prisma.userRelation.findFirst({
+      where: {
+        fromUserId: userId,
+        toUserId: targetUserId,
+        type: relationType as any,
+      },
+    });
+
+    if (existingRelation) {
+      return failure("Relationship already exists", "Conflict", 409);
     }
 
     // Create primary relation
@@ -428,15 +613,25 @@ export async function handleCreateRelationship(
     let reciprocalRelation = null;
     if (reciprocal) {
       const reciprocalType = getReciprocalType(relationType);
-      reciprocalRelation = await prisma.userRelation
-        .create({
+
+      // Check if reciprocal already exists
+      const existingReciprocal = await prisma.userRelation.findFirst({
+        where: {
+          fromUserId: targetUserId,
+          toUserId: userId,
+          type: reciprocalType as any,
+        },
+      });
+
+      if (!existingReciprocal) {
+        reciprocalRelation = await prisma.userRelation.create({
           data: {
             fromUserId: targetUserId,
             toUserId: userId,
             type: reciprocalType as any,
           },
-        })
-        .catch(() => null); // Ignore if already exists
+        });
+      }
     }
 
     return success(
@@ -490,7 +685,8 @@ export async function handleDeleteRelationship(
     }
 
     const userId = auth.payload.userId || auth.payload.id;
-    if (relation.fromUserId !== userId) {
+    // Allow deletion if user is either side of the relationship
+    if (relation.fromUserId !== userId && relation.toUserId !== userId) {
       return failure(
         "Unauthorized to delete this relationship",
         "Forbidden",

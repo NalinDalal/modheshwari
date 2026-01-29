@@ -2,6 +2,11 @@ import prisma from "@modheshwari/db";
 import { verifyJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 
+/**
+ * Performs get user id from request operation.
+ * @param {Request} req - Description of req
+ * @returns {string} Description of return value
+ */
 function getUserIdFromRequest(req: Request): string | null {
   const authHeader = req.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "").trim();
@@ -15,6 +20,11 @@ function getUserIdFromRequest(req: Request): string | null {
 }
 
 // GET /api/chat
+/**
+ * Performs handle get chat operation.
+ * @param {Request} req - Description of req
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function handleGetChat(req: Request) {
   const userId = getUserIdFromRequest(req);
   if (!userId) return failure("Unauthorized", null, 401);
