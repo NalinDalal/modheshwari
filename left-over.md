@@ -12,7 +12,6 @@
 3. [Quick Wins (Easy, High Impact)](#quick-wins-easy-high-impact)
 4. [Medium Effort Tasks](#medium-effort-tasks)
 5. [High Effort / v2 Features](#high-effort--v2-features)
-6. [Documentation Issues to Fix](#documentation-issues-to-fix)
 
 ---
 
@@ -36,7 +35,18 @@
 - Need: `apps/be/routes/calendar.ts`
 - Need: `apps/web/app/calendar/page.tsx`
 
-**Estimated Effort:** 3-4 days
+**Requirements:**
+
+- Calendar data source (API or local)
+- Display system
+- Festival reminders
+- Integration with events
+
+**Estimated Time:** 1 week  
+**Impact:** High visibility, important for community
+
+[link1](https://github.com/karthikraman/panchangam)
+[link2](https://gist.github.com/hrishikeshrt/0090a0460608728f32381164ea54865c)
 
 ### 2. Event Pass Generation with QR Codes
 
@@ -152,6 +162,16 @@ model Profile {
 - `apps/web/components/MapView.tsx`
 
 **Estimated Effort:** 3-4 days
+
+**Requirements:**
+
+- Geolocation data in profiles
+- PostGIS for spatial queries
+- Nearby search API
+- Map UI component
+
+**Estimated Time:** 1 week  
+**Impact:** Location discovery and services
 
 ### 7. Fan-Out services
 
@@ -428,37 +448,6 @@ system design, it's a lot of people, single server handling it , it will be dest
 
 ## High Effort / v2 Features
 
-### 1. Hindu Calendar Integration
-
-**Requirements:**
-
-- Calendar data source (API or local)
-- Display system
-- Festival reminders
-- Integration with events
-
-**Estimated Time:** 1 week  
-**Impact:** High visibility, important for community
-
-[link1](https://github.com/karthikraman/panchangam)
-[link2](https://gist.github.com/hrishikeshrt/0090a0460608728f32381164ea54865c)
-
----
-
-### 2. Location-Based Services
-
-**Requirements:**
-
-- Geolocation data in profiles
-- PostGIS for spatial queries
-- Nearby search API
-- Map UI component
-
-**Estimated Time:** 1 week  
-**Impact:** Location discovery and services
-
----
-
 ### 3. QR Code Pass Generation
 
 **Requirements:**
@@ -503,56 +492,6 @@ system design, it's a lot of people, single server handling it , it will be dest
 
 ---
 
-## Implementation Priority Matrix
-
-### Phase 1: Foundation (Weeks 1-2)
-
-1. ✅ Profile management (quick win)
-2. ✅ User relationships API (quick win)
-3. ✅ Email notifications (quick win)
-4. ✅ Advanced search filters (quick win)
-5. ✅ Medical records completion (quick win)
-
-**Effort:** 2-3 weeks  
-**Blockers:** None
-
----
-
-### Phase 2: Events & Engagement (Weeks 3-4)
-
-1. Event management UI
-2. Payment gateway integration
-3. Polls & voting system
-4. Event pass generation with QR
-
-**Effort:** 3-4 weeks  
-**Blockers:** Payment gateway API keys
-
----
-
-### Phase 3: Community Features (Weeks 5-6)
-
-1. Forum system
-2. Family tree visualization
-3. Email templates & preferences
-
-**Effort:** 3-4 weeks  
-**Blockers:** None
-
----
-
-### Phase 4: Advanced Features (Weeks 7+)
-
-1. Hindu calendar
-2. Location-based services
-3. Full-text search (Elasticsearch)
-4. Real-time features
-
-**Effort:** 2-3 weeks each  
-**Blockers:** Architecture decisions needed
-
----
-
 ## Quick Reference: File Status
 
 | Component           | Model | API | Frontend | Status      |
@@ -592,10 +531,6 @@ Notification to admins only
 
 Admin change logic check it please
 What if wanna change admins
-
-To do as developer:
-
-Admin signup logic to see,
 
 ---
 
