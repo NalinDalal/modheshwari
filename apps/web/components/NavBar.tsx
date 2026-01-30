@@ -92,11 +92,11 @@ export default function NavBar() {
   /* ================= JSX ================= */
 
   return (
-    <nav className="fixed top-0 z-50 h-16 w-full bg-black/80 backdrop-blur-xl border-b border-white/10">
+    <nav className="fixed top-0 z-50 h-16 w-full bg-gradient-to-r from-purple-900/80 via-purple-800/80 to-indigo-900/80 backdrop-blur-xl border-b border-purple-500/20 shadow-lg shadow-purple-500/10">
       <div className="mx-auto max-w-7xl h-full px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-purple-900 text-sm shadow-lg shadow-amber-500/30">
             M
           </div>
           <span className="text-white">Modheshwari</span>
