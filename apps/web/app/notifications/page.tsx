@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 /**
  * Single notification item returned from backend.
@@ -286,7 +287,7 @@ export default function NotificationsPage(): React.ReactElement {
     });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white px-6 py-10">
+    <DreamySunsetBackground className="px-6 py-10">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-1">Notifications</h1>
@@ -542,6 +543,6 @@ export default function NotificationsPage(): React.ReactElement {
           </ul>
         )}
       </section>
-    </div>
+    </DreamySunsetBackground>
   );
 }

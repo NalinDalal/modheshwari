@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, MapPin, FileText, ArrowLeft, Loader } from "lucide-react";
 import { NotAuthenticated } from "@repo/ui/not-authenticated";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 /**
  * Performs  create event page operation.
@@ -76,7 +77,7 @@ export default function CreateEventPage() {
   if (!hydrated) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white px-6 py-10">
+    <DreamySunsetBackground className="px-6 py-10">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <button
@@ -224,6 +225,6 @@ export default function CreateEventPage() {
           </div>
         </form>
       </div>
-    </div>
+    </DreamySunsetBackground>
   );
 }

@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { LoaderOne } from "@repo/ui/loading";
 import { List, Network } from "lucide-react";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 import FamilyPageContent from "./FamilyPageContent";
 import FamilyTreeView from "./FamilyTreeView";
@@ -22,7 +23,7 @@ export default function FamilyPage(): React.ReactElement {
   const [activeTab, setActiveTab] = useState<"list" | "tree">("list");
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white px-6 py-10">
+    <DreamySunsetBackground className="px-6 py-10">
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Family Management</h1>
@@ -71,6 +72,6 @@ export default function FamilyPage(): React.ReactElement {
           </Suspense>
         )}
       </div>
-    </div>
+    </DreamySunsetBackground>
   );
 }

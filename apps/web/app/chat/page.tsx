@@ -51,7 +51,7 @@ export default function ChatPage() {
     // connect WS
     const token = getToken();
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${proto}://${window.location.hostname}:3001/?token=${encodeURIComponent(
+    const wsUrl = `${proto}://${window.location.hostname}:3002/?token=${encodeURIComponent(
       token || "",
     )}`;
 

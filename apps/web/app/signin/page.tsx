@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 const roles = [
   { label: "Family Head", value: "familyhead" },
@@ -25,7 +26,7 @@ export default function SigninPage() {
   const [role, setRole] = useState("familyhead");
   const [loading, setLoading] = useState(false);
 
-  async function handleLogin(e: React.FormEvent) {
+
   async function handleLogin(e?: React.FormEvent) {
     if (e) e.preventDefault();
     setLoading(true);
@@ -54,18 +55,7 @@ export default function SigninPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-[#0a0e1a] to-black px-4 relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-        <div
-          className="absolute top-60 -left-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "1s" }}
-        />
-      </div>
-
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
+    <DreamySunsetBackground className="flex items-center justify-center px-4">
 
       <motion.main
         initial={{ opacity: 0, y: 20 }}
@@ -228,7 +218,6 @@ export default function SigninPage() {
           </p>
         </motion.div>
       </motion.main>
-    </div>
+    </DreamySunsetBackground>
   );
-}
 }

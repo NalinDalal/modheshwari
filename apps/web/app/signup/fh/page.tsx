@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Shield,
 } from "lucide-react";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 /**
  * Signup Page Component — Handles registration flow for the Family Head role.
@@ -89,7 +90,7 @@ export default function SignupPage() {
     form.name && form.email && form.password && form.familyName;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-[#0a0e1a] to-black px-4 relative overflow-hidden">
+    <DreamySunsetBackground className="flex items-center justify-center px-4 relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
@@ -304,6 +305,6 @@ export default function SignupPage() {
           </p>
         </motion.div>
       </motion.main>
-    </div>
+    </DreamySunsetBackground>
   );
 }

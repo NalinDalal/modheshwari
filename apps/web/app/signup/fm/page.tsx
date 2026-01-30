@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@repo/ui/button";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 /**
  * Performs  member signup page operation.
@@ -49,7 +50,7 @@ export default function MemberSignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-b from-black via-[#0b0f17] to-black text-white">
+    <DreamySunsetBackground className="flex items-center justify-center px-6">
       <div className="w-full max-w-md">
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-xl">
           {submitted ? (
@@ -134,7 +135,7 @@ export default function MemberSignupPage() {
           )}
         </div>
       </div>
-    </div>
+    </DreamySunsetBackground>
   );
 }
 

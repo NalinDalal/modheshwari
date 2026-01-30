@@ -17,6 +17,7 @@ import {
 import { motion } from "framer-motion";
 import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/not-authenticated";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 interface EventDetails {
   id: string;
@@ -257,7 +258,7 @@ export default function EventDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white px-6 py-10">
+    <DreamySunsetBackground className="px-6 py-10">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <button
@@ -433,6 +434,6 @@ export default function EventDetailsPage() {
           </motion.div>
         )}
       </div>
-    </div>
+    </DreamySunsetBackground>
   );
 }

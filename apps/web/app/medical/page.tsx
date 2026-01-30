@@ -9,6 +9,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 interface User {
   id: string;
@@ -161,166 +162,172 @@ export default function Medical() {
   // --- Render ---
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white flex items-center justify-center">
-        <p className="text-gray-400">Loading user info...</p>
-      </div>
+      <DreamySunsetBackground>
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-gray-600">Loading user info...</p>
+        </div>
+      </DreamySunsetBackground>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white flex items-center justify-center">
-        <p className="text-gray-400">No user data available</p>
-      </div>
+      <DreamySunsetBackground>
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-gray-600">No user data available</p>
+        </div>
+      </DreamySunsetBackground>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0f17] to-black text-white px-6 py-10">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-1">Medical Dashboard</h1>
-        <p className="text-sm text-gray-400">Welcome back, {user.name}</p>
-      </div>
-
-      {/* My Medical Info Card */}
-      <div className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-5 mb-8">
-        <h2 className="text-lg font-semibold mb-4">My Medical Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Blood Group</p>
-            <p className="text-sm font-medium">
-              {formatBloodGroup(myProfile?.bloodGroup)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Allergies</p>
-            <p className="text-sm font-medium">
-              {myProfile?.allergies || "None recorded"}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Medical Notes</p>
-            <p className="text-sm font-medium">
-              {myProfile?.medicalNotes || "None recorded"}
-            </p>
-          </div>
+    <DreamySunsetBackground>
+      <div className="min-h-screen px-6 py-10">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-1 text-gray-900">Medical Dashboard</h1>
+          <p className="text-sm text-gray-600">Welcome back, {user.name}</p>
         </div>
-        <button
-          onClick={() => router.push("/profile")}
-          className="mt-4 text-sm text-blue-400 hover:text-blue-300 transition"
-        >
-          Update Medical Info →
-        </button>
-      </div>
 
-      {/* Search Card */}
-      <div className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-5 mb-8">
-        <label className="block text-sm text-gray-400 mb-2">
-          Search users by blood group
-        </label>
-        <p className="text-xs text-gray-500 mb-3">
-          Enter blood group (e.g., O+, AB-, B+)
-        </p>
-
-        <div className="flex gap-3">
-          <input
-            type="text"
-            placeholder="e.g. O+, AB-, B+"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") fetchMedicalInfo(searchQuery);
-            }}
-            className="flex-grow bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-
+        {/* My Medical Info Card */}
+        <div className="bg-white/70 backdrop-blur-md border border-gray-200/50 rounded-xl p-5 mb-8 shadow-lg">
+          <h2 className="text-lg font-semibold mb-4 text-gray-900">My Medical Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Blood Group</p>
+              <p className="text-sm font-medium text-gray-900">
+                {formatBloodGroup(myProfile?.bloodGroup)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Allergies</p>
+              <p className="text-sm font-medium text-gray-900">
+                {myProfile?.allergies || "None recorded"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 mb-1">Medical Notes</p>
+              <p className="text-sm font-medium text-gray-900">
+                {myProfile?.medicalNotes || "None recorded"}
+              </p>
+            </div>
+          </div>
           <button
-            onClick={() => fetchMedicalInfo(searchQuery)}
-            disabled={searchLoading || !searchQuery.trim()}
-            className="px-5 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => router.push("/profile")}
+            className="mt-4 text-sm text-blue-600 hover:text-blue-700 transition font-medium"
           >
-            {searchLoading ? "Searching..." : "Search"}
+            Update Medical Info →
           </button>
         </div>
 
-        {/* Quick Search Buttons */}
-        <div className="flex flex-wrap gap-2 mt-3">
-          {Object.keys(REVERSE_BLOOD_GROUP_MAP).map((bg) => (
-            <button
-              key={bg}
-              onClick={() => {
-                setSearchQuery(bg);
-                fetchMedicalInfo(bg);
+        {/* Search Card */}
+        <div className="bg-white/70 backdrop-blur-md border border-gray-200/50 rounded-xl p-5 mb-8 shadow-lg">
+          <label className="block text-sm text-gray-700 font-medium mb-2">
+            Search users by blood group
+          </label>
+          <p className="text-xs text-gray-500 mb-3">
+            Enter blood group (e.g., O+, AB-, B+)
+          </p>
+
+          <div className="flex gap-3">
+            <input
+              type="text"
+              placeholder="e.g. O+, AB-, B+"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") fetchMedicalInfo(searchQuery);
               }}
-              className="px-3 py-1 text-xs rounded-full bg-black/40 hover:bg-black/60 border border-white/10 transition"
+              className="flex-grow bg-white/80 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            />
+
+            <button
+              onClick={() => fetchMedicalInfo(searchQuery)}
+              disabled={searchLoading || !searchQuery.trim()}
+              className="px-5 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {bg}
+              {searchLoading ? "Searching..." : "Search"}
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Results Card */}
-      <div className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-white/5">
-          <h2 className="text-lg font-semibold">
-            Search Results
-            {medicalList.length > 0 && (
-              <span className="ml-2 text-sm text-gray-400">
-                ({medicalList.length} users)
-              </span>
-            )}
-          </h2>
-        </div>
-
-        {medicalList.length === 0 ? (
-          <div className="text-center text-gray-500 py-10 text-sm">
-            {searchQuery
-              ? "No users found with this blood group"
-              : "Enter a blood group to search"}
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-black/40 text-gray-400">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium">Name</th>
-                  <th className="px-4 py-3 text-left font-medium">Email</th>
-                  <th className="px-4 py-3 text-left font-medium">
-                    Blood Group
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium">Allergies</th>
-                  <th className="px-4 py-3 text-left font-medium">Notes</th>
-                </tr>
-              </thead>
 
-              <tbody>
-                {medicalList.map((m) => (
-                  <tr
-                    key={m.userId}
-                    className="border-t border-white/5 hover:bg-white/5 transition"
-                  >
-                    <td className="px-4 py-3 font-medium">{m.name}</td>
-                    <td className="px-4 py-3 text-gray-400">{m.email}</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 text-xs font-medium">
-                        {formatBloodGroup(m.bloodGroup)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-300">
-                      {m.allergies || "None"}
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 max-w-xs truncate">
-                      {m.medicalNotes || "None"}
-                    </td>
+          {/* Quick Search Buttons */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {Object.keys(REVERSE_BLOOD_GROUP_MAP).map((bg) => (
+              <button
+                key={bg}
+                onClick={() => {
+                  setSearchQuery(bg);
+                  fetchMedicalInfo(bg);
+                }}
+                className="px-3 py-1 text-xs rounded-full bg-white/80 hover:bg-white border border-gray-300 transition text-gray-700"
+              >
+                {bg}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Results Card */}
+        <div className="bg-white/70 backdrop-blur-md border border-gray-200/50 rounded-xl overflow-hidden shadow-lg">
+          <div className="px-5 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Search Results
+              {medicalList.length > 0 && (
+                <span className="ml-2 text-sm text-gray-600">
+                  ({medicalList.length} users)
+                </span>
+              )}
+            </h2>
+          </div>
+
+          {medicalList.length === 0 ? (
+            <div className="text-center text-gray-500 py-10 text-sm">
+              {searchQuery
+                ? "No users found with this blood group"
+                : "Enter a blood group to search"}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100/80 text-gray-700">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">Name</th>
+                    <th className="px-4 py-3 text-left font-medium">Email</th>
+                    <th className="px-4 py-3 text-left font-medium">
+                      Blood Group
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium">Allergies</th>
+                    <th className="px-4 py-3 text-left font-medium">Notes</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+
+                <tbody>
+                  {medicalList.map((m) => (
+                    <tr
+                      key={m.userId}
+                      className="border-t border-gray-200 hover:bg-white/50 transition"
+                    >
+                      <td className="px-4 py-3 font-medium text-gray-900">{m.name}</td>
+                      <td className="px-4 py-3 text-gray-600">{m.email}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-xs font-medium border border-red-200">
+                          {formatBloodGroup(m.bloodGroup)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">
+                        {m.allergies || "None"}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
+                        {m.medicalNotes || "None"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </DreamySunsetBackground>
   );
 }

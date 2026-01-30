@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Bug, HelpCircle, Lightbulb, MessageSquare, Send } from "lucide-react";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 /* ============================== */
 /* Types                          */
@@ -94,7 +95,7 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="min-h-screen px-6 py-16 bg-gradient-to-b from-black via-[#0b0f17] to-black text-white">
+    <DreamySunsetBackground className="px-6 py-16">
       <section className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-14 space-y-4">
@@ -197,7 +198,7 @@ export default function ContactPage() {
           )}
         </div>
       </section>
-    </div>
+    </DreamySunsetBackground>
   );
 }
 

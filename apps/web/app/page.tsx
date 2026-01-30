@@ -11,6 +11,7 @@ import {
   Bell,
   Calendar,
 } from "lucide-react";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 /**
  * Performs  home operation.
@@ -65,19 +66,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-black via-[#0a0e1a] to-black">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
-        <div
-          className="absolute top-60 -left-40 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "1s" }}
-        />
-        <div
-          className="absolute bottom-20 right-1/4 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "2s" }}
-        />
-      </div>
+    <DreamySunsetBackground>
 
       {/* Grid Pattern Overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
@@ -282,6 +271,6 @@ export default function Home() {
           <p>© 2026 Modheshwari Community Platform. All rights reserved.</p>
         </footer>
       </main>
-    </div>
+    </DreamySunsetBackground>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
+import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 import SearchInput from "./SearchInput";
 /**
@@ -36,7 +37,7 @@ export default function SearchPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0a0e1a] to-black relative overflow-hidden">
+    <DreamySunsetBackground className="relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
@@ -147,6 +148,6 @@ export default function SearchPage() {
           </p>
         </motion.div>
       </div>
-    </div>
+    </DreamySunsetBackground>
   );
 }
