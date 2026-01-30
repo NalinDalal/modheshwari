@@ -74,63 +74,6 @@
 
 **Estimated Effort:** 3-4 days
 
-### 3. Forum & Discussion Features
-
-**Requirement:** FR6 in design doc  
-**Expected:** Discussion forums for community members to discuss topics
-
-**What's Missing:**
-
-- No forum/discussion database models
-- No thread/post/comment models
-- No API endpoints for CRUD operations
-- No frontend forum UI
-
-**Database Models Needed:**
-
-```prisma
-model Forum {
-  id String @id @default(uuid())
-  name String
-  description String?
-  createdBy User @relation(fields: [createdById], references: [id])
-  createdById String
-  threads Thread[]
-  createdAt DateTime @default(now())
-}
-
-model Thread {
-  id String @id @default(uuid())
-  forum Forum @relation(fields: [forumId], references: [id], onDelete: Cascade)
-  forumId String
-  title String
-  createdBy User @relation(fields: [createdById], references: [id])
-  createdById String
-  posts Post[]
-  createdAt DateTime @default(now())
-}
-
-model Post {
-  id String @id @default(uuid())
-  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  threadId String
-  author User @relation(fields: [authorId], references: [id])
-  authorId String
-  content String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-```
-
-**Files Needed:**
-
-- `packages/db/schema.prisma` updates
-- `apps/be/routes/forums.ts`
-- `apps/web/app/forums/page.tsx`
-- `apps/web/components/ForumThread.tsx`
-
-**Estimated Effort:** 4-5 days
-
 ### 5. Location-Based Services
 
 **Requirement:** Design doc key capability  
@@ -189,6 +132,25 @@ Message to gotra or whole body/community, family
 admin can edit sub admin and sub-comm admin
 3/more sub-comm admin can edit admin, sub admin
 i.e. a profile having status as admin/sub-admin/sub-comm admin can be trasnferred or changed
+
+**Status:** ✅ **IMPLEMENTED** (January 30, 2026)
+
+**Implementation:**
+- `PATCH /api/admin/users/:id/role` - Change user role
+- `GET /api/admin/users` - List all users with roles
+- `GET /api/admin/users/:id` - Get user details
+- `GET /api/admin/role-change-permissions` - Get current user's permissions
+
+**Permission Logic:**
+- COMMUNITY_HEAD can edit: COMMUNITY_SUBHEAD, GOTRA_HEAD, FAMILY_HEAD, MEMBER
+- 3+ COMMUNITY_SUBHEAD can collectively edit: COMMUNITY_HEAD, COMMUNITY_SUBHEAD, GOTRA_HEAD
+- GOTRA_HEAD cannot change admin roles
+
+**Documentation:** See [ADMIN_ROLE_CHANGE.md](ADMIN_ROLE_CHANGE.md)
+
+**Files:**
+- Backend: `/apps/be/routes/adminRoleChange.ts`
+- Routes: `/apps/be/index.ts`
 
 ---
 
@@ -475,20 +437,6 @@ system design, it's a lot of people, single server handling it , it will be dest
 
 **Estimated Time:** 1 week  
 **Impact:** Production-grade search
-
----
-
-### 5. Real-Time Features
-
-**Options:**
-
-- WebSocket for notifications
-- Live member updates
-- Real-time event updates
-- Chat system (optional)
-
-**Estimated Time:** 1 week+  
-**Impact:** Better UX, higher engagement
 
 ---
 

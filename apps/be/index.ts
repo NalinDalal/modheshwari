@@ -2,7 +2,6 @@ import { serve } from "bun";
 import { config } from "dotenv";
 import { join } from "path";
 
-import type { ServerWebSocket } from "bun";
 import prisma from "@modheshwari/db";
 
 // Load env first
@@ -71,6 +70,12 @@ import { handleGetChat } from "./routes/chat";
 
 // Admin endpoints
 import { handleListAllRequests, handleUpdateEventStatus } from "./routes/admin";
+import {
+  handleChangeUserRole,
+  handleListUsers,
+  handleGetRoleChangePermissions,
+  handleGetUserDetails,
+} from "./routes/adminRoleChange";
 
 // Status Update Requests
 import {
@@ -154,135 +159,14 @@ const authRouteTable = [
   },
 ];
 
-//-------- WS Server --------
-//TODO: move this logic to separate websocket server
-type WSNotificationMessage = {
-  type: "notification";
-  notification: {
-    id: string;
-    title: string;
-    body: string;
-    createdAt: string;
-    read: boolean;
-  };
-};
-
-type WSData = {
-  userId: string;
-};
-
-const userSockets = new Map<string, Set<ServerWebSocket<WSData>>>();
-
-// Simple per-user rate limiter for websocket messages
-const wsRateLimits = new Map<string, { count: number; windowStart: number }>();
-const RATE_LIMIT_WINDOW_MS = 10_000; // 10s
-const RATE_LIMIT_MAX = 25; // max messages per window per user
-
-// Typing debounce timers: conversationId -> (userId -> timeoutId)
-const TYPING_DEBOUNCE_MS = 3000;
-const typingTimers = new Map<string, Map<string, number>>();
-
-/**
- * Performs check and increment ws rate operation.
- * @param {string} userId - Description of userId
- * @returns {boolean} Description of return value
- */
-function checkAndIncrementWsRate(userId: string) {
-  const now = Date.now();
-  const state = wsRateLimits.get(userId);
-  if (!state || now - state.windowStart > RATE_LIMIT_WINDOW_MS) {
-    wsRateLimits.set(userId, { count: 1, windowStart: now });
-    return true;
-  }
-
-  state.count += 1;
-  if (state.count > RATE_LIMIT_MAX) return false;
-  return true;
-}
-
-/**
- * Performs add socket operation.
- * @param {string} userId - Description of userId
- * @param {Bun.ServerWebSocket<WSData>} ws - Description of ws
- * @returns {void} Description of return value
- */
-function addSocket(userId: string, ws: ServerWebSocket<WSData>) {
-  if (!userSockets.has(userId)) {
-    userSockets.set(userId, new Set());
-  }
-  userSockets.get(userId)!.add(ws);
-}
-
-/**
- * Performs remove socket operation.
- * @param {string} userId - Description of userId
- * @param {Bun.ServerWebSocket<WSData>} ws - Description of ws
- * @returns {void} Description of return value
- */
-function removeSocket(userId: string, ws: ServerWebSocket<WSData>) {
-  const set = userSockets.get(userId);
-  if (!set) return;
-
-  set.delete(ws);
-  if (set.size === 0) {
-    userSockets.delete(userId);
-  }
-}
-
-/**
- * Performs push notification operation.
- * @param {string} userId - Description of userId
- * @param {any} notification - Description of notification
- * @returns {void} Description of return value
- */
-export function pushNotification(userId: string, notification: any) {
-  const sockets = userSockets.get(userId);
-  if (!sockets) return;
-
-  const payload = JSON.stringify({
-    type: "notification",
-    notification,
-  });
-
-  for (const ws of sockets) {
-    ws.send(payload);
-  }
-}
-
 // --- SERVER ---
 const PORT = process.env.PORT ?? 3001;
 
-const server = serve<WSData>({
+const server = serve({
   port: PORT,
 
   async fetch(req: Request) {
     try {
-      if (req.headers.get("upgrade") === "websocket") {
-        // Allow token via Authorization header OR ?token=... query param (browsers can't set ws headers)
-        const urlForUpgrade = new URL(req.url);
-        const tokenFromQuery = urlForUpgrade.searchParams.get("token");
-
-        let authReq = req;
-        if (tokenFromQuery && !req.headers.get("authorization")) {
-          const headers = new Headers(req.headers);
-          headers.set("authorization", `Bearer ${tokenFromQuery}`);
-          authReq = new Request(req.url, { headers, method: req.method });
-        }
-
-        const meRes = await handleGetMe(authReq);
-        if (meRes.status !== 200) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-
-        const me = (await meRes.json()) as { id: string };
-
-        server.upgrade(req, {
-          data: { userId: me.id } satisfies WSData,
-        });
-
-        return;
-      }
-
       const url = new URL(req.url);
       const method = req.method.toUpperCase();
 
@@ -526,6 +410,46 @@ const server = serve<WSData>({
         return withCorsHeaders(await handleUpdateEventStatus(req, id));
       }
 
+      // Admin - User Management
+      if (url.pathname === "/api/admin/users" && method === "GET") {
+        return withCorsHeaders(await handleListUsers(req));
+      }
+
+      const mAdminUserDetails = match(url.pathname, "/api/admin/users/:id");
+      if (mAdminUserDetails && method === "GET") {
+        const id = mAdminUserDetails.id;
+        if (!id) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "id required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return withCorsHeaders(await handleGetUserDetails(req, id));
+      }
+
+      const mAdminChangeRole = match(url.pathname, "/api/admin/users/:id/role");
+      if (mAdminChangeRole && method === "PATCH") {
+        const id = mAdminChangeRole.id;
+        if (!id) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "id required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return withCorsHeaders(await handleChangeUserRole(req, id));
+      }
+
+      if (
+        url.pathname === "/api/admin/role-change-permissions" &&
+        method === "GET"
+      ) {
+        return withCorsHeaders(await handleGetRoleChangePermissions(req));
+      }
+
       // ------------------ Notifications ------------------
 
       if (url.pathname === "/api/notifications" && method === "GET") {
@@ -734,216 +658,6 @@ const server = serve<WSData>({
     }
   },
 
-  websocket: {
-    open(ws) {
-      addSocket(ws.data.userId, ws);
-      console.log("WS connected:", ws.data.userId);
-    },
-
-    async message(ws, message) {
-      try {
-        const raw =
-          typeof message === "string"
-            ? message
-            : new TextDecoder().decode(message as Uint8Array);
-        const data = JSON.parse(raw || "{}");
-
-        // Rate-limit per-sender to avoid spam/flood
-        const senderIdForRate = ws?.data?.userId;
-        if (!senderIdForRate || !checkAndIncrementWsRate(senderIdForRate)) {
-          try {
-            ws.send(JSON.stringify({ type: "error", message: "rate_limited" }));
-          } catch {}
-          return;
-        }
-
-        if (data?.type === "chat_message") {
-          const { conversationId, content } = data;
-          const senderId = ws.data.userId;
-          if (!conversationId || !content) {
-            ws.send(JSON.stringify({ type: "ack", status: "error", message: "invalid_payload", clientId: data?.clientId }));
-            return;
-          }
-
-          // Validate content length
-          if (typeof content !== "string" || content.length === 0 || content.length > 5000) {
-            ws.send(JSON.stringify({ type: "ack", status: "error", message: "invalid_content", clientId: data?.clientId }));
-            return;
-          }
-
-          // Verify conversation exists and sender is a participant
-          const conversation = await prisma.conversation.findUnique({
-            where: { id: conversationId },
-          });
-          if (!conversation || !conversation.participants.includes(senderId)) {
-            ws.send(JSON.stringify({ type: "error", message: "Not a participant" }));
-            return;
-          }
-
-          const user = await prisma.user.findUnique({
-            where: { id: senderId },
-            select: { name: true },
-          });
-
-          // Persist message
-          const created = await prisma.message.create({
-            data: {
-              conversationId,
-              senderId,
-              senderName: user?.name ?? "Unknown",
-              content,
-            },
-          });
-
-          // Update conversation metadata
-          await prisma.conversation.update({
-            where: { id: conversationId },
-            data: { lastMessage: content.slice(0, 512), lastMessageAt: new Date() },
-          });
-
-          const payload = {
-            type: "chat_message",
-            message: {
-              id: created.id,
-              conversationId,
-              senderId,
-              senderName: created.senderName,
-              content: created.content,
-              createdAt: created.createdAt,
-            },
-          };
-
-          // Send acknowledgement to sender
-          try {
-            ws.send(
-              JSON.stringify({
-                type: "ack",
-                status: "ok",
-                conversationId,
-                messageId: created.id,
-                createdAt: created.createdAt,
-                clientId: data?.clientId,
-              }),
-            );
-          } catch (err) {
-            console.error("Failed to send ack", err);
-          }
-
-          // Broadcast to all other participants who are connected (exclude sender)
-          for (const participantId of conversation.participants) {
-            if (participantId === senderId) continue;
-            const sockets = userSockets.get(participantId);
-            if (!sockets) continue;
-            for (const s of sockets) {
-              try {
-                s.send(JSON.stringify(payload));
-              } catch (err) {
-                console.error("Failed to send WS payload", err);
-              }
-            }
-          }
-        } else if (data?.type === "typing") {
-          // typing indicator with debounce: broadcast to other participants in a conversation
-          const { conversationId, typing } = data;
-          const senderId = ws.data.userId;
-          if (!conversationId) return;
-          const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
-          if (!conversation) return;
-
-          const notifyTyping = (isTyping: boolean) => {
-            const payload = { type: "typing", conversationId, userId: senderId, typing: !!isTyping };
-            for (const participantId of conversation.participants) {
-              if (participantId === senderId) continue;
-              const sockets = userSockets.get(participantId);
-              if (!sockets) continue;
-              for (const s of sockets) {
-                try {
-                  s.send(JSON.stringify(payload));
-                } catch (err) {
-                  console.error("Failed to send typing payload", err);
-                }
-              }
-            }
-          };
-
-          // Always notify on typing=true immediately
-          if (typing) {
-            notifyTyping(true);
-
-            // clear existing timer and set a debounce to send typing=false
-            let convMap = typingTimers.get(conversationId);
-            if (!convMap) {
-              convMap = new Map<string, number>();
-              typingTimers.set(conversationId, convMap);
-            }
-            const prev = convMap.get(senderId);
-            if (prev) clearTimeout(prev);
-            const tid = setTimeout(() => {
-              notifyTyping(false);
-              const cm = typingTimers.get(conversationId);
-              cm?.delete(senderId);
-            }, TYPING_DEBOUNCE_MS) as unknown as number;
-            convMap.set(senderId, tid);
-          } else {
-            // explicit stop typing: cancel timer and notify
-            const convMap = typingTimers.get(conversationId);
-            const prev = convMap?.get(senderId);
-            if (prev) {
-              clearTimeout(prev);
-              convMap?.delete(senderId);
-            }
-            notifyTyping(false);
-          }
-        } else if (data?.type === "read") {
-          // read receipt: update message.readBy and broadcast receipt
-          const { conversationId, messageId } = data;
-          const senderId = ws.data.userId;
-          if (!conversationId || !messageId) {
-            ws.send(JSON.stringify({ type: "ack", status: "error", message: "invalid_payload" }));
-            return;
-          }
-
-          try {
-            const msg = await prisma.message.findUnique({ where: { id: messageId } });
-            if (!msg) return;
-            if (!msg.readBy.includes(senderId)) {
-              await prisma.message.update({ where: { id: messageId }, data: { readBy: { push: senderId } } });
-            }
-
-            const receipt = { type: "read_receipt", conversationId, messageId, userId: senderId };
-            const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
-            if (!conversation) return;
-            for (const participantId of conversation.participants) {
-              if (participantId === senderId) continue;
-              const sockets = userSockets.get(participantId);
-              if (!sockets) continue;
-              for (const s of sockets) {
-                try {
-                  s.send(JSON.stringify(receipt));
-                } catch (err) {
-                  console.error("Failed to send read receipt", err);
-                }
-              }
-            }
-
-            // ack to sender
-            try {
-              ws.send(JSON.stringify({ type: "ack", status: "ok", conversationId, messageId }));
-            } catch {}
-          } catch (err) {
-            console.error("Failed to process read receipt", err);
-          }
-        }
-      } catch (err) {
-        console.error("WS message handler error:", err);
-      }
-    },
-
-    close(ws) {
-      removeSocket(ws.data.userId, ws);
-      console.log("WS disconnected:", ws.data.userId);
-    },
-  },
 });
 
 console.log(`Server running on http://localhost:${PORT}`);

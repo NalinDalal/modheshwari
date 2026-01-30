@@ -16,7 +16,13 @@ const NOTIFICATION_TOPIC =
   process.env.NOTIFICATION_TOPIC || "notification.events";
 const WS_CONSUMER_GROUP = process.env.WS_CONSUMER_GROUP || "notifications-ws";
 
-type WSData = { userId: string };
+const MAX_MESSAGE_SIZE = 1024 * 1024; // 1MB
+const HEARTBEAT_INTERVAL = 30000; // 30s
+const CONNECTION_TIMEOUT = 60000; // 60s
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_MESSAGES_PER_WINDOW = 100;
+
+type WSData = { userId: string; lastSeen: number; heartbeatId?: number };
 
 type NotificationEvent = {
   eventId: string;
@@ -49,6 +55,42 @@ type IncomingMessage = {
 };
 
 const userSockets = new Map<string, Set<ServerWebSocket<WSData>>>();
+const messageRateLimits = new Map<string, { count: number; resetAt: number }>();
+
+/**
+ * Performs check rate limit operation.
+ * @param {string} userId - Description of userId
+ * @returns {boolean} Description of return value
+ */
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const limit = messageRateLimits.get(userId);
+
+  if (!limit || now > limit.resetAt) {
+    messageRateLimits.set(userId, {
+      count: 1,
+      resetAt: now + RATE_LIMIT_WINDOW,
+    });
+    return true;
+  }
+
+  if (limit.count >= MAX_MESSAGES_PER_WINDOW) {
+    return false;
+  }
+
+  limit.count += 1;
+  return true;
+}
+
+/**
+ * Performs get message size operation.
+ * @param {string | Uint8Array} message - Description of message
+ * @returns {number} Description of return value
+ */
+function getMessageSize(message: string | Uint8Array): number {
+  if (typeof message === "string") return message.length;
+  return message.byteLength;
+}
 
 /**
  * Performs authenticate operation.
@@ -203,7 +245,9 @@ const server = serve<WSData>({
         return new Response("Unauthorized", { status: 401 });
       }
 
-      server.upgrade(req, { data: { userId } satisfies WSData });
+      server.upgrade(req, {
+        data: { userId, lastSeen: Date.now() } satisfies WSData,
+      });
       return;
     }
 
@@ -217,72 +261,120 @@ const server = serve<WSData>({
   websocket: {
     open(ws) {
       addSocket(ws.data.userId, ws);
-      logger.info("connected", { userId: ws.data.userId });
+      logger.info("WebSocket connected", { userId: ws.data.userId });
+
+      // Send initial connection confirmation
+      ws.send(JSON.stringify({ type: "connected", userId: ws.data.userId }));
+
+      ws.data.lastSeen = Date.now();
+      const heartbeatId = setInterval(() => {
+        const now = Date.now();
+        if (now - ws.data.lastSeen > CONNECTION_TIMEOUT) {
+          try {
+            ws.close();
+          } catch {}
+          return;
+        }
+
+        try {
+          ws.send(
+            JSON.stringify({ type: "ping", timestamp: new Date().toISOString() }),
+          );
+        } catch {
+          // ignore send failures; close handler will clean up
+        }
+      }, HEARTBEAT_INTERVAL) as unknown as number;
+      ws.data.heartbeatId = heartbeatId;
     },
     async message(ws, message) {
+      const userId = ws.data.userId;
+      const size = getMessageSize(message as string | Uint8Array);
+      if (!checkRateLimit(userId)) {
+        try {
+          ws.send(JSON.stringify({ type: "error", message: "Rate limit exceeded" }));
+        } catch {}
+        return;
+      }
+
+      if (size > MAX_MESSAGE_SIZE) {
+        try {
+          ws.send(JSON.stringify({ type: "error", message: "Message too large" }));
+        } catch {}
+        return;
+      }
+
       try {
-        const data = JSON.parse(message.toString()) as IncomingMessage;
+        const raw =
+          typeof message === "string"
+            ? message
+            : new TextDecoder().decode(message as Uint8Array);
+        if (!raw) return;
+        const data = JSON.parse(raw) as IncomingMessage;
+        ws.data.lastSeen = Date.now();
 
-        if (data.type === "chat" && data.conversationId && data.content) {
-          // Verify user is part of conversation
-          const conversation = await prisma.conversation.findFirst({
-            where: {
-              id: data.conversationId,
-              participants: {
-                has: ws.data.userId,
+        if (data.type === "chat") {
+          const conversationId = data.conversationId;
+          if (!conversationId) return;
+          const content = data.content;
+          if (!content) return;
+          if (content.length > 10000) {
+            ws.send(JSON.stringify({ type: "error", message: "Message too long" }));
+            return;
+          }
+
+          const result = await prisma.$transaction(async (tx) => {
+            const conversation = await tx.conversation.findFirst({
+              where: {
+                id: conversationId,
+                participants: { has: userId },
               },
-            },
+            });
+
+            if (!conversation) {
+              throw new Error("User not in conversation");
+            }
+
+            const sender = await tx.user.findUnique({
+              where: { id: userId },
+              select: { name: true },
+            });
+
+            if (!sender) {
+              throw new Error("Sender not found");
+            }
+
+            const savedMessage = await tx.message.create({
+              data: {
+                conversationId,
+                senderId: userId,
+                senderName: sender.name,
+                content,
+                readBy: [userId],
+              },
+            });
+
+            await tx.conversation.update({
+              where: { id: conversationId },
+              data: {
+                lastMessage: content,
+                lastMessageAt: savedMessage.createdAt,
+              },
+            });
+
+            return { savedMessage, sender, conversation };
           });
 
-          if (!conversation) {
-            console.error("[WS] User not in conversation");
-            return;
-          }
-
-          // Get sender details
-          const sender = await prisma.user.findUnique({
-            where: { id: ws.data.userId },
-            select: { name: true },
-          });
-
-          if (!sender) {
-            console.error("[WS] Sender not found");
-            return;
-          }
-
-          // Save message to database
-          const savedMessage = await prisma.message.create({
-            data: {
-              conversationId: data.conversationId,
-              senderId: ws.data.userId,
-              senderName: sender.name,
-              content: data.content,
-              readBy: [ws.data.userId], // Mark as read by sender
-            },
-          });
-
-          // Update conversation's last message
-          await prisma.conversation.update({
-            where: { id: data.conversationId },
-            data: {
-              lastMessage: data.content,
-              lastMessageAt: savedMessage.createdAt,
-            },
-          });
-
-          // Send to all participants including sender
           const chatPayload: ChatMessage = {
             type: "chat",
-            messageId: savedMessage.id,
-            conversationId: data.conversationId,
-            senderId: ws.data.userId,
-            senderName: sender.name,
-            content: data.content,
-            timestamp: savedMessage.createdAt.toISOString(),
+            messageId: result.savedMessage.id,
+            conversationId,
+            senderId: userId,
+            senderName: result.sender.name,
+            content,
+            timestamp: result.savedMessage.createdAt.toISOString(),
           };
 
-          // Push to all recipients
-          for (const recipientId of conversation.participants) {
+          for (const recipientId of result.conversation.participants) {
             pushToUser(recipientId, chatPayload);
           }
         } else if (
@@ -290,67 +382,70 @@ const server = serve<WSData>({
           data.conversationId &&
           data.recipientIds
         ) {
+          if (!Array.isArray(data.recipientIds) || data.recipientIds.length > 50) {
+            return;
+          }
+
           // Broadcast typing indicator
           const typingPayload = {
             type: "typing",
             conversationId: data.conversationId,
-            userId: ws.data.userId,
+            userId,
             timestamp: new Date().toISOString(),
           };
 
           for (const recipientId of data.recipientIds) {
-            if (recipientId !== ws.data.userId) {
+            if (recipientId !== userId) {
               pushToUser(recipientId, typingPayload);
             }
           }
         } else if (data.type === "read" && data.messageIds) {
-          // Mark messages as read
-          await prisma.message.updateMany({
-            where: {
-              id: {
-                in: data.messageIds,
-              },
-              senderId: {
-                not: ws.data.userId,
-              },
-            },
-            data: {
-              readBy: {
-                push: ws.data.userId,
-              },
-            },
-          });
-
-          // Send read receipt to senders
-          const messages = await prisma.message.findMany({
-            where: {
-              id: {
-                in: data.messageIds,
-              },
-            },
-            select: {
-              id: true,
-              senderId: true,
-              conversationId: true,
-            },
-          });
-
-          for (const msg of messages) {
-            pushToUser(msg.senderId, {
-              type: "read",
-              messageIds: [msg.id],
-              conversationId: msg.conversationId,
-              userId: ws.data.userId,
-              timestamp: new Date().toISOString(),
-            });
+          if (!Array.isArray(data.messageIds) || data.messageIds.length > 100) {
+            return;
           }
+
+          await prisma.$transaction(async (tx) => {
+            await tx.message.updateMany({
+              where: {
+                id: { in: data.messageIds },
+                senderId: { not: userId },
+              },
+              data: {
+                readBy: { push: userId },
+              },
+            });
+
+            const messages = await tx.message.findMany({
+              where: { id: { in: data.messageIds } },
+              select: { id: true, senderId: true, conversationId: true },
+            });
+
+            for (const msg of messages) {
+              pushToUser(msg.senderId, {
+                type: "read",
+                messageIds: [msg.id],
+                conversationId: msg.conversationId,
+                userId,
+                timestamp: new Date().toISOString(),
+              });
+            }
+          });
         }
-        } catch (err) {
-          logger.error("Failed to handle message", err instanceof Error ? err : String(err));
-        }
+      } catch (err) {
+        logger.error("Failed to handle message", {
+          error: err instanceof Error ? err.message : String(err),
+          userId,
+        });
+        try {
+          ws.send(JSON.stringify({ type: "error", message: "Failed to process message" }));
+        } catch {}
+      }
     },
     close(ws) {
       removeSocket(ws.data.userId, ws);
+      if (ws.data.heartbeatId) {
+        clearInterval(ws.data.heartbeatId);
+      }
       logger.info("disconnected", { userId: ws.data.userId });
     },
   },
