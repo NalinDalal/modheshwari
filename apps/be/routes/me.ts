@@ -196,12 +196,13 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
     });
 
     if (locationLat !== undefined && locationLng !== undefined) {
-      await prisma.$executeRaw`
-        UPDATE "Profile"
-        SET "locationGeo" = ST_SetSRID(ST_MakePoint(${locationLng}, ${locationLat}), 4326)::geography,
-            "locationUpdatedAt" = now()
-        WHERE "userId" = ${userId}
-      `;
+      await prisma.profile.update({
+        where: { userId },
+        data: {
+          locationGeo: `SRID=4326;POINT(${locationLng} ${locationLat})`,
+          locationUpdatedAt: new Date(),
+        },
+      });
     }
 
     // --- Step 4: Send success response ---
