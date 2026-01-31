@@ -115,6 +115,10 @@ model Profile {
   profession String?
   gotra      String?
   location   String?
+  locationLat Float?
+  locationLng Float?
+  locationGeo Unsupported("geography")?
+  locationUpdatedAt DateTime?
   status     String? // e.g. "alive", "deceased"
   bloodGroup String? // Add this line
   allergies    String?     // Add this for medical info

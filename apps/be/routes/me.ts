@@ -45,6 +45,9 @@ export async function handleGetMe(req: Request): Promise<Response> {
             profession: true,
             gotra: true,
             location: true,
+            locationLat: true,
+            locationLng: true,
+            locationUpdatedAt: true,
             status: true,
             bloodGroup: true,
             allergies: true,
@@ -113,6 +116,9 @@ type UpdateProfileBody = {
   bloodGroup?: string;
   gotra?: string;
   profession?: string;
+  location?: string;
+  locationLat?: number;
+  locationLng?: number;
 };
 
 /**
@@ -128,9 +134,23 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
 
     // --- Step 2: Parse and validate input ---
     const body = (await req.json()) as UpdateProfileBody;
-    const { bloodGroup, gotra, profession } = body;
+    const {
+      bloodGroup,
+      gotra,
+      profession,
+      location,
+      locationLat,
+      locationLng,
+    } = body;
 
-    if (!bloodGroup && !gotra && !profession) {
+    if (
+      !bloodGroup &&
+      !gotra &&
+      !profession &&
+      location === undefined &&
+      locationLat === undefined &&
+      locationLng === undefined
+    ) {
       return failure(
         "No valid fields provided for update",
         "Validation Error",
@@ -138,12 +158,51 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
       );
     }
 
+    const hasLatLng = locationLat !== undefined || locationLng !== undefined;
+    if (hasLatLng) {
+      if (
+        typeof locationLat !== "number" ||
+        typeof locationLng !== "number" ||
+        !Number.isFinite(locationLat) ||
+        !Number.isFinite(locationLng)
+      ) {
+        return failure("Invalid latitude/longitude", "Validation Error", 400);
+      }
+
+      if (locationLat < -90 || locationLat > 90) {
+        return failure("Latitude out of range", "Validation Error", 400);
+      }
+
+      if (locationLng < -180 || locationLng > 180) {
+        return failure("Longitude out of range", "Validation Error", 400);
+      }
+    }
+
+    const updateData: Record<string, unknown> = {
+      bloodGroup,
+      gotra,
+      profession,
+    };
+
+    if (location !== undefined) updateData.location = location;
+    if (locationLat !== undefined) updateData.locationLat = locationLat;
+    if (locationLng !== undefined) updateData.locationLng = locationLng;
+
     // --- Step 3: Update profile ---
     const updatedProfile = await prisma.profile.upsert({
       where: { userId },
-      update: { bloodGroup, gotra, profession },
-      create: { userId, bloodGroup, gotra, profession },
+      update: updateData,
+      create: { userId, ...updateData },
     });
+
+    if (locationLat !== undefined && locationLng !== undefined) {
+      await prisma.$executeRaw`
+        UPDATE "Profile"
+        SET "locationGeo" = ST_SetSRID(ST_MakePoint(${locationLng}, ${locationLat}), 4326)::geography,
+            "locationUpdatedAt" = now()
+        WHERE "userId" = ${userId}
+      `;
+    }
 
     // --- Step 4: Send success response ---
     return success("Profile updated successfully", updatedProfile);

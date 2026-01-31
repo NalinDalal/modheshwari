@@ -20,7 +20,8 @@ import { handleAdminLogin, handleAdminSignup } from "./routes/auth/admin";
 import { handleFHLogin, handleFHSignup } from "./routes/auth/fh";
 import { handleMemberLogin, handleMemberSignup } from "./routes/auth/fm";
 
-import { handleGetMe } from "./routes/me";
+import { handleGetMe, handleUpdateMe } from "./routes/me";
+import { handleGetNearbyUsers } from "./routes/nearby";
 
 // Family
 import {
@@ -337,6 +338,14 @@ const server = serve({
 
       if (url.pathname === "/api/me" && method === "GET") {
         return withCorsHeaders(await handleGetMe(req));
+      }
+
+      if (url.pathname === "/api/me" && method === "PUT") {
+        return withCorsHeaders(await handleUpdateMe(req));
+      }
+
+      if (url.pathname === "/api/users/nearby" && method === "GET") {
+        return withCorsHeaders(await handleGetNearbyUsers(req));
       }
 
       if (url.pathname.startsWith("/api/family/members") && method === "GET") {

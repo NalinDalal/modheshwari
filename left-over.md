@@ -126,32 +126,6 @@ Message to gotra or whole body/community, family
 
 - No way to broadcast messages
 
-### 9. Admin Change
-
-**Expected:** Change a profile i.e. edit the admin powers from a profile
-admin can edit sub admin and sub-comm admin
-3/more sub-comm admin can edit admin, sub admin
-i.e. a profile having status as admin/sub-admin/sub-comm admin can be trasnferred or changed
-
-**Status:** ✅ **IMPLEMENTED** (January 30, 2026)
-
-**Implementation:**
-- `PATCH /api/admin/users/:id/role` - Change user role
-- `GET /api/admin/users` - List all users with roles
-- `GET /api/admin/users/:id` - Get user details
-- `GET /api/admin/role-change-permissions` - Get current user's permissions
-
-**Permission Logic:**
-- COMMUNITY_HEAD can edit: COMMUNITY_SUBHEAD, GOTRA_HEAD, FAMILY_HEAD, MEMBER
-- 3+ COMMUNITY_SUBHEAD can collectively edit: COMMUNITY_HEAD, COMMUNITY_SUBHEAD, GOTRA_HEAD
-- GOTRA_HEAD cannot change admin roles
-
-**Documentation:** See [ADMIN_ROLE_CHANGE.md](ADMIN_ROLE_CHANGE.md)
-
-**Files:**
-- Backend: `/apps/be/routes/adminRoleChange.ts`
-- Routes: `/apps/be/index.ts`
-
 ---
 
 ## Partially Implemented / Scaffolding (25-50% Complete)
