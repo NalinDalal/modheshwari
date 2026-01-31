@@ -189,21 +189,12 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
     if (locationLng !== undefined) updateData.locationLng = locationLng;
 
     // --- Step 3: Update profile ---
+    // Note: locationGeo is auto-updated via DB trigger when locationLat/locationLng change
     const updatedProfile = await prisma.profile.upsert({
       where: { userId },
       update: updateData,
       create: { userId, ...updateData },
     });
-
-    if (locationLat !== undefined && locationLng !== undefined) {
-      await prisma.profile.update({
-        where: { userId },
-        data: {
-          locationGeo: `SRID=4326;POINT(${locationLng} ${locationLat})`,
-          locationUpdatedAt: new Date(),
-        },
-      });
-    }
 
     // --- Step 4: Send success response ---
     return success("Profile updated successfully", updatedProfile);
