@@ -1,6 +1,8 @@
 # Notification System
 
 Scalable async notification delivery using Redis Streams with priority-based queues.
+Use a pre defined template
+A production-grade, event-driven notification system using Kafka for pub/sub messaging, supporting multiple delivery channels (in-app, email, push, SMS).
 
 ## Architecture
 
@@ -96,6 +98,15 @@ pm2 start apps/be/workers/notifications.ts --name "notifications:important" -- i
 pm2 start apps/be/workers/notifications.ts --name "notifications:bulk" -- bulk
 ```
 
+Workers Logs:
+- `Message received`
+- `Email sent`
+- `Push notification sent`
+- `Success`
+- `Failure`
+
+
+
 ### 5. Start Backend & Frontend
 
 ```bash
@@ -120,6 +131,37 @@ curl -X POST http://localhost:3001/api/notifications \
     "channel": "EMAIL",
     "targetRole": "FAMILY_HEAD"
   }'
+```
+
+POST /api/notifications
+
+Broadcast notification (requires admin role)
+
+**Request:**
+
+```json
+{
+  "message": "Important community update",
+  "type": "ANNOUNCEMENT",
+  "channels": ["IN_APP", "EMAIL", "PUSH"],
+  "subject": "Community Update",
+  "targetRole": "MEMBER",
+  "priority": "high"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "eventId": "notif_1234567890_abc123",
+    "recipientCount": 150,
+    "channels": ["IN_APP", "EMAIL", "PUSH"]
+  },
+  "message": "Notifications queued for delivery"
+}
 ```
 
 ### Channels
@@ -206,7 +248,7 @@ Workers will:
 2. Verify consumer group exists: `XINFO GROUPS notifications:important`
 3. Check worker logs for errors
 
-### Messages stuck in DLQ
+### Messages stuck in Dead Letter Queue
 
 1. Review error logs: `bun run --cwd apps/be worker:important 2>&1 | tail -100`
 2. Fix underlying issue (e.g., invalid SMTP credentials)
@@ -239,3 +281,63 @@ Ki when admins put up for a notification, then they need to choose whether it wi
 Cause agar mene gotraHead liya say
 Ab usne bola ki bhai meri family yaha aao
 To ye to sabko uske gotra me chla jyega na
+
+---
+
+```mermaid
+graph TB
+    subgraph "API Layer"
+        API[Bun API Server]
+    end
+
+    subgraph "Message Queue"
+        Kafka[Kafka<br/>notification.events topic]
+    end
+
+    subgraph "Worker Processes"
+        Router[Router Worker<br/>Routes to channels]
+        EmailWorker[Email Worker<br/>SendGrid/SMTP]
+        PushWorker[Push Worker]
+        InAppWorker[In-App Worker<br/>WebSocket broadcaster]
+    end
+
+    subgraph "Real-Time Layer"
+        WS[WebSocket Server<br/>apps/ws]
+        Redis[Redis Pub/Sub<br/>For WS clustering]
+    end
+
+    subgraph "Clients"
+        Browser[Web Browser]
+        Mobile[Mobile App]
+    end
+
+    API -->|Produce event| Kafka
+    Kafka -->|Consume| Router
+    Router -->|Email channel| EmailWorker
+    Router -->|Push channel| PushWorker
+    Router -->|In-app channel| InAppWorker
+
+    EmailWorker -->|SMTP| SendGrid[SendGrid API]
+    PushWorker -->|FCM API| FCM[Firebase Cloud Messaging]
+    InAppWorker -->|Publish| Redis
+
+    Redis -->|Subscribe| WS
+    WS -->|WebSocket| Browser
+    WS -->|WebSocket| Mobile
+
+    style Kafka fill:#ff6b6b
+    style Redis fill:#ffa06b
+    style WS fill:#95e1d3
+```
+
+
+## Features
+
+- **Multi-channel delivery**: In-app, email, push notifications, SMS
+- **Event-driven architecture**: Kafka for reliable message delivery
+- **Horizontal scalability**: Run multiple consumer instances
+- **User preferences**: Respect user notification settings
+- **Rich templates**: HTML emails, customizable push notifications
+- **Failure handling**: Invalid token cleanup, retry logic
+- **Priority levels**: Low, normal, high, urgent
+- **Role-based targeting**: Send to specific user groups

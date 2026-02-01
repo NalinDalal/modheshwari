@@ -1,11 +1,5 @@
 # Community Management Platform
 
-## Design Document & Software Requirements Specification
-
-> **System Design Reference:** [Excalidraw Diagram](https://excalidraw.com/#json=29LoyprJCOF1ARplRHu-m,Wvnq4d274i16MkQKBqe2Eg)
-
----
-
 ## Table of Contents
 
 1. [System Overview](#system-overview)

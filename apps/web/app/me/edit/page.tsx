@@ -27,6 +27,10 @@ interface User {
   profile: Profile | null;
 }
 
+/**
+ * Performs  edit profile page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function EditProfilePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);

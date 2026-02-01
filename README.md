@@ -58,39 +58,21 @@ This project is a full-stack platform for managing local community operations, i
    bun run docs:gen
    ```
 
-## Monorepo Structure
-
-- `apps/web` – Next.js frontend
-- `packages/ui` – Shared React UI components
-- `packages/db` – Prisma schema and seed scripts
-- `packages/utils` - to handle with stuff like auth, other similar things
-- `packages/test` - well testcases
-
 ## CI/CD & Deployment
 
 - Automated with GitHub Actions (`.github/workflows/ci.yml`)
 - Builds, tests, and deploys Docker images to AWS (ECR + ECS)
 
-## Documentation
-
-- [Design Document](design.md)
-- [Development Steps & Rationale](steps.md)
-- [Database Schema](packages/db/schema.prisma)
+## [Documentation](design.md)
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
 
-## Stress Testing
+## [Stress Testing](./stress-testing.md)
 
-[to do stress-testing](./stress-testing.md)
-
-## Case Study
-
-[Case Study](./case.md)
+## [Case Study](./case.md)
 
 ---
 
-list down everything you know from resume and implement here
-
-head count 10-15k
+users/head count 10-15k

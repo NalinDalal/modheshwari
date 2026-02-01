@@ -34,6 +34,10 @@ interface RoleChangePermissions {
   description: string;
 }
 
+/**
+ * Performs  admin role change page operation.
+ * @returns {any} Description of return value
+ */
 export default function AdminRoleChangePage() {
   const [users, setUsers] = useState<User[]>([]);
   const [permissions, setPermissions] = useState<RoleChangePermissions | null>(null);

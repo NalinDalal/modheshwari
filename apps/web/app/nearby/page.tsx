@@ -14,6 +14,11 @@ interface NearbyUser {
 }
 
 //Helper function
+/**
+ * Performs  meta operation.
+ * @param {{ label: string; value: string; }} { label, value } - Description of { label, value }
+ * @returns {React.JSX.Element} Description of return value
+ */
 function Meta({ label, value }: { label: string; value: string }) {
   return (
     <div className="p-3 border rounded-lg">
@@ -23,6 +28,10 @@ function Meta({ label, value }: { label: string; value: string }) {
   );
 }
 
+/**
+ * Performs  nearby page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function NearbyPage() {
   const router = useRouter();
   const [users, setUsers] = useState<NearbyUser[]>([]);

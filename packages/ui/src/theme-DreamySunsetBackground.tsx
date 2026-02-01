@@ -10,6 +10,17 @@ interface DreamySunsetBackgroundProps {
   className?: string;
 }
 
+/**
+ * Performs  dreamy sunset background operation.
+ * @param {DreamySunsetBackgroundProps} {
+ *   children,
+ *   className = "",
+ * } - Description of {
+ *   children,
+ *   className = "",
+ * }
+ * @returns {any} Description of return value
+ */
 export function DreamySunsetBackground({
   children,
   className = "",

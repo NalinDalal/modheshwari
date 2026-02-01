@@ -1,14 +1,9 @@
 # Modheshwari — Remaining Implementation Tasks
 
-**Last Updated:** January 10, 2026  
-**Status:** Comprehensive backlog of features to be implemented
-
----
-
 ## Table of Contents
 
 1. [Not Implemented (0% Complete)](#not-implemented-0-complete)
-2. [Partially Implemented / Scaffolding (25-50% Complete)](#partially-implemented--scaffolding-2550-complete)
+2. [Partially Implemented / Scaffolding (25-50% Complete)](#partially-implemented--scaffolding-25-50-complete)
 3. [Quick Wins (Easy, High Impact)](#quick-wins-easy-high-impact)
 4. [Medium Effort Tasks](#medium-effort-tasks)
 5. [High Effort / v2 Features](#high-effort--v2-features)
@@ -51,7 +46,7 @@
 ### 2. Event Pass Generation with QR Codes
 
 **Requirement:** FR4 in design doc  
-**Expected:** Generate unique QR codes for event registrations, send as PDF
+**Expected:** Generate unique QR codes for event registrations, send as PDF on mail upon confirmation
 
 **What's Missing:**
 
@@ -73,58 +68,6 @@
 - S3 client configuration
 
 **Estimated Effort:** 3-4 days
-
-### 5. Location-Based Services
-
-**Requirement:** Design doc key capability  
-**Expected:** Search and discover families nearby
-
-**What's Missing:**
-
-- No geolocation fields in User/Profile schema
-- No geospatial queries
-- No location-based filtering API
-- No map UI component
-
-**Database Changes Needed:**
-
-```prisma
-model Profile {
-  // ... existing fields
-  latitude Float?
-  longitude Float?
-  @@index([latitude, longitude])  // For spatial queries
-}
-```
-
-**Files Needed:**
-
-- Geospatial indexing in PostgreSQL
-- PostGIS extension for distance calculations
-- `apps/be/routes/nearby.ts`
-- `apps/web/components/MapView.tsx`
-
-**Estimated Effort:** 3-4 days
-
-**Requirements:**
-
-- Geolocation data in profiles
-- PostGIS for spatial queries
-- Nearby search API
-- Map UI component
-
-**Estimated Time:** 1 week  
-**Impact:** Location discovery and services
-
-### 7. Fan-Out services
-
-**Expected:** What if want to fan out message to group of people
-
-Message to gotra or whole body/community, family
-
-**What's Missing:**
-
-- No way to broadcast messages
 
 ---
 
@@ -171,41 +114,6 @@ Message to gotra or whole body/community, family
 
 **Estimated Effort:** 3-4 days
 
-### 4. User Profile Management
-
-**Status:** Model exists, no endpoints
-
-**What's Working:**
-
-- ✅ Profile model with all fields (phone, address, profession, gotra)
-- ✅ One-to-one relation with User
-
-**What's Missing:**
-
-- ❌ Profile update endpoints
-- ❌ Profile viewing UI
-- ❌ Profession/skill listing
-
-**Files Needed:**
-
-- `apps/be/routes/profile.ts` (PATCH endpoint)
-- `apps/web/app/profile/page.tsx` (edit profile)
-- `apps/web/app/profile/[userId]/page.tsx` (view profile)
-
-**Estimated Effort:** 1-2 days
-
-### 1. Complete Profile Management
-
-**Files to Create:**
-
-- [x] `apps/be/routes/profile.ts` — PATCH `/api/profile`
-- [ ] `apps/web/app/profile/page.tsx` — Profile edit form
-- [ ] `apps/web/app/profile/[userId]/page.tsx` — Profile view
-
-**Estimated Time:** 4-6 hours  
-**Impact:** Critical for user experience
-
-need to visualise complete profile at `/me` endpoint mind-you
 
 ### 5. Medical Information
 
@@ -249,33 +157,179 @@ model MedicalRecord {
 
 **Estimated Effort:** 1-2 days
 
-### 6. Email Notifications
+### 6. Notification System (Email + Push + Real-Time)
 
-**Status:** Model exists, not sending actual emails
+**Status:** 70% Complete - Kafka infrastructure done, workers + WebSocket integration needed
 
 **What's Working:**
 
-- ✅ Notification model in database
-- ✅ Notification creation on events
+- ✅ Notification model in database with multi-channel support (IN_APP, EMAIL, PUSH, SMS)
+- ✅ Kafka producer: `apps/be/kafka/notification-producer.ts`
+- ✅ Kafka infrastructure with topic: `notification.events`
+- ✅ WebSocket server: `apps/ws/index.ts` (separate process)
 - ✅ In-app notifications functional
+- ✅ Rate limiting on notification creation
+- ✅ Role-based notification scoping
+- ✅ Profile fields for preferences: `fcmToken`, `notificationPreferences` JSON
 
-**What's Missing:**
+**Production Architecture (scales to 100k+ users):**
 
-- ❌ Email service integration (SendGrid/SMTP)
-- ❌ Email template system
-- ❌ Email sending on notification creation
-- ❌ Email preference management
+```
+API Server (Bun)
+    ↓ (Kafka produce, <5ms)
+Kafka Topic: notification.events
+    ↓ (Consumer)
+Router Worker (Route to channels)
+    ├→ Email Worker (SendGrid/SMTP) → Email Channel
+    ├→ Push Worker (Firebase FCM) → Push Notifications
+    ├→ In-App Worker → Redis Pub/Sub
+                          ↓
+WebSocket Servers (Redis clustered)
+    ↓
+Connected Clients (Real-time updates)
+```
 
-**Files Needed:**
+**Why This Scales (for 10-15k+ users):**
+- API doesn't block on email/push (Kafka queues events)
+- Multiple workers process in parallel (run 2-5 instances)
+- Redis Pub/Sub connects WebSocket servers (no single point of failure)
+- Kafka persists messages (no data loss on worker failure)
+- Each component scales independently
 
-- Email service integration in `apps/be/routes/notifications.ts`
-- Email templates
-- Notification preference model/API
+**What's Missing (To Complete):**
 
-**Estimated Effort:** 1-2 days
+### Priority 1: Email Worker (2-3 hours)
+- Create: `apps/be/kafka/workers/email-worker.ts`
+- Subscribe to `notification.email` topic
+- Integrate SendGrid or Nodemailer
+- Add email template system
+- Handle retries with backoff
 
-what do you suggest for notifications??
-system design, it's a lot of people, single server handling it , it will be destroyed
+### Priority 2: Push Notification Worker (2-3 hours)
+- Create: `apps/be/kafka/workers/push-worker.ts`
+- Subscribe to `notification.push` topic
+- Integrate Firebase Cloud Messaging (FCM)
+- Handle invalid tokens (delete from DB)
+- Add device token management
+
+### Priority 3: In-App + WebSocket Integration (2-3 hours)
+- Update: `apps/ws/index.ts` to use Redis Pub/Sub
+- Create: `apps/be/kafka/workers/in-app-worker.ts`
+- Connect WebSocket servers with Redis for clustering
+- Broadcast in-app notifications to connected users
+- Handle user presence tracking
+
+### Priority 4: Notification Preferences UI (1-2 hours)
+- Create: `apps/web/app/notifications/preferences/page.tsx`
+- Allow users to choose: Email, Push, In-App, SMS
+- Store preferences in `Profile.notificationPreferences`
+- Add unsubscribe links in emails (GDPR compliant)
+
+**Files to Create/Update:**
+
+```
+Backend:
+- ✅ apps/be/kafka/notification-producer.ts (done)
+- ❌ apps/be/kafka/workers/email-worker.ts (NEW)
+- ❌ apps/be/kafka/workers/push-worker.ts (NEW)
+- ❌ apps/be/kafka/workers/in-app-worker.ts (NEW)
+- ❌ apps/be/kafka/workers/router-worker.ts (OPTIONAL - route to channels)
+- 📝 apps/be/routes/notifications.ts (add email templates)
+- 📝 apps/ws/index.ts (add Redis Pub/Sub)
+
+Frontend:
+- ❌ apps/web/app/notifications/preferences/page.tsx (NEW)
+- 📝 apps/web/components/NotificationProvider.tsx (add WebSocket hook)
+
+Config:
+- 📝 .env.example (add SendGrid, FCM, Redis keys)
+```
+
+**Environment Variables Needed:**
+
+```bash
+# Email
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_USER=apikey
+SMTP_PASS=your_sendgrid_api_key
+SEND_FROM_EMAIL=notifications@modheshwari.com
+
+# Push (FCM)
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_PRIVATE_KEY=your_private_key
+FIREBASE_CLIENT_EMAIL=your_client_email
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# WebSocket
+WS_PORT=8080
+WS_SECRET=your_jwt_secret
+```
+
+**Estimated Effort:** 2-3 days (for all 4 priorities)
+
+**Implementation Order:**
+1. Email Worker (highest impact, most used)
+2. WebSocket + Redis (real-time delighter)
+3. Push Notifications (mobile support)
+4. Notification Preferences UI (user control)
+
+---
+
+### 7. Fan-Out Services
+
+**Status:** Not started (depends on notification system above)
+
+**Use Cases:**
+- Broadcast to entire gotra (1 message → 100+ people)
+- Community-wide announcements
+- Family group messages
+- Emergency alerts
+
+**What's Needed:**
+
+- Recipient resolution: Find all users in gotra/community/family
+- Batch notification creation (performance)
+- Targeting: Gotra, Community, Family scopes
+- Role-based filtering (notify only Family Heads, etc.)
+
+**Approach:**
+
+```typescript
+// Example: Fan-out to gotra
+const users = await prisma.user.findMany({
+  where: {
+    profile: { gotra: 'Sharma' },
+    status: true
+  }
+});
+
+// Batch create notifications (don't create 100 individual rows)
+await prisma.notification.createMany({
+  data: users.map(u => ({
+    userId: u.id,
+    type: 'ANNOUNCEMENT',
+    message: 'New event in your gotra!',
+    // ... rest of fields
+  }))
+});
+
+// Then produce single Kafka event for fan-out
+await producer.send({
+  topic: 'notification.events',
+  messages: [{
+    value: JSON.stringify({
+      recipientIds: users.map(u => u.id),
+      type: 'ANNOUNCEMENT',
+      channels: ['IN_APP', 'EMAIL']
+    })
+  }]
+});
+```
+
+**Estimated Effort:** 1-2 days (after email/push workers done)
 
 ---
 
@@ -294,18 +348,6 @@ system design, it's a lot of people, single server handling it , it will be dest
 
 **Estimated Time:** 3-4 hours  
 **Impact:** Enables family tree building
-
-### 3. Email Notification Sending
-
-**Setup Steps:**
-
-1. Add SendGrid API key to `.env`
-2. Create email template helper
-3. Update `handleCreateNotification` to send emails
-4. Add notification preference model/API
-
-**Estimated Time:** 4-6 hours  
-**Impact:** Users get actual email updates
 
 ### 4. Pagination Support
 
@@ -345,15 +387,17 @@ system design, it's a lot of people, single server handling it , it will be dest
 **Estimated Time:** 2-3 days  
 **Impact:** Users can fully manage events
 
+5. **Event Management**
+   - View upcoming events.
+   - Register for events and make payments online.
+   - Download event passes with unique IDs.
+
 ---
 
 ### 2. Payment Gateway Integration
 
-**Options:**
-
-- Stripe (recommended for international)
 - Razorpay (good for India)
-- PayPal
+- BHIM UPI
 
 **Implementation:**
 
@@ -427,13 +471,14 @@ system design, it's a lot of people, single server handling it , it will be dest
 | Forums              | ❌    | ❌  | ❌       | Not Started |
 | Polls               | ❌    | ❌  | ❌       | Not Started |
 | Calendar            | ❌    | ❌  | ❌       | Not Started |
-| Location Services   | ❌    | ❌  | ❌       | Not Started |
-| Family Tree         | ⚠️    | ⚠️  | ❌       | Partial     |
+| Location Services   | ✅    | ✅  | ❌       | Complete (API only) |
+| Family Tree         | ✅    | ✅  | ⚠️       | Mostly Done |
 | User Relations      | ✅    | ❌  | ❌       | Schema Only |
-| Profiles            | ✅    | ❌  | ❌       | Schema Only |
-| Medical Info        | ⚠️    | ⚠️  | ❌       | Partial     |
-| Email Notifications | ✅    | ⚠️  | ✅       | Partial     |
-| Advanced Search     | ⚠️    | ⚠️  | ❌       | Partial     |
+| Profiles            | ✅    | ✅  | ✅       | Complete (via search) |
+| Medical Info        | ✅    | ✅  | ❌       | Partial     |
+| Notifications   | ✅    | ⚠️  | ⚠️       | 70% - Needs Workers |
+| Advanced Search     | ✅    | ✅  | ❌       | Partial     |
+| WebSocket/Real-Time | ✅    | ⚠️  | ❌       | Needs Redis |
 
 ---
 
@@ -456,18 +501,7 @@ What if wanna change admins
 
 ---
 
-4. **Location-Based Rendering**
-   - Filter and display families based on location (city, state).
 
-5. **Event Management**
-   - View upcoming events.
-   - Register for events and make payments online.
-   - Download event passes with unique IDs.
-
-6. **Notification System**
-   - Push notifications for important updates and reminders.
-   - Email notifications for event registrations and other alerts.
-   - Use Kafka Service
 
 7. **Storage**
    - Store things like user profile pic, etc on AWS S3
