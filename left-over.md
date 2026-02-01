@@ -114,7 +114,6 @@
 
 **Estimated Effort:** 3-4 days
 
-
 ### 5. Medical Information
 
 **Status:** Route file exists but incomplete
@@ -190,6 +189,7 @@ Connected Clients (Real-time updates)
 ```
 
 **Why This Scales (for 10-15k+ users):**
+
 - API doesn't block on email/push (Kafka queues events)
 - Multiple workers process in parallel (run 2-5 instances)
 - Redis Pub/Sub connects WebSocket servers (no single point of failure)
@@ -199,6 +199,7 @@ Connected Clients (Real-time updates)
 **What's Missing (To Complete):**
 
 ### Priority 1: Email Worker (2-3 hours)
+
 - Create: `apps/be/kafka/workers/email-worker.ts`
 - Subscribe to `notification.email` topic
 - Integrate SendGrid or Nodemailer
@@ -206,6 +207,7 @@ Connected Clients (Real-time updates)
 - Handle retries with backoff
 
 ### Priority 2: Push Notification Worker (2-3 hours)
+
 - Create: `apps/be/kafka/workers/push-worker.ts`
 - Subscribe to `notification.push` topic
 - Integrate Firebase Cloud Messaging (FCM)
@@ -213,6 +215,7 @@ Connected Clients (Real-time updates)
 - Add device token management
 
 ### Priority 3: In-App + WebSocket Integration (2-3 hours)
+
 - Update: `apps/ws/index.ts` to use Redis Pub/Sub
 - Create: `apps/be/kafka/workers/in-app-worker.ts`
 - Connect WebSocket servers with Redis for clustering
@@ -220,6 +223,7 @@ Connected Clients (Real-time updates)
 - Handle user presence tracking
 
 ### Priority 4: Notification Preferences UI (1-2 hours)
+
 - Create: `apps/web/app/notifications/preferences/page.tsx`
 - Allow users to choose: Email, Push, In-App, SMS
 - Store preferences in `Profile.notificationPreferences`
@@ -271,6 +275,7 @@ WS_SECRET=your_jwt_secret
 **Estimated Effort:** 2-3 days (for all 4 priorities)
 
 **Implementation Order:**
+
 1. Email Worker (highest impact, most used)
 2. WebSocket + Redis (real-time delighter)
 3. Push Notifications (mobile support)
@@ -283,6 +288,7 @@ WS_SECRET=your_jwt_secret
 **Status:** Not started (depends on notification system above)
 
 **Use Cases:**
+
 - Broadcast to entire gotra (1 message → 100+ people)
 - Community-wide announcements
 - Family group messages
@@ -301,31 +307,33 @@ WS_SECRET=your_jwt_secret
 // Example: Fan-out to gotra
 const users = await prisma.user.findMany({
   where: {
-    profile: { gotra: 'Sharma' },
-    status: true
-  }
+    profile: { gotra: "Sharma" },
+    status: true,
+  },
 });
 
 // Batch create notifications (don't create 100 individual rows)
 await prisma.notification.createMany({
-  data: users.map(u => ({
+  data: users.map((u) => ({
     userId: u.id,
-    type: 'ANNOUNCEMENT',
-    message: 'New event in your gotra!',
+    type: "ANNOUNCEMENT",
+    message: "New event in your gotra!",
     // ... rest of fields
-  }))
+  })),
 });
 
 // Then produce single Kafka event for fan-out
 await producer.send({
-  topic: 'notification.events',
-  messages: [{
-    value: JSON.stringify({
-      recipientIds: users.map(u => u.id),
-      type: 'ANNOUNCEMENT',
-      channels: ['IN_APP', 'EMAIL']
-    })
-  }]
+  topic: "notification.events",
+  messages: [
+    {
+      value: JSON.stringify({
+        recipientIds: users.map((u) => u.id),
+        type: "ANNOUNCEMENT",
+        channels: ["IN_APP", "EMAIL"],
+      }),
+    },
+  ],
 });
 ```
 
@@ -460,25 +468,25 @@ await producer.send({
 
 ## Quick Reference: File Status
 
-| Component           | Model | API | Frontend | Status      |
-| ------------------- | ----- | --- | -------- | ----------- |
-| User Management     | ✅    | ✅  | ✅       | Complete    |
-| Family Management   | ✅    | ✅  | ✅       | Complete    |
-| Resource Requests   | ✅    | ✅  | ✅       | Complete    |
-| Event Management    | ✅    | ⚠️  | ❌       | Partial     |
-| Payments            | ⚠️    | ❌  | ❌       | Scaffolding |
-| Events QR Codes     | ❌    | ❌  | ❌       | Not Started |
-| Forums              | ❌    | ❌  | ❌       | Not Started |
-| Polls               | ❌    | ❌  | ❌       | Not Started |
-| Calendar            | ❌    | ❌  | ❌       | Not Started |
-| Location Services   | ✅    | ✅  | ❌       | Complete (API only) |
-| Family Tree         | ✅    | ✅  | ⚠️       | Mostly Done |
-| User Relations      | ✅    | ❌  | ❌       | Schema Only |
+| Component           | Model | API | Frontend | Status                |
+| ------------------- | ----- | --- | -------- | --------------------- |
+| User Management     | ✅    | ✅  | ✅       | Complete              |
+| Family Management   | ✅    | ✅  | ✅       | Complete              |
+| Resource Requests   | ✅    | ✅  | ✅       | Complete              |
+| Event Management    | ✅    | ⚠️  | ❌       | Partial               |
+| Payments            | ⚠️    | ❌  | ❌       | Scaffolding           |
+| Events QR Codes     | ❌    | ❌  | ❌       | Not Started           |
+| Forums              | ❌    | ❌  | ❌       | Not Started           |
+| Polls               | ❌    | ❌  | ❌       | Not Started           |
+| Calendar            | ❌    | ❌  | ❌       | Not Started           |
+| Location Services   | ✅    | ✅  | ❌       | Complete (API only)   |
+| Family Tree         | ✅    | ✅  | ⚠️       | Mostly Done           |
+| User Relations      | ✅    | ❌  | ❌       | Schema Only           |
 | Profiles            | ✅    | ✅  | ✅       | Complete (via search) |
-| Medical Info        | ✅    | ✅  | ❌       | Partial     |
-| Notifications   | ✅    | ⚠️  | ⚠️       | 70% - Needs Workers |
-| Advanced Search     | ✅    | ✅  | ❌       | Partial     |
-| WebSocket/Real-Time | ✅    | ⚠️  | ❌       | Needs Redis |
+| Medical Info        | ✅    | ✅  | ❌       | Partial               |
+| Notifications       | ✅    | ⚠️  | ⚠️       | 70% - Needs Workers   |
+| Advanced Search     | ✅    | ✅  | ❌       | Partial               |
+| WebSocket/Real-Time | ✅    | ⚠️  | ❌       | Needs Redis           |
 
 ---
 
@@ -501,8 +509,6 @@ What if wanna change admins
 
 ---
 
-
-
 7. **Storage**
    - Store things like user profile pic, etc on AWS S3
 
@@ -515,3 +521,4 @@ WebSocket(new server in apps) to refresh notifications without page reload
 ---
 
 blend [this](https://patterncraft.fun/) into ui
+

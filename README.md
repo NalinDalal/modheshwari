@@ -47,13 +47,13 @@ This project is a full-stack platform for managing local community operations, i
    docker exec -it kafka kafka-topics --create --topic notification.events --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 # verify topics exists
    ```
 
-6. **Run the app:**
+7. **Run the app:**
 
    ```bash
    bun run dev
    ```
 
-7. To generate code documentation:
+8. To generate code documentation:
    ```bash
    bun run docs:gen
    ```
@@ -73,6 +73,5 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## [Case Study](./case.md)
 
----
-
 users/head count 10-15k
+
