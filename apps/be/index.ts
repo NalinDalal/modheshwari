@@ -12,7 +12,6 @@ import { handleCors, withCorsHeaders } from "./utils/cors";
 
 // utility functions
 import { match } from "@modheshwari/utils/match";
-
 import { isRateLimited } from "@modheshwari/utils/rate-limit";
 
 // Auth
@@ -168,6 +167,185 @@ const authRouteTable = [
   },
 ];
 
+const staticRouteTable = [
+  // Health
+  {
+    path: "/api/health",
+    method: "GET",
+    handler: () => Response.json({ status: "ok" }, { status: 200 }),
+  },
+
+  // Families
+  {
+    path: "/api/families",
+    method: "POST",
+    handler: (r: Request) => handleCreateFamily(r),
+  },
+  {
+    path: "/api/family/tree",
+    method: "GET",
+    handler: (r: Request) => handleGetFamilyTree(r),
+  },
+  {
+    path: "/api/family/tree/relations",
+    method: "POST",
+    handler: (r: Request) => handleCreateRelationship(r),
+  },
+
+  // Profile / Members
+  {
+    path: "/api/me",
+    method: "GET",
+    handler: (r: Request) => handleGetMe(r),
+  },
+  {
+    path: "/api/me",
+    method: "PUT",
+    handler: (r: Request) => handleUpdateMe(r),
+  },
+  {
+    path: "/api/users/nearby",
+    method: "GET",
+    handler: (r: Request) => handleGetNearbyUsers(r),
+  },
+  {
+    path: "/api/family/members",
+    method: "GET",
+    handler: (r: Request) => handleGetFamilyMembers(r),
+  },
+
+  // Search
+  {
+    path: "/api/search",
+    method: "GET",
+    handler: (r: Request) => handleSearch(r),
+  },
+
+  // Resource Requests
+  {
+    path: "/api/resource-requests",
+    method: "POST",
+    handler: (r: Request) => handleCreateResourceRequest(r),
+  },
+  {
+    path: "/api/resource-requests",
+    method: "GET",
+    handler: (r: Request) => handleListResourceRequests(r),
+  },
+
+  // Admin
+  {
+    path: "/api/admin/requests",
+    method: "GET",
+    handler: (r: Request) => handleListAllRequests(r),
+  },
+  {
+    path: "/api/admin/users",
+    method: "GET",
+    handler: (r: Request) => handleListUsers(r),
+  },
+  {
+    path: "/api/admin/role-change-permissions",
+    method: "GET",
+    handler: (r: Request) => handleGetRoleChangePermissions(r),
+  },
+
+  // Notifications
+  {
+    path: "/api/notifications",
+    method: "GET",
+    handler: (r: Request) => handleListNotifications(r),
+  },
+  {
+    path: "/api/notifications",
+    method: "POST",
+    handler: (r: Request) => handleCreateNotification(r),
+  },
+  {
+    path: "/api/notifications/read-multiple",
+    method: "POST",
+    handler: (r: Request) => handleMarkMultipleAsRead(r),
+  },
+  {
+    path: "/api/notifications/read-all",
+    method: "POST",
+    handler: (r: Request) => handleMarkAllAsRead(r),
+  },
+
+  // Messages
+  {
+    path: "/api/chat",
+    method: "GET",
+    handler: (r: Request) => handleGetChat(r),
+  },
+  {
+    path: "/api/messages/conversations",
+    method: "GET",
+    handler: (r: Request) => handleGetConversations(r),
+  },
+  {
+    path: "/api/messages/conversations",
+    method: "POST",
+    handler: (r: Request) => handleCreateConversation(r),
+  },
+  {
+    path: "/api/messages",
+    method: "POST",
+    handler: (r: Request) => handleSendMessage(r),
+  },
+  {
+    path: "/api/messages/read",
+    method: "POST",
+    handler: (r: Request) => handleMarkMessagesRead(r),
+  },
+  {
+    path: "/api/messages/users/search",
+    method: "GET",
+    handler: (r: Request) => handleSearchUsersForChat(r),
+  },
+
+  // Status Update Requests
+  {
+    path: "/api/status-update-requests",
+    method: "POST",
+    handler: (r: Request) => handleCreateStatusUpdateRequest(r),
+  },
+  {
+    path: "/api/status-update-requests",
+    method: "GET",
+    handler: (r: Request) => handleListStatusUpdateRequests(r),
+  },
+
+  // Medical & Transfer
+  {
+    path: "/api/profile/medical",
+    method: "PATCH",
+    handler: (r: Request) => handleUpdateMedical(r),
+  },
+  {
+    path: "/api/family/transfer",
+    method: "POST",
+    handler: (r: Request) => handleFamilyTransfer(r),
+  },
+  {
+    path: "/api/medical/search",
+    method: "GET",
+    handler: (r: Request) => handleSearchByBloodGroup(r),
+  },
+
+  // Events
+  {
+    path: "/api/events",
+    method: "POST",
+    handler: (r: Request) => handleCreateEvent(r),
+  },
+  {
+    path: "/api/events",
+    method: "GET",
+    handler: (r: Request) => handleListEvents(r),
+  },
+] as const;
+
 // --- SERVER ---
 const PORT = process.env.PORT ?? 3001;
 
@@ -236,13 +414,6 @@ const server = serve({
         }
       }
 
-      // ------------------ Health ------------------
-      if (url.pathname === "/api/health" && method === "GET") {
-        return withCorsHeaders(
-          Response.json({ status: "ok" }, { status: 200 }),
-        );
-      }
-
       // ------------------ Auth ------------------
       const matchedAuth = authRouteTable.find(
         (row) => row.path === url.pathname && row.method === method,
@@ -252,11 +423,16 @@ const server = serve({
         return withCorsHeaders(await matchedAuth.handler(req));
       }
 
-      // ------------------ Families ------------------
+      // ------------------ Static routes ------------------
+      const matchedStatic = staticRouteTable.find(
+        (row) => row.path === url.pathname && row.method === method,
+      );
 
-      if (url.pathname === "/api/families" && method === "POST") {
-        return withCorsHeaders(await handleCreateFamily(req));
+      if (matchedStatic) {
+        return withCorsHeaders(await matchedStatic.handler(req));
       }
+
+      // ------------------ Families ------------------
 
       const mAddMember = match(url.pathname, "/api/families/:familyId/members");
       if (mAddMember && method === "POST") {
@@ -317,14 +493,6 @@ const server = serve({
         );
       }
 
-      if (url.pathname === "/api/family/tree" && method === "GET") {
-        return withCorsHeaders(await handleGetFamilyTree(req));
-      }
-
-      if (url.pathname === "/api/family/tree/relations" && method === "POST") {
-        return withCorsHeaders(await handleCreateRelationship(req));
-      }
-
       const mDeleteRelation = match(
         url.pathname,
         "/api/family/tree/relations/:id",
@@ -343,38 +511,6 @@ const server = serve({
       }
 
       // ------------------ Profile / Members ------------------
-
-      if (url.pathname === "/api/me" && method === "GET") {
-        return withCorsHeaders(await handleGetMe(req));
-      }
-
-      if (url.pathname === "/api/me" && method === "PUT") {
-        return withCorsHeaders(await handleUpdateMe(req));
-      }
-
-      if (url.pathname === "/api/users/nearby" && method === "GET") {
-        return withCorsHeaders(await handleGetNearbyUsers(req));
-      }
-
-      if (url.pathname.startsWith("/api/family/members") && method === "GET") {
-        return withCorsHeaders(await handleGetFamilyMembers(req));
-      }
-
-      // ------------------ Search ------------------
-
-      if (url.pathname.startsWith("/api/search") && method === "GET") {
-        return withCorsHeaders(await handleSearch(req));
-      }
-
-      // ------------------ Resource Requests ------------------
-
-      if (url.pathname === "/api/resource-requests" && method === "POST") {
-        return withCorsHeaders(await handleCreateResourceRequest(req));
-      }
-
-      if (url.pathname === "/api/resource-requests" && method === "GET") {
-        return withCorsHeaders(await handleListResourceRequests(req));
-      }
 
       const mGetResource = match(url.pathname, "/api/resource-requests/:id");
       if (mGetResource && method === "GET") {
@@ -409,10 +545,6 @@ const server = serve({
 
       // ------------------ Admin ------------------
 
-      if (url.pathname === "/api/admin/requests" && method === "GET") {
-        return withCorsHeaders(await handleListAllRequests(req));
-      }
-
       const mAdminEvent = match(url.pathname, "/api/admin/event/:id/status");
       if (mAdminEvent && method === "POST") {
         const id = mAdminEvent.id;
@@ -425,11 +557,6 @@ const server = serve({
           );
         }
         return withCorsHeaders(await handleUpdateEventStatus(req, id));
-      }
-
-      // Admin - User Management
-      if (url.pathname === "/api/admin/users" && method === "GET") {
-        return withCorsHeaders(await handleListUsers(req));
       }
 
       const mAdminUserDetails = match(url.pathname, "/api/admin/users/:id");
@@ -460,23 +587,6 @@ const server = serve({
         return withCorsHeaders(await handleChangeUserRole(req, id));
       }
 
-      if (
-        url.pathname === "/api/admin/role-change-permissions" &&
-        method === "GET"
-      ) {
-        return withCorsHeaders(await handleGetRoleChangePermissions(req));
-      }
-
-      // ------------------ Notifications ------------------
-
-      if (url.pathname === "/api/notifications" && method === "GET") {
-        return withCorsHeaders(await handleListNotifications(req));
-      }
-
-      if (url.pathname === "/api/notifications" && method === "POST") {
-        return withCorsHeaders(await handleCreateNotification(req));
-      }
-
       // Mark notification as read
       const mMarkAsRead = match(url.pathname, "/api/notifications/:id/read");
       if (mMarkAsRead && method === "POST") {
@@ -492,16 +602,6 @@ const server = serve({
         return withCorsHeaders(await handleMarkAsRead(req, id));
       }
 
-      // Mark multiple notifications as read
-      if (url.pathname === "/api/notifications/read-multiple" && method === "POST") {
-        return withCorsHeaders(await handleMarkMultipleAsRead(req));
-      }
-
-      // Mark all notifications as read
-      if (url.pathname === "/api/notifications/read-all" && method === "POST") {
-        return withCorsHeaders(await handleMarkAllAsRead(req));
-      }
-
       // Get delivery status
       const mDeliveryStatus = match(url.pathname, "/api/notifications/:id/delivery-status");
       if (mDeliveryStatus && method === "GET") {
@@ -515,20 +615,6 @@ const server = serve({
           );
         }
         return withCorsHeaders(await handleGetDeliveryStatus(req, id));
-      }
-
-      // ------------------ Messages/Chat ------------------
-
-      if (url.pathname === "/api/chat" && method === "GET") {
-        return withCorsHeaders(await handleGetChat(req));
-      }
-
-      if (url.pathname === "/api/messages/conversations" && method === "GET") {
-        return withCorsHeaders(await handleGetConversations(req));
-      }
-
-      if (url.pathname === "/api/messages/conversations" && method === "POST") {
-        return withCorsHeaders(await handleCreateConversation(req));
       }
 
       const mGetMessages = match(
@@ -548,28 +634,6 @@ const server = serve({
         return withCorsHeaders(await handleGetMessages(req, conversationId));
       }
 
-      if (url.pathname === "/api/messages" && method === "POST") {
-        return withCorsHeaders(await handleSendMessage(req));
-      }
-
-      if (url.pathname === "/api/messages/read" && method === "POST") {
-        return withCorsHeaders(await handleMarkMessagesRead(req));
-      }
-
-      if (url.pathname === "/api/messages/users/search" && method === "GET") {
-        return withCorsHeaders(await handleSearchUsersForChat(req));
-      }
-
-      // ------------------ Status Update Requests ------------------
-
-      if (url.pathname === "/api/status-update-requests" && method === "POST") {
-        return withCorsHeaders(await handleCreateStatusUpdateRequest(req));
-      }
-
-      if (url.pathname === "/api/status-update-requests" && method === "GET") {
-        return withCorsHeaders(await handleListStatusUpdateRequests(req));
-      }
-
       const mReviewStatus = match(
         url.pathname,
         "/api/status-update-requests/:id/review",
@@ -585,44 +649,6 @@ const server = serve({
           );
         }
         return withCorsHeaders(await handleReviewStatusUpdateRequest(req, id));
-      }
-
-      // ------------------ Medical & Transfer ------------------
-
-      if (url.pathname === "/api/profile/medical" && method === "PATCH") {
-        return withCorsHeaders(await handleUpdateMedical(req));
-      }
-
-      if (url.pathname === "/api/family/transfer" && method === "POST") {
-        return withCorsHeaders(await handleFamilyTransfer(req));
-      }
-
-      // ------------------ Search ------------------
-
-      if (url.pathname.startsWith("/api/search") && method === "GET") {
-        return withCorsHeaders(await handleSearch(req));
-      }
-
-      // ------------------ Medical Search ------------------
-
-      if (url.pathname === "/api/medical/search" && method === "GET") {
-        return withCorsHeaders(await handleSearchByBloodGroup(req));
-      }
-
-      // ------------------ Resource Requests ------------------
-
-      if (url.pathname === "/api/resource-requests" && method === "POST") {
-        return withCorsHeaders(await handleCreateResourceRequest(req));
-      }
-
-      // ------------------ Events ------------------
-
-      if (url.pathname === "/api/events" && method === "POST") {
-        return withCorsHeaders(await handleCreateEvent(req));
-      }
-
-      if (url.pathname === "/api/events" && method === "GET") {
-        return withCorsHeaders(await handleListEvents(req));
       }
 
       const mEvent = match(url.pathname, "/api/events/:id");
