@@ -4,18 +4,6 @@ import { useEffect, useRef, useState, ChangeEvent } from "react";
 import { Network } from "vis-network";
 import { Plus, Loader } from "lucide-react";
 
-interface TreeNode {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  relationshipToUser?: string;
-  children?: TreeNode[];
-  spouse?: TreeNode;
-  parents?: TreeNode[];
-  siblings?: TreeNode[];
-}
-
 interface GraphData {
   nodes: Array<{
     id: string;

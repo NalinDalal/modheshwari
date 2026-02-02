@@ -46,6 +46,9 @@ export default function NearbyPage() {
       return;
     }
 
+    const getErrorMessage = (err: unknown) =>
+      err instanceof Error ? err.message : "Failed to fetch nearby users";
+
     async function fetchNearby() {
       try {
         setLoading(true);
@@ -67,9 +70,9 @@ export default function NearbyPage() {
         } else {
           throw new Error(data.error || "Failed to fetch nearby users");
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error(err);
-        setError(err.message);
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }

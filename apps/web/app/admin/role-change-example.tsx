@@ -116,7 +116,7 @@ export default function AdminRoleChangePage() {
       setLoading(true);
       const token = localStorage.getItem("token");
       
-      const body: any = { newRole };
+      const body: { newRole: Role; approvalIds?: string[] } = { newRole };
       if (permissions?.requiresMultipleApprovals && approvalIds.length > 0) {
         body.approvalIds = approvalIds;
       }

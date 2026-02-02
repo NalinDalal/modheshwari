@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Search, Loader2, User, Mail, Users, X, Filter } from "lucide-react";
+import { Search, Loader2, X, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";

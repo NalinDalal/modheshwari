@@ -1,20 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, ChangeEvent } from "react";
+import { useCallback, useEffect, useRef, useState, ChangeEvent } from "react";
 import { Network } from "vis-network";
-import { Users, Plus, Trash2, Loader, AlertCircle } from "lucide-react";
-
-interface TreeNode {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  relationshipToUser?: string;
-  children?: TreeNode[];
-  spouse?: TreeNode;
-  parents?: TreeNode[];
-  siblings?: TreeNode[];
-}
+import { Users, Plus, Loader, AlertCircle } from "lucide-react";
 
 interface GraphData {
   nodes: Array<{
@@ -55,78 +43,65 @@ export default function FamilyTreePage() {
   });
   const [showRelationshipForm, setShowRelationshipForm] = useState(false);
 
-  // Get userId from token
-  const getUserIdFromToken = (): string | null => {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
-
-    try {
-      const parts = token.split(".");
-      if (parts.length < 2) return null;
-      const payload = JSON.parse(atob(parts[1]!));
-      return payload.userId || payload.id || null;
-    } catch (err) {
-      console.error("Failed to decode token:", err);
-      return null;
-    }
-  };
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
 
   // Fetch family tree
-  const fetchFamilyTree = async (targetUserId?: string) => {
-    const userIdToUse = targetUserId || userId;
+  const fetchFamilyTree = useCallback(
+    async (targetUserId?: string) => {
+      const userIdToUse = targetUserId || userId;
 
-    if (!userIdToUse) {
-      setError("User ID not available. Please sign in again.");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams({
-        userId: userIdToUse,
-        view,
-        depth: depth.toString(),
-        format: "graph",
-      });
-
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("No authentication token found. Please sign in.");
+      if (!userIdToUse) {
+        setError("User ID not available. Please sign in again.");
         setLoading(false);
         return;
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/family/tree?${params}`,
-        {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const params = new URLSearchParams({
+          userId: userIdToUse,
+          view,
+          depth: depth.toString(),
+          format: "graph",
+        });
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("No authentication token found. Please sign in.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${API_BASE}/family/tree?${params}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
-      );
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || "Failed to fetch family tree");
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.message || "Failed to fetch family tree");
+        }
+
+        const data = await response.json();
+
+        if (data.status === "success" && data.data?.tree) {
+          setTreeData(data.data.tree);
+        } else {
+          setError("No family tree data available");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error occurred");
+        console.error("Fetch family tree error:", err);
+      } finally {
+        setLoading(false);
       }
-
-      const data = await response.json();
-
-      if (data.status === "success" && data.data?.tree) {
-        setTreeData(data.data.tree);
-      } else {
-        setError("No family tree data available");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error occurred");
-      console.error("Fetch family tree error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [API_BASE, userId, view, depth],
+  );
 
   // Initialize network visualization
   useEffect(() => {
@@ -210,7 +185,17 @@ export default function FamilyTreePage() {
       return;
     }
 
-    const extractedUserId = getUserIdFromToken();
+    let extractedUserId: string | null = null;
+    try {
+      const parts = token.split(".");
+      if (parts.length >= 2) {
+        const payload = JSON.parse(atob(parts[1]!));
+        extractedUserId = payload.userId || payload.id || null;
+      }
+    } catch (err) {
+      console.error("Failed to decode token:", err);
+    }
+
     if (!extractedUserId) {
       setError("Invalid authentication token. Please sign in again.");
       setLoading(false);
@@ -219,14 +204,14 @@ export default function FamilyTreePage() {
 
     setUserId(extractedUserId);
     fetchFamilyTree(extractedUserId);
-  }, []);
+  }, [fetchFamilyTree]);
 
   // Refetch when view or depth changes
   useEffect(() => {
     if (userId) {
       fetchFamilyTree();
     }
-  }, [view, depth]);
+  }, [userId, fetchFamilyTree]);
 
   // Create relationship
   const handleCreateRelationship = async () => {
@@ -246,17 +231,14 @@ export default function FamilyTreePage() {
         return;
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/family/tree/relations`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(relationshipForm),
+      const response = await fetch(`${API_BASE}/family/tree/relations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify(relationshipForm),
+      });
 
       const data = await response.json();
 

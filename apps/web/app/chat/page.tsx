@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Conversation = {
   id: string;
@@ -45,6 +45,17 @@ export default function ChatPage() {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("token");
   }
+
+  const fetchChats = useCallback(async () => {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/chat`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) return;
+    const js = await res.json();
+    setPersonal(js.data.personal || []);
+    setFamilyChat(js.data.familyChat || null);
+  }, [API_BASE]);
 
   useEffect(() => {
     void fetchChats();
@@ -106,18 +117,7 @@ export default function ChatPage() {
       ws.close();
       wsRef.current = null;
     };
-  }, []);
-
-  async function fetchChats() {
-    const token = getToken();
-    const res = await fetch(`${API_BASE}/chat`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!res.ok) return;
-    const js = await res.json();
-    setPersonal(js.data.personal || []);
-    setFamilyChat(js.data.familyChat || null);
-  }
+  }, [fetchChats]);
 
   async function loadConversation(conv: Conversation) {
     setSelected(conv);
@@ -134,8 +134,16 @@ export default function ChatPage() {
     const unread = js.data.filter((m: Message) => !(m.readBy || []).includes(getToken() || ""));
     for (const m of unread) {
       try {
-        wsRef.current?.send(JSON.stringify({ type: "read", conversationId: conv.id, messageId: m.id }));
-      } catch {}
+        wsRef.current?.send(
+          JSON.stringify({
+            type: "read",
+            conversationId: conv.id,
+            messageId: m.id,
+          }),
+        );
+      } catch (err) {
+        console.error("Failed to send read receipt", err);
+      }
     }
     setTimeout(() => scrollToBottom(), 50);
   }
@@ -181,13 +189,29 @@ export default function ChatPage() {
     setInput(v);
     if (!selected) return;
     try {
-      wsRef.current?.send(JSON.stringify({ type: "typing", conversationId: selected.id, typing: true }));
-    } catch {}
+      wsRef.current?.send(
+        JSON.stringify({
+          type: "typing",
+          conversationId: selected.id,
+          typing: true,
+        }),
+      );
+    } catch (err) {
+      console.error("Failed to send typing event", err);
+    }
     if (typingTimer.current) clearTimeout(typingTimer.current);
     typingTimer.current = window.setTimeout(() => {
       try {
-        wsRef.current?.send(JSON.stringify({ type: "typing", conversationId: selected.id, typing: false }));
-      } catch {}
+        wsRef.current?.send(
+          JSON.stringify({
+            type: "typing",
+            conversationId: selected.id,
+            typing: false,
+          }),
+        );
+      } catch (err) {
+        console.error("Failed to send typing stop", err);
+      }
     }, 2000) as unknown as number;
   }
 
@@ -197,7 +221,9 @@ export default function ChatPage() {
       if (el) {
         el.scrollTop = el.scrollHeight;
       }
-    } catch {}
+    } catch (err) {
+      console.error("Failed to scroll", err);
+    }
   }
 
   function retryMessage(msg: Message) {
@@ -277,7 +303,10 @@ export default function ChatPage() {
               </div>
 
               <div className="mb-2 text-xs text-gray-400">
-                {Object.entries(typingUsers).filter(([_, v]) => v).map(([k]) => `${k} is typing...`).join(" ")}
+                {Object.entries(typingUsers)
+                  .filter(([, v]) => v)
+                  .map(([k]) => `${k} is typing...`)
+                  .join(" ")}
               </div>
 
               <div className="flex gap-2">
