@@ -480,7 +480,15 @@ const server = serve({
       // Mark notification as read
       const mMarkAsRead = match(url.pathname, "/api/notifications/:id/read");
       if (mMarkAsRead && method === "POST") {
-        const id = mMarkAsRead.id as string;
+        const id = mMarkAsRead.id;
+        if (!id) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "id required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         return withCorsHeaders(await handleMarkAsRead(req, id));
       }
 
@@ -497,7 +505,15 @@ const server = serve({
       // Get delivery status
       const mDeliveryStatus = match(url.pathname, "/api/notifications/:id/delivery-status");
       if (mDeliveryStatus && method === "GET") {
-        const id = mDeliveryStatus.id as string;
+        const id = mDeliveryStatus.id;
+        if (!id) {
+          return withCorsHeaders(
+            new Response(JSON.stringify({ error: "id required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         return withCorsHeaders(await handleGetDeliveryStatus(req, id));
       }
 

@@ -26,36 +26,14 @@ const ESCALATION_DELAYS = {
  */
 async function processEscalation() {
   try {
-    const now = new Date();
+    let processedCount = 0;
 
-    // Find deliveries that are scheduled and ready to send
-    // Note: We limit to 100 to avoid overwhelming the system
-    // In a distributed setup, each worker should claim deliveries atomically
-    // to prevent duplicate processing across workers
-    const readyDeliveries = await prisma.notificationDelivery.findMany({
-      where: {
-        status: "SCHEDULED",
-        scheduledFor: {
-          lte: now,
-        },
-      },
-      include: {
-        notification: {
-          include: {
-            user: {
-              include: {
-                profile: true,
-              },
-            },
-          },
-        },
-      },
-      take: 100, // Process in batches
-    });
+    while (true) {
+      const readyDeliveries = await claimReadyDeliveries(100);
+      if (readyDeliveries.length === 0) break;
 
-    if (readyDeliveries.length === 0) return;
-
-    for (const delivery of readyDeliveries) {
+      for (const delivery of readyDeliveries) {
+        const now = new Date();
       const { notification } = delivery;
 
       // Check if notification has been read - if yes, cancel remaining escalations
@@ -89,16 +67,19 @@ async function processEscalation() {
 
         console.log(`✅ Escalated notification ${notification.id} to ${delivery.channel}`);
       } catch (error) {
+        const nextAttemptCount = delivery.attemptCount + 1;
+        const shouldFail = nextAttemptCount >= 3;
+
         // Mark as failed and retry later
         await prisma.notificationDelivery.update({
           where: { id: delivery.id },
           data: {
-            status: delivery.attemptCount >= 3 ? "FAILED" : "SCHEDULED",
+            status: shouldFail ? "FAILED" : "SCHEDULED",
             attemptCount: { increment: 1 },
             lastAttemptAt: now,
             error: error instanceof Error ? error.message : "Unknown error",
             // Retry in 5 minutes if not exceeded max attempts
-            scheduledFor: delivery.attemptCount < 3 
+            scheduledFor: !shouldFail
               ? new Date(now.getTime() + 5 * 60 * 1000)
               : delivery.scheduledFor,
           },
@@ -106,14 +87,78 @@ async function processEscalation() {
 
         console.error(`❌ Failed to escalate notification ${notification.id}:`, error);
       }
+      }
+
+      processedCount += readyDeliveries.length;
     }
 
-    if (readyDeliveries.length > 0) {
-      console.log(`📊 Processed ${readyDeliveries.length} escalation deliveries`);
+    if (processedCount > 0) {
+      console.log(`📊 Processed ${processedCount} escalation deliveries`);
     }
   } catch (error) {
     console.error("❌ Error processing escalations:", error);
   }
+}
+
+async function claimReadyDeliveries(batchSize: number) {
+  const now = new Date();
+
+  return prisma.$transaction(async (tx) => {
+    const candidates = await tx.notificationDelivery.findMany({
+      where: {
+        status: "SCHEDULED",
+        scheduledFor: {
+          lte: now,
+        },
+      },
+      include: {
+        notification: {
+          include: {
+            user: {
+              include: {
+                profile: true,
+              },
+            },
+          },
+        },
+      },
+      take: batchSize,
+    });
+
+    if (candidates.length === 0) return [];
+
+    const candidateIds = candidates.map((delivery) => delivery.id);
+
+    await tx.notificationDelivery.updateMany({
+      where: {
+        id: { in: candidateIds },
+        status: "SCHEDULED",
+      },
+      data: {
+        status: "PROCESSING",
+        lastAttemptAt: now,
+      },
+    });
+
+    return tx.notificationDelivery.findMany({
+      where: {
+        id: { in: candidateIds },
+        status: "PROCESSING",
+        lastAttemptAt: now,
+      },
+      include: {
+        notification: {
+          include: {
+            user: {
+              include: {
+                profile: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  });
 }
 
 /**
@@ -124,7 +169,7 @@ async function cancelEscalation(notificationId: string) {
     const result = await prisma.notificationDelivery.updateMany({
       where: {
         notificationId,
-        status: { in: ["PENDING", "SCHEDULED"] },
+        status: { in: ["PENDING", "SCHEDULED", "PROCESSING"] },
       },
       data: {
         status: "CANCELLED",
@@ -146,14 +191,14 @@ async function cancelEscalation(notificationId: string) {
  */
 export async function scheduleEscalation(
   notificationId: string,
-  userId: string,
   channels: { email?: string; sms?: string }
 ) {
   const now = new Date();
+  const createOperations = [];
 
   // Schedule SMS delivery (10 minutes after in-app)
   if (channels.sms) {
-    await prisma.notificationDelivery.create({
+    createOperations.push(prisma.notificationDelivery.create({
       data: {
         notificationId,
         channel: "SMS",
@@ -161,12 +206,12 @@ export async function scheduleEscalation(
         scheduledFor: new Date(now.getTime() + ESCALATION_DELAYS.SMS),
         metadata: { phoneNumber: channels.sms },
       },
-    });
+    }));
   }
 
   // Schedule EMAIL delivery (40 minutes after in-app)
   if (channels.email) {
-    await prisma.notificationDelivery.create({
+    createOperations.push(prisma.notificationDelivery.create({
       data: {
         notificationId,
         channel: "EMAIL",
@@ -174,7 +219,11 @@ export async function scheduleEscalation(
         scheduledFor: new Date(now.getTime() + ESCALATION_DELAYS.EMAIL),
         metadata: { emailAddress: channels.email },
       },
-    });
+    }));
+  }
+
+  if (createOperations.length > 0) {
+    await prisma.$transaction(createOperations);
   }
 
   console.log(`📅 Scheduled escalations for notification ${notificationId}`);
@@ -217,7 +266,8 @@ async function startReadEventConsumer() {
  * Start the escalation worker
  * Runs periodic checks for scheduled deliveries
  */
-let escalationInterval: NodeJS.Timeout | null = null;
+let escalationTimeout: NodeJS.Timeout | null = null;
+let shouldRunEscalation = true;
 
 async function startEscalationWorker() {
   console.log("🚀 Starting Escalation Worker...");
@@ -231,27 +281,37 @@ async function startEscalationWorker() {
   }
 
   // Process escalations every 30 seconds and store the handle
-  escalationInterval = setInterval(async () => {
-    await processEscalation();
-  }, 30 * 1000);
+  const scheduleNextRun = () => {
+    if (!shouldRunEscalation) return;
+    escalationTimeout = setTimeout(async () => {
+      await processEscalation();
+      scheduleNextRun();
+    }, 30 * 1000);
+  };
 
   // Initial processing
   await processEscalation();
+  scheduleNextRun();
 
   console.log("✅ Escalation Worker ready - checking every 30 seconds");
 }
 
 // Start the worker
-startEscalationWorker().catch(console.error);
+startEscalationWorker().catch((error) => {
+  console.error("❌ Failed to start escalation worker:", error);
+  process.exit(1);
+});
 
 // Handle graceful shutdown
 process.on("SIGINT", async () => {
   console.log("\n⏹️  Shutting down escalation worker...");
   
   // Clear the escalation interval
-  if (escalationInterval) {
-    clearInterval(escalationInterval);
-    console.log("✓ Escalation interval cleared");
+  shouldRunEscalation = false;
+  if (escalationTimeout) {
+    clearTimeout(escalationTimeout);
+    escalationTimeout = null;
+    console.log("✓ Escalation schedule cleared");
   }
 
   // Stop and disconnect Kafka consumer
@@ -276,9 +336,11 @@ process.on("SIGTERM", async () => {
   console.log("\n⏹️  SIGTERM: Shutting down escalation worker...");
   
   // Clear the escalation interval
-  if (escalationInterval) {
-    clearInterval(escalationInterval);
-    console.log("✓ Escalation interval cleared");
+  shouldRunEscalation = false;
+  if (escalationTimeout) {
+    clearTimeout(escalationTimeout);
+    escalationTimeout = null;
+    console.log("✓ Escalation schedule cleared");
   }
 
   // Stop and disconnect Kafka consumer

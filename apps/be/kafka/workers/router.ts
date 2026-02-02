@@ -78,10 +78,44 @@ export async function startRouterConsumer(): Promise<void> {
         }
 
         const eventData = JSON.parse(message.value.toString());
+        if (!eventData || typeof eventData !== "object") {
+          console.error("[Router] Invalid notification payload", { eventData });
+          return;
+        }
+
         const event: NotificationEvent = eventData;
         const deliveryStrategy = eventData.deliveryStrategy as "BROADCAST" | "ESCALATION" | undefined;
         const notificationPriority = eventData.notificationPriority as "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | undefined;
         const notificationId = eventData.notificationId as string | undefined;
+        const recipientIds = Array.isArray(eventData.recipientIds)
+          ? eventData.recipientIds
+          : null;
+        const channels = Array.isArray(eventData.channels) ? eventData.channels : null;
+
+        if (!recipientIds || !channels) {
+          console.error("[Router] Invalid recipients/channels in payload", { eventData });
+          return;
+        }
+
+        if (!recipientIds.every((id: unknown) => typeof id === "string" && id.length > 0)) {
+          console.error("[Router] Invalid recipientIds in payload", { eventData });
+          return;
+        }
+
+        if (!channels.every((channel: unknown) => typeof channel === "string" && channel.length > 0)) {
+          console.error("[Router] Invalid channels in payload", { eventData });
+          return;
+        }
+
+        if (deliveryStrategy && !["BROADCAST", "ESCALATION"].includes(deliveryStrategy)) {
+          console.error("[Router] Invalid deliveryStrategy in payload", { eventData });
+          return;
+        }
+
+        if (notificationPriority && !["LOW", "MEDIUM", "HIGH", "CRITICAL"].includes(notificationPriority)) {
+          console.error("[Router] Invalid notificationPriority in payload", { eventData });
+          return;
+        }
 
         // Default to BROADCAST strategy
         const strategy = deliveryStrategy || "BROADCAST";
@@ -91,11 +125,11 @@ export async function startRouterConsumer(): Promise<void> {
         const useEscalation = strategy === "ESCALATION" && priority !== "CRITICAL";
 
         console.log(
-          `[Router] Processing notification ${event.eventId} (${strategy}/${priority}) with ${event.recipientIds.length} recipients`
+          `[Router] Processing notification ${event.eventId} (${strategy}/${priority}) with ${recipientIds.length} recipients`
         );
 
         // Route to each recipient
-        for (const recipientId of event.recipientIds) {
+        for (const recipientId of recipientIds) {
           try {
             // Fetch recipient details
             const recipientDetails = await getRecipientDetails(recipientId);
@@ -110,7 +144,7 @@ export async function startRouterConsumer(): Promise<void> {
 
               // Always send in-app notification immediately
               if (
-                event.channels.includes("IN_APP") &&
+                channels.includes("IN_APP") &&
                 isChannelEnabled("IN_APP", recipientDetails.notificationPreferences)
               ) {
                 await publishToChannel("IN_APP" as any, recipientId, event as any);
@@ -119,16 +153,37 @@ export async function startRouterConsumer(): Promise<void> {
 
               // Schedule escalation to SMS and EMAIL if notification is not read
               if (notificationId) {
-                await scheduleEscalation(notificationId, recipientId, {
-                  email: recipientDetails.email,
-                  sms: recipientDetails.phoneNumber || undefined,
-                });
+                const escalationChannels = {
+                  email:
+                    recipientDetails.email &&
+                    isChannelEnabled("EMAIL", recipientDetails.notificationPreferences)
+                      ? recipientDetails.email
+                      : undefined,
+                  sms:
+                    recipientDetails.phoneNumber &&
+                    isChannelEnabled("SMS", recipientDetails.notificationPreferences)
+                      ? recipientDetails.phoneNumber
+                      : undefined,
+                };
+
+                if (escalationChannels.email || escalationChannels.sms) {
+                  await scheduleEscalation(notificationId, escalationChannels);
+                } else {
+                  console.log(
+                    `[Router] No escalation channels enabled for user ${recipientId}, skipping escalation scheduling`,
+                  );
+                }
+              } else {
+                console.error(
+                  "[Router] Escalation requested but notificationId missing",
+                  { eventData },
+                );
               }
             } else {
               // BROADCAST STRATEGY: Send to all channels immediately
               console.log(`[Router] Using broadcast strategy for notification ${event.eventId}`);
 
-              for (const channel of event.channels) {
+              for (const channel of channels) {
                 // Check if channel is enabled in user preferences
                 if (!isChannelEnabled(channel, recipientDetails.notificationPreferences)) {
                   console.log(`[Router] Channel ${channel} disabled for user ${recipientId}, skipping`);
@@ -141,10 +196,10 @@ export async function startRouterConsumer(): Promise<void> {
                   continue;
                 }
 
-                // if (channel === "SMS" && !recipientDetails.phoneNumber) {
-                //   console.log(`[Router] No phone number for user ${recipientId}, skipping SMS`);
-                //   continue;
-                // }
+                if (channel === "SMS" && !recipientDetails.phoneNumber) {
+                  console.log(`[Router] No phone number for user ${recipientId}, skipping SMS`);
+                  continue;
+                }
 
                 // Route message to channel topic
                 console.log(`[Router] Routing notification ${event.eventId} to ${channel} for ${recipientId}`);
@@ -153,7 +208,7 @@ export async function startRouterConsumer(): Promise<void> {
                   ...event,
                   ...(channel === "EMAIL" && { recipientEmail: recipientDetails.email }),
                   ...(channel === "PUSH" && { fcmToken: recipientDetails.fcmToken }),
-                  // ...(channel === "SMS" && { phoneNumber: recipientDetails.phoneNumber }),
+                  ...(channel === "SMS" && { phoneNumber: recipientDetails.phoneNumber }),
                 } as any);
               }
             }

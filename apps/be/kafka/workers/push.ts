@@ -39,10 +39,24 @@ async function sendPushNotification(message: FCMMessage): Promise<boolean> {
       
       // Only initialize once
       if (!admin.apps.length) {
+        const projectId = process.env.FIREBASE_PROJECT_ID;
+        const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+        const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+
+        if (!projectId) {
+          throw new Error("Missing required Firebase env var: FIREBASE_PROJECT_ID");
+        }
+        if (!privateKey) {
+          throw new Error("Missing required Firebase env var: FIREBASE_PRIVATE_KEY");
+        }
+        if (!clientEmail) {
+          throw new Error("Missing required Firebase env var: FIREBASE_CLIENT_EMAIL");
+        }
+
         const serviceAccount = {
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          projectId,
+          privateKey: privateKey.replace(/\\n/g, "\n"),
+          clientEmail,
         };
 
         admin.initializeApp({
@@ -58,7 +72,7 @@ async function sendPushNotification(message: FCMMessage): Promise<boolean> {
         console.warn(
           "[Push] firebase-admin not installed. To enable push notifications, run: bun add firebase-admin",
         );
-        console.log("[Push] Message queued but not sent:", message);
+        console.log("[Push] Message dropped: SDK not available", message);
         return false; // SDK not available, not sent
       }
       throw error;
@@ -79,7 +93,7 @@ function buildFCMMessage(
     token: event.fcmToken,
     notification: {
       title: event.subject || event.type.replace(/_/g, " "),
-      body: event.message.substring(0, 150), // FCM has character limits
+      body: String(event.message ?? "").substring(0, 150), // FCM has character limits
     },
     data: {
       eventId: event.eventId,

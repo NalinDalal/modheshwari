@@ -34,7 +34,7 @@ async function sendSMS(message: SMSMessage): Promise<boolean> {
 
       if (!accountSid || !authToken || !fromNumber) {
         console.warn("[SMS] Twilio credentials not configured");
-        console.log("[SMS] Message queued but not sent:", message);
+        console.log("[SMS] Message dropped — missing credentials. eventId:", message.eventId);
         return false; // Credentials missing, not sent
       }
 
@@ -56,7 +56,7 @@ async function sendSMS(message: SMSMessage): Promise<boolean> {
         console.warn(
           "[SMS] twilio SDK not installed. To enable SMS notifications, run: bun add twilio",
         );
-        console.log("[SMS] Message queued but not sent:", message);
+        console.log("[SMS] Message dropped — SDK not available. eventId:", message.eventId);
         return false; // SDK not available, not sent
       }
       throw error;
@@ -74,8 +74,9 @@ async function sendSMS(message: SMSMessage): Promise<boolean> {
  * Format notification message for SMS (enforce 160-char limit)
  */
 function formatSMSBody(event: NotificationEvent): string {
-  const SMS_LIMIT = 160;
   const prefix = event.type.includes("EVENT") ? "📅" : "📢";
+  const usesUnicode = /[^\u0000-\u007F]/.test(prefix);
+  const SMS_LIMIT = usesUnicode ? 70 : 160;
   const subject = event.subject || event.type;
   
   // Calculate available space after prefix, separators, and subject

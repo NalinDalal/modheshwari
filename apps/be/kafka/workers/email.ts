@@ -1,6 +1,7 @@
 import { createConsumer, TOPICS } from "../config";
 import type { EachMessagePayload } from "kafkajs";
 import type { NotificationEvent } from "../notification-producer";
+import { createHash } from "crypto";
 
 /**
  * Email transporter configuration
@@ -56,10 +57,22 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => map[char] || char);
 }
 
+function toEmailLogId(recipientEmail: string): string {
+  if (!recipientEmail) return "unknown-recipient";
+  const [local, domain] = recipientEmail.split("@");
+  if (!local || !domain) return `${recipientEmail.slice(0, 2)}***`;
+  const hash = createHash("sha256").update(recipientEmail).digest("hex").slice(0, 8);
+  return `${local.slice(0, 2)}***@${domain}#${hash}`;
+}
+
 /**
  * Generate email template based on notification type
  */
 function generateEmailTemplate(event: NotificationEvent & { recipientId: string; recipientEmail: string }) {
+  const priorityLabel = String(event.priority ?? "unknown").toUpperCase();
+  const notificationSubject = escapeHtml(event.subject || "Community Notification");
+  const notificationHeading = escapeHtml(event.subject || "Community Update");
+  const notificationMessage = escapeHtml(event.message);
   const templates: Record<string, { subject: string; html: string }> = {
     EVENT_APPROVAL: {
       subject: `Event Approval Required: ${escapeHtml(event.message)}`,
@@ -71,7 +84,7 @@ function generateEmailTemplate(event: NotificationEvent & { recipientId: string;
           <blockquote style="background: #f0f0f0; padding: 15px; border-left: 4px solid #007bff;">
             ${escapeHtml(event.message)}
           </blockquote>
-          <p><strong>Priority:</strong> ${event.priority.toUpperCase()}</p>
+          <p><strong>Priority:</strong> ${priorityLabel}</p>
           <p><a href="${process.env.APP_URL}/events/${event.eventId}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Review Event</a></p>
           <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
           <footer style="color: #666; font-size: 12px;">
@@ -90,7 +103,7 @@ function generateEmailTemplate(event: NotificationEvent & { recipientId: string;
           <blockquote style="background: #f0f0f0; padding: 15px; border-left: 4px solid #28a745;">
             ${escapeHtml(event.message)}
           </blockquote>
-          <p><strong>Priority:</strong> ${event.priority.toUpperCase()}</p>
+          <p><strong>Priority:</strong> ${priorityLabel}</p>
           <p><a href="${process.env.APP_URL}/resources" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">View Requests</a></p>
           <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
           <footer style="color: #666; font-size: 12px;">
@@ -100,15 +113,15 @@ function generateEmailTemplate(event: NotificationEvent & { recipientId: string;
       `,
     },
     NOTIFICATION: {
-      subject: event.subject || "Community Notification",
+      subject: notificationSubject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>${event.subject || "Community Update"}</h2>
+          <h2>${notificationHeading}</h2>
           <p>Dear Community Member,</p>
           <blockquote style="background: #f0f0f0; padding: 15px; border-left: 4px solid #6c757d;">
-            ${event.message}
+            ${notificationMessage}
           </blockquote>
-          <p><strong>Priority:</strong> ${event.priority.toUpperCase()}</p>
+          <p><strong>Priority:</strong> ${priorityLabel}</p>
           <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
           <footer style="color: #666; font-size: 12px;">
             <p>This is an automated notification from Modheshwari Community Platform</p>
@@ -137,6 +150,8 @@ async function sendEmailWithRetry(
     return false;
   }
 
+  const recipientId = toEmailLogId(recipientEmail);
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const info = await transporter.sendMail({
@@ -146,11 +161,13 @@ async function sendEmailWithRetry(
         html,
       });
 
-      console.log(`✓ Email sent to ${recipientEmail} (Message ID: ${info.messageId})`);
+      console.log(
+        `[Email] Sent (recipient: ${recipientId}, messageId: ${info.messageId}, attempt: ${attempt}/${retries})`,
+      );
       return true;
     } catch (error) {
       console.error(
-        `[Email] Attempt ${attempt}/${retries} failed for ${recipientEmail}:`,
+        `[Email] Attempt ${attempt}/${retries} failed (recipient: ${recipientId}):`,
         error instanceof Error ? error.message : error,
       );
 
@@ -206,7 +223,8 @@ export async function startEmailConsumer(): Promise<void> {
           recipientEmail: string;
         };
 
-        console.log(`[Email] Processing notification for ${event.recipientEmail}`);
+        const recipientLogId = toEmailLogId(event.recipientEmail);
+        console.log(`[Email] Processing notification for ${recipientLogId}`);
 
         // Generate email template
         const template = generateEmailTemplate(event);
@@ -220,10 +238,12 @@ export async function startEmailConsumer(): Promise<void> {
         const success = await sendEmailWithRetry(transporter, event.recipientEmail, subject, html);
 
         if (success) {
-          console.log(`✓ Notification ${event.eventId} delivered via email to ${event.recipientEmail}`);
+          console.log(
+            `[Email] Notification ${event.eventId} delivered (recipient: ${recipientLogId})`,
+          );
         } else {
           console.error(
-            `✗ Failed to send email to ${event.recipientEmail} after retries. Event ID: ${event.eventId}`,
+            `[Email] Failed to send email after retries (recipient: ${recipientLogId}, eventId: ${event.eventId})`,
           );
           // In production, you might want to log this to a DLQ (Dead Letter Queue)
         }

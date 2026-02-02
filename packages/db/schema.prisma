@@ -504,6 +504,7 @@ enum DeliveryStrategy {
 enum DeliveryStatus {
   PENDING // Waiting to be sent
   SCHEDULED // Scheduled for future delivery
+  PROCESSING // Claimed by a worker for delivery
   SENT // Successfully sent
   DELIVERED // Confirmed delivery (if available)
   FAILED // Delivery failed

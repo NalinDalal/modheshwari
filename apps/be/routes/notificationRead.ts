@@ -14,12 +14,19 @@ const producer = kafka.producer();
 
 // Track producer readiness
 let producerReady = false;
+let connectionPromise: Promise<void> | null = null;
 
 /**
  * Ensure producer is connected before sending
  */
 async function ensureProducerConnected() {
-  if (!producerReady) {
+  if (producerReady) return;
+  if (connectionPromise) {
+    await connectionPromise;
+    return;
+  }
+
+  connectionPromise = (async () => {
     try {
       await producer.connect();
       producerReady = true;
@@ -28,7 +35,16 @@ async function ensureProducerConnected() {
       console.error("❌ Failed to connect Kafka producer:", error);
       throw new Error("Kafka producer connection failed");
     }
+  })();
+
+  try {
+    await connectionPromise;
+  } catch (error) {
+    connectionPromise = null;
+    throw error;
   }
+
+  connectionPromise = null;
 }
 
 /**
@@ -70,7 +86,7 @@ export async function handleMarkAsRead(req: Request, id: string): Promise<Respon
     
     // Validate Authorization header format
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Invalid authorization header" }), {
+      return new Response(JSON.stringify({ error: "Missing or invalid Bearer token" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
@@ -90,16 +106,18 @@ export async function handleMarkAsRead(req: Request, id: string): Promise<Respon
     const notificationId = id;
 
     // Update notification as read
-    const notification = await prisma.notification.update({
-      where: {
-        id: notificationId,
-        userId, // Ensure user can only mark their own notifications
-      },
-      data: {
-        read: true,
-        readAt: new Date(),
-      },
-    });
+    const notification = await prisma.$transaction((tx) =>
+      tx.notification.update({
+        where: {
+          id: notificationId,
+          userId, // Ensure user can only mark their own notifications
+        },
+        data: {
+          read: true,
+          readAt: new Date(),
+        },
+      }),
+    );
 
     // Publish read event to Kafka to cancel escalations
     await publishReadEvent(notificationId, userId as string);
@@ -147,14 +165,14 @@ export async function handleMarkAsRead(req: Request, id: string): Promise<Respon
 export async function handleMarkMultipleAsRead(req: Request): Promise<Response> {
   try {
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Missing or invalid Bearer token" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.slice(7);
     const payload = verifyJWT(token);
 
     if (!payload || typeof payload === "string") {
@@ -176,28 +194,27 @@ export async function handleMarkMultipleAsRead(req: Request): Promise<Response> 
     }
 
     // Update all notifications as read
-    const result = await prisma.notification.updateMany({
-      where: {
-        id: { in: notificationIds },
-        userId, // Ensure user can only mark their own notifications
-      },
-      data: {
-        read: true,
-        readAt: new Date(),
-      },
-    });
-
-    // Only publish read events for successfully updated IDs
-    // Fetch the updated notifications to get the actual IDs
-    const updatedNotifications = await prisma.notification.findMany({
-      where: {
-        id: { in: notificationIds },
-        userId,
-        read: true,
-        readAt: { not: null },
-      },
-      select: { id: true },
-    });
+    const [result, updatedNotifications] = await prisma.$transaction([
+      prisma.notification.updateMany({
+        where: {
+          id: { in: notificationIds },
+          userId, // Ensure user can only mark their own notifications
+        },
+        data: {
+          read: true,
+          readAt: new Date(),
+        },
+      }),
+      prisma.notification.findMany({
+        where: {
+          id: { in: notificationIds },
+          userId,
+          read: true,
+          readAt: { not: null },
+        },
+        select: { id: true },
+      }),
+    ]);
 
     const updatedIds = updatedNotifications.map(n => n.id);
     await Promise.all(updatedIds.map((id: string) => publishReadEvent(id, userId)));
@@ -233,14 +250,14 @@ export async function handleMarkMultipleAsRead(req: Request): Promise<Response> 
 export async function handleMarkAllAsRead(req: Request): Promise<Response> {
   try {
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Missing or invalid Bearer token" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.slice(7);
     const payload = verifyJWT(token);
 
     if (!payload || typeof payload === "string") {
@@ -253,25 +270,25 @@ export async function handleMarkAllAsRead(req: Request): Promise<Response> {
     const userId = payload.userId as string;
 
     // Get all unread notification IDs
-    const unreadNotifications = await prisma.notification.findMany({
-      where: {
-        userId,
-        read: false,
-      },
-      select: { id: true },
-    });
-
-    // Update all as read
-    const result = await prisma.notification.updateMany({
-      where: {
-        userId,
-        read: false,
-      },
-      data: {
-        read: true,
-        readAt: new Date(),
-      },
-    });
+    const [unreadNotifications, result] = await prisma.$transaction([
+      prisma.notification.findMany({
+        where: {
+          userId,
+          read: false,
+        },
+        select: { id: true },
+      }),
+      prisma.notification.updateMany({
+        where: {
+          userId,
+          read: false,
+        },
+        data: {
+          read: true,
+          readAt: new Date(),
+        },
+      }),
+    ]);
 
     // Publish read events
     await Promise.all(unreadNotifications.map((notif: { id: string }) => publishReadEvent(notif.id, userId)));
@@ -307,14 +324,14 @@ export async function handleMarkAllAsRead(req: Request): Promise<Response> {
 export async function handleGetDeliveryStatus(req: Request, id: string): Promise<Response> {
   try {
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Missing or invalid Bearer token" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.slice(7);
     const payload = verifyJWT(token);
 
     if (!payload || typeof payload === "string") {
