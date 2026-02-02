@@ -1,0 +1,469 @@
+asyncapi: 3.0.0
+info:
+  title: Modheshwari WebSocket API
+  version: 1.0.0
+  description: |
+    Real-time WebSocket API for notifications, chat messaging, typing indicators, and read receipts.
+    
+    **Authentication**: Pass JWT token via query parameter: `?token=<your-jwt>`
+    
+    **Connection URL**: `ws://localhost:3002/?token=<jwt>` or `wss://ws.modheshwari.com/?token=<jwt>`
+    
+    **Rate Limits**: 100 messages per minute per user
+    **Message Size**: Max 1MB per message
+    **Heartbeat**: Server sends ping every 30s, connection times out after 60s inactivity
+
+servers:
+  production:
+    host: ws.modheshwari.com
+    protocol: wss
+    description: Production WebSocket server
+  development:
+    host: localhost:3002
+    protocol: ws
+    description: Local development server
+
+channels:
+  root:
+    address: /
+    description: Main WebSocket connection endpoint
+    messages:
+      connected:
+        $ref: '#/components/messages/Connected'
+      notification:
+        $ref: '#/components/messages/Notification'
+      sendChat:
+        $ref: '#/components/messages/SendChat'
+      chatMessage:
+        $ref: '#/components/messages/ChatMessage'
+      chatAck:
+        $ref: '#/components/messages/ChatAck'
+      sendTyping:
+        $ref: '#/components/messages/SendTyping'
+      typingIndicator:
+        $ref: '#/components/messages/TypingIndicator'
+      sendRead:
+        $ref: '#/components/messages/SendRead'
+      readReceipt:
+        $ref: '#/components/messages/ReadReceipt'
+      ping:
+        $ref: '#/components/messages/Ping'
+      error:
+        $ref: '#/components/messages/Error'
+
+operations:
+  onConnect:
+    action: receive
+    channel:
+      $ref: '#/channels/root'
+    summary: Client connects to WebSocket
+    description: Client establishes WebSocket connection with JWT authentication
+    messages:
+      - $ref: '#/components/messages/Connected'
+
+  receiveNotification:
+    action: receive
+    channel:
+      $ref: '#/channels/root'
+    summary: Receive push notification
+    description: Server pushes real-time notifications from Kafka to connected clients
+    messages:
+      - $ref: '#/components/messages/Notification'
+
+  sendChatMessage:
+    action: send
+    channel:
+      $ref: '#/channels/root'
+    summary: Send chat message
+    description: Client sends a chat message to a conversation
+    messages:
+      - $ref: '#/components/messages/SendChat'
+
+  receiveChatMessage:
+    action: receive
+    channel:
+      $ref: '#/channels/root'
+    summary: Receive chat message
+    description: Server broadcasts chat message to conversation participants
+    messages:
+      - $ref: '#/components/messages/ChatMessage'
+
+  receiveChatAck:
+    action: receive
+    channel:
+      $ref: '#/channels/root'
+    summary: Receive chat acknowledgment
+    description: Server acknowledges sent message with server-generated ID
+    messages:
+      - $ref: '#/components/messages/ChatAck'
+
+  sendTyping:
+    action: send
+    channel:
+      $ref: '#/channels/root'
+    summary: Send typing indicator
+    description: Client indicates typing status in a conversation
+    messages:
+      - $ref: '#/components/messages/SendTyping'
+
+  receiveTyping:
+    action: receive
+    channel:
+      $ref: '#/channels/root'
+    summary: Receive typing indicator
+    description: Server broadcasts typing status to conversation participants
+    messages:
+      - $ref: '#/components/messages/TypingIndicator'
+
+  sendReadReceipt:
+    action: send
+    channel:
+      $ref: '#/channels/root'
+    summary: Mark messages as read
+    description: Client marks one or more messages as read
+    messages:
+      - $ref: '#/components/messages/SendRead'
+
+  receiveReadReceipt:
+    action: receive
+    channel:
+      $ref: '#/channels/root'
+    summary: Receive read receipt
+    description: Server broadcasts read receipt to conversation participants
+    messages:
+      - $ref: '#/components/messages/ReadReceipt'
+
+  receivePing:
+    action: receive
+    channel:
+      $ref: '#/channels/root'
+    summary: Receive heartbeat ping
+    description: Server sends periodic ping to keep connection alive
+    messages:
+      - $ref: '#/components/messages/Ping'
+
+  receiveError:
+    action: receive
+    channel:
+      $ref: '#/channels/root'
+    summary: Receive error message
+    description: Server sends error message for invalid requests or rate limit violations
+    messages:
+      - $ref: '#/components/messages/Error'
+
+components:
+  messages:
+    Connected:
+      name: Connected
+      title: Connection Established
+      summary: Sent immediately after successful WebSocket connection
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ConnectedPayload'
+
+    Notification:
+      name: Notification
+      title: Push Notification
+      summary: Real-time notification pushed from Kafka
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationPayload'
+
+    SendChat:
+      name: SendChat
+      title: Send Chat Message (Client → Server)
+      summary: Client sends a chat message
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SendChatPayload'
+
+    ChatMessage:
+      name: ChatMessage
+      title: Chat Message (Server → Client)
+      summary: Broadcast chat message to participants
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ChatMessagePayload'
+
+    ChatAck:
+      name: ChatAck
+      title: Chat Acknowledgment
+      summary: Acknowledgment of sent message with server-assigned ID
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ChatAckPayload'
+
+    SendTyping:
+      name: SendTyping
+      title: Send Typing Indicator (Client → Server)
+      summary: Client indicates typing status
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SendTypingPayload'
+
+    TypingIndicator:
+      name: TypingIndicator
+      title: Typing Indicator (Server → Client)
+      summary: Broadcast typing status to participants
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TypingIndicatorPayload'
+
+    SendRead:
+      name: SendRead
+      title: Mark as Read (Client → Server)
+      summary: Client marks messages as read
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SendReadPayload'
+
+    ReadReceipt:
+      name: ReadReceipt
+      title: Read Receipt (Server → Client)
+      summary: Broadcast read receipt to participants
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ReadReceiptPayload'
+
+    Ping:
+      name: Ping
+      title: Heartbeat Ping
+      summary: Server heartbeat to keep connection alive (every 30s)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PingPayload'
+
+    Error:
+      name: Error
+      title: Error Message
+      summary: Error response for invalid requests or rate limits
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ErrorPayload'
+
+  schemas:
+    ConnectedPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: connected
+        userId:
+          type: string
+          description: Authenticated user ID
+      required:
+        - type
+        - userId
+
+    NotificationPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: notification
+        eventId:
+          type: string
+          description: Unique notification event ID
+        message:
+          type: string
+          description: Notification message content
+        notificationType:
+          type: string
+          description: Type of notification
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [EMAIL, SMS, PUSH, IN_APP]
+          description: Delivery channels
+        subject:
+          type: string
+          description: Email subject (if applicable)
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - type
+        - eventId
+        - message
+        - notificationType
+        - channels
+        - priority
+        - timestamp
+
+    SendChatPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: chat_message
+        conversationId:
+          type: string
+          description: Target conversation ID
+        content:
+          type: string
+          description: Message content (max 5000 chars)
+          maxLength: 5000
+        clientId:
+          type: string
+          description: Client-generated ID for optimistic updates
+      required:
+        - type
+        - conversationId
+        - content
+        - clientId
+
+    ChatMessagePayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: chat_message
+        message:
+          type: object
+          properties:
+            id:
+              type: string
+              description: Server-assigned message ID
+            clientId:
+              type: string
+              description: Client-provided ID for reconciliation
+            conversationId:
+              type: string
+            senderId:
+              type: string
+            senderName:
+              type: string
+            content:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+      required:
+        - type
+        - message
+
+    ChatAckPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: ack
+        clientId:
+          type: string
+          description: Client ID from original message
+        messageId:
+          type: string
+          description: Server-assigned message ID
+        status:
+          type: string
+          enum: [ok, error]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - type
+        - clientId
+        - status
+
+    SendTypingPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: typing
+        conversationId:
+          type: string
+        typing:
+          type: boolean
+          description: true when typing, false when stopped
+      required:
+        - type
+        - conversationId
+        - typing
+
+    TypingIndicatorPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: typing
+        conversationId:
+          type: string
+        userId:
+          type: string
+          description: User who is typing
+        typing:
+          type: boolean
+      required:
+        - type
+        - conversationId
+        - userId
+        - typing
+
+    SendReadPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: read
+        conversationId:
+          type: string
+        messageId:
+          type: string
+          description: Message ID to mark as read (optional if marking all)
+      required:
+        - type
+        - conversationId
+
+    ReadReceiptPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: read_receipt
+        conversationId:
+          type: string
+        messageId:
+          type: string
+        userId:
+          type: string
+          description: User who read the message
+      required:
+        - type
+        - conversationId
+        - messageId
+        - userId
+
+    PingPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: ping
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - type
+        - timestamp
+
+    ErrorPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          const: error
+        message:
+          type: string
+          description: Error description
+          examples:
+            - Rate limit exceeded
+            - Message too large
+            - Invalid message format
+      required:
+        - type
+        - message
