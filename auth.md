@@ -1,10 +1,8 @@
 ## **Auth Module — Family System (v1)**
 
-### Completed Authentication Flows
+### 1. Family Head
 
-#### 1. 👑 Family Head
-
-##### **Signup**
+#### **Signup**
 
 **Endpoint:**
 `POST /api/signup/familyhead`
@@ -51,7 +49,7 @@
 
 ---
 
-##### **Login**
+#### **Login**
 
 **Endpoint:**
 `POST /api/login/familyhead`
@@ -87,9 +85,9 @@
 
 ---
 
-#### 2. 👩‍👧 Family Member
+### 2. 👩‍👧 Family Member
 
-##### **Login**
+#### **Login**
 
 **Endpoint:**
 `POST /api/login/member`
@@ -146,7 +144,7 @@
 
 ---
 
-### 🔒 Auth Behavior Summary
+## Auth Behavior Summary
 
 | Role                                          | Signup                                        | Login                                           | Notes                                              |
 | --------------------------------------------- | --------------------------------------------- | ----------------------------------------------- | -------------------------------------------------- |
@@ -156,7 +154,7 @@
 
 ---
 
-### 🧠 Implementation Notes
+## Implementation Notes
 
 - Passwords stored securely via `bcrypt.hash`.
 - Passwords verified via `bcrypt.compare`.
@@ -164,11 +162,3 @@
 - `@modheshwari/utils/response` handles consistent `success()` / `failure()` formatting.
 - Prisma relations ensure family linkage + role integrity.
 - Supports multiple families with same user email (distinguished by `familyUniqueId`).
-
----
-
-✅ **Status:**
-
-> **Family Head** → full signup & login verified
-> **Family Member** → login verified (signup implemented earlier)
-> System working end-to-end 🎯

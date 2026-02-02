@@ -521,4 +521,3 @@ WebSocket(new server in apps) to refresh notifications without page reload
 ---
 
 blend [this](https://patterncraft.fun/) into ui
-
