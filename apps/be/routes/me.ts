@@ -3,6 +3,11 @@ import { verifyJWT } from "@modheshwari/utils/jwt";
 import type { AuthPayload } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 import { extractAndVerifyToken } from "../utils/auth";
+import {
+  isValidBloodGroup,
+  normalizeBloodGroup,
+} from "../utils/searchParser";
+import type { bloodGroup as PrismaBloodGroup } from "@prisma/client";
 
 /**
  * GET /api/me
@@ -178,11 +183,22 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
       }
     }
 
-    const updateData: Record<string, unknown> = {
-      bloodGroup,
-      gotra,
-      profession,
-    };
+    const updateData: Record<string, unknown> = {};
+
+    if (bloodGroup !== undefined) {
+      if (!isValidBloodGroup(bloodGroup)) {
+        return failure(
+          "Invalid blood group. Use format like O+, A-, AB+, etc.",
+          "Validation Error",
+          400,
+        );
+      }
+      updateData.bloodGroup = normalizeBloodGroup(
+        bloodGroup,
+      ) as PrismaBloodGroup;
+    }
+    if (gotra !== undefined) updateData.gotra = gotra;
+    if (profession !== undefined) updateData.profession = profession;
 
     if (location !== undefined) updateData.location = location;
     if (locationLat !== undefined) updateData.locationLat = locationLat;
@@ -193,7 +209,16 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
     const updatedProfile = await prisma.profile.upsert({
       where: { userId },
       update: updateData,
-      create: { userId, ...updateData },
+      create: {
+        userId,
+        status: true,
+        bloodGroup: ((
+          bloodGroup !== undefined && isValidBloodGroup(bloodGroup)
+            ? normalizeBloodGroup(bloodGroup)
+            : "O_POS"
+        ) as PrismaBloodGroup),
+        ...updateData,
+      },
     });
 
     // --- Step 4: Send success response ---

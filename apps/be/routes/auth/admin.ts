@@ -51,9 +51,24 @@ export async function handleAdminSignup(
     const body: any = await req.json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
-    const { name, email, password, gotra } = body;
+    const { name, email, password, gotra, bloodGroup } = body;
     if (!name || !email || !password)
       return failure("Missing required fields", "Validation Error", 400);
+
+    const validBloodGroups = [
+      "A_POS",
+      "A_NEG",
+      "B_POS",
+      "B_NEG",
+      "AB_POS",
+      "AB_NEG",
+      "O_POS",
+      "O_NEG",
+    ] as const;
+
+    if (bloodGroup && !validBloodGroups.includes(bloodGroup)) {
+      return failure("Invalid blood group", "Validation Error", 400);
+    }
 
     const existing = await prisma.user.findFirst({ where: { email } });
     if (existing) return failure("Email already registered", "Conflict", 409);
@@ -76,6 +91,8 @@ export async function handleAdminSignup(
         data: {
           userId: u.id,
           gotra: gotra ?? null,
+          status: true,
+          bloodGroup: bloodGroup,
         },
       });
 

@@ -61,7 +61,8 @@ export async function handleUpdateMedical(req: Request) {
       },
       create: {
         userId,
-        bloodGroup: body.bloodGroup || null,
+        status: true,
+        bloodGroup: body.bloodGroup ?? "O_POS",
         allergies: body.allergies || null,
         medicalNotes: body.medicalNotes || null,
       },

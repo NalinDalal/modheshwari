@@ -143,7 +143,7 @@ export async function handleReviewStatusUpdateRequest(
     if (reqObj?.targetUserId) {
       await prisma.profile.updateMany({
         where: { userId: reqObj.targetUserId },
-        data: { status: "deceased" },
+        data: { status: false },
       });
     }
   }
