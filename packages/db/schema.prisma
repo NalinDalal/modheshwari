@@ -119,8 +119,8 @@ model Profile {
   locationLng       Float?
   locationGeo       Unsupported("geography")?
   locationUpdatedAt DateTime?
-  status            String? // e.g. "alive", "deceased"
-  bloodGroup        String? // Add this line
+  status            Boolean // e.g. 1-"alive", 0-"deceased"
+  bloodGroup        bloodGroup
   allergies         String? // Add this for medical info
   medicalNotes      String? // Add this for medical info
 
