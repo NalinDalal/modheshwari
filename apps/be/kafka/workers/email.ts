@@ -57,6 +57,11 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => map[char] || char);
 }
 
+/**
+ * Performs to email log id operation.
+ * @param {string} recipientEmail - Description of recipientEmail
+ * @returns {string} Description of return value
+ */
 function toEmailLogId(recipientEmail: string): string {
   if (!recipientEmail) return "unknown-recipient";
   const [local, domain] = recipientEmail.split("@");

@@ -100,6 +100,11 @@ async function processEscalation() {
   }
 }
 
+/**
+ * Performs claim ready deliveries operation.
+ * @param {number} batchSize - Description of batchSize
+ * @returns {Promise<({ notification: { user: { profile: { id: string; status: string; userId: string; phone: string; address: string; profession: string; gotra: string; location: string; locationLat: number; locationLng: number; locationUpdatedAt: Date; bloodGroup: string; allergies: string; medicalNotes: string; fcmToken: string; notificationPreferences: import("/Users/nalindalal/modheshwari/node_modules/@prisma/client/runtime/library").JsonValue; }; } & { id: string; status: boolean; createdAt: Date; updatedAt: Date; name: string; email: string; password: string; role: import("/Users/nalindalal/modheshwari/node_modules/.prisma/client/index").$Enums.Role; }; } & { message: string; id: string; channel: import("/Users/nalindalal/modheshwari/node_modules/.prisma/client/index").$Enums.NotificationChannel; metadata: import("/Users/nalindalal/modheshwari/node_modules/@prisma/client/runtime/library").JsonValue; createdAt: Date; userId: string; type: import("/Users/nalindalal/modheshwari/node_modules/.prisma/client/index").$Enums.NotificationType; read: boolean; readAt: Date; deliveryStrategy: import("/Users/nalindalal/modheshwari/node_modules/.prisma/client/index").$Enums.DeliveryStrategy; priority: import("/Users/nalindalal/modheshwari/node_modules/.prisma/client/index").$Enums.NotificationPriority; eventId: string; resourceRequestId: string; paymentId: string; statusUpdateRequestId: string; }; } & { error: string; id: string; notificationId: string; channel: import("/Users/nalindalal/modheshwari/node_modules/.prisma/client/index").$Enums.NotificationChannel; status: import("/Users/nalindalal/modheshwari/node_modules/.prisma/client/index").$Enums.DeliveryStatus; attemptCount: number; lastAttemptAt: Date; deliveredAt: Date; scheduledFor: Date; metadata: import("/Users/nalindalal/modheshwari/node_modules/@prisma/client/runtime/library").JsonValue; createdAt: Date; updatedAt: Date; })[]>} Description of return value
+ */
 async function claimReadyDeliveries(batchSize: number) {
   const now = new Date();
 
@@ -235,6 +240,10 @@ export async function scheduleEscalation(
  */
 let readConsumer: Consumer | null = null;
 
+/**
+ * Performs start read event consumer operation.
+ * @returns {Promise<void>} Description of return value
+ */
 async function startReadEventConsumer() {
   readConsumer = kafka.consumer({ groupId: "escalation-read-group" });
 
@@ -269,6 +278,10 @@ async function startReadEventConsumer() {
 let escalationTimeout: NodeJS.Timeout | null = null;
 let shouldRunEscalation = true;
 
+/**
+ * Performs start escalation worker operation.
+ * @returns {Promise<void>} Description of return value
+ */
 async function startEscalationWorker() {
   console.log("🚀 Starting Escalation Worker...");
 

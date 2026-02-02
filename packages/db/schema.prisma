@@ -107,27 +107,27 @@ enum Role {
 //
 
 model Profile {
-  id         String  @id @default(uuid())
-  user       User    @relation(fields: [userId], references: [id])
-  userId     String  @unique
-  phone      String?
-  address    String?
-  profession String?
-  gotra      String?
-  location   String?
-  locationLat Float?
-  locationLng Float?
-  locationGeo Unsupported("geography")?
+  id                String                    @id @default(uuid())
+  user              User                      @relation(fields: [userId], references: [id])
+  userId            String                    @unique
+  phone             String?
+  address           String?
+  profession        String?
+  gotra             String?
+  location          String?
+  locationLat       Float?
+  locationLng       Float?
+  locationGeo       Unsupported("geography")?
   locationUpdatedAt DateTime?
-  status     String? // e.g. "alive", "deceased"
-  bloodGroup String? // Add this line
-  allergies    String?     // Add this for medical info
-  medicalNotes String?     // Add this for medical info
-  
+  status            String? // e.g. "alive", "deceased"
+  bloodGroup        String? // Add this line
+  allergies         String? // Add this for medical info
+  medicalNotes      String? // Add this for medical info
+
   // Notification preferences
-  fcmToken                  String? // Firebase Cloud Messaging token for push notifications
-  notificationPreferences   Json?   // JSON object with email/push/sms preferences
-  
+  fcmToken                String? // Firebase Cloud Messaging token for push notifications
+  notificationPreferences Json? // JSON object with email/push/sms preferences
+
   // Search indexes
   @@index([profession])
   @@index([gotra])
@@ -137,16 +137,17 @@ model Profile {
 }
 
 //Store bloodGroup
-enum bloodGroup{
-    A_POS
-    A_NEG
-    B_POS
-    B_NEG
-    AB_POS
-    AB_NEG
-    O_POS
-    O_NEG
+enum bloodGroup {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
 }
+
 //
 // -------------------- FAMILY --------------------
 // Represents a nuclear family unit led by one head.
@@ -309,15 +310,15 @@ model Payment {
 //
 
 model Resource {
-  id              String            @id @default(uuid())
-  name            String            // "Hall 1", "Hall 2", "Hall 3"
-  type            String            // "marriage_hall", "community_center", etc.
-  description     String?
-  capacity        Int?              // Seating capacity if applicable
-  status          ResourceStatus    @default(AVAILABLE)
+  id               String            @id @default(uuid())
+  name             String // "Hall 1", "Hall 2", "Hall 3"
+  type             String // "marriage_hall", "community_center", etc.
+  description      String?
+  capacity         Int? // Seating capacity if applicable
+  status           ResourceStatus    @default(AVAILABLE)
   resourceRequests ResourceRequest[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   @@unique([name, type])
 }
@@ -346,8 +347,8 @@ model ResourceRequest {
   userId       String
   resource     Resource                  @relation(fields: [resourceId], references: [id])
   resourceId   String
-  startDate    DateTime?                 // Booking start date
-  endDate      DateTime?                 // Booking end date
+  startDate    DateTime? // Booking start date
+  endDate      DateTime? // Booking end date
   status       ApprovalStatus // request's overall status
   // keep optional last-approver snapshot for quick access
   approver     User?                     @relation("ApprovedBy", fields: [approverId], references: [id])
@@ -376,20 +377,19 @@ model ResourceRequestApproval {
   @@unique([requestId, approverId])
 }
 
-
 //
 // -------------------- MESSAGING --------------------
 // Direct messaging between users
 //
 
 model Conversation {
-  id           String    @id @default(uuid())
-  participants String[]  // Array of user IDs
-  lastMessage  String?
+  id            String    @id @default(uuid())
+  participants  String[] // Array of user IDs
+  lastMessage   String?
   lastMessageAt DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  messages     Message[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  messages      Message[]
 
   @@index([participants])
   @@index([lastMessageAt])
@@ -416,17 +416,17 @@ model Message {
 //
 
 model Notification {
-  id               String                   @id @default(uuid())
-  user             User                     @relation(fields: [userId], references: [id])
+  id               String               @id @default(uuid())
+  user             User                 @relation(fields: [userId], references: [id])
   userId           String
   type             NotificationType // e.g. EVENT_APPROVAL, RESOURCE_REQUEST
-  channel          NotificationChannel      @default(IN_APP)
+  channel          NotificationChannel  @default(IN_APP)
   message          String
-  read             Boolean                  @default(false)
+  read             Boolean              @default(false)
   readAt           DateTime? // When the notification was read
-  deliveryStrategy DeliveryStrategy         @default(BROADCAST) // BROADCAST or ESCALATION
-  priority         NotificationPriority     @default(MEDIUM) // Priority level
-  createdAt        DateTime                 @default(now())
+  deliveryStrategy DeliveryStrategy     @default(BROADCAST) // BROADCAST or ESCALATION
+  priority         NotificationPriority @default(MEDIUM) // Priority level
+  createdAt        DateTime             @default(now())
 
   // Optional links to related entities
   event             Event?           @relation(fields: [eventId], references: [id])

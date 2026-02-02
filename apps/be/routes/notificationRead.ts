@@ -404,6 +404,10 @@ export async function handleGetDeliveryStatus(req: Request, id: string): Promise
 // Graceful shutdown
 let isShuttingDown = false;
 
+/**
+ * Performs shutdown producer operation.
+ * @returns {Promise<void>} Description of return value
+ */
 async function shutdownProducer() {
   if (isShuttingDown) return;
   isShuttingDown = true;
