@@ -1,7 +1,8 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
-import { requireAuth } from "./authMiddleware";
 import type { Role } from "@prisma/client";
+
+import { requireAuth } from "./authMiddleware";
 
 const ADMIN_ROLES = ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"];
 
@@ -308,7 +309,7 @@ export async function handleGetRoleChangePermissions(
 
     const requesterRole = auth.payload.role as Role;
 
-    let permissions: any = {
+    const permissions: any = {
       role: requesterRole,
       canEditRoles: [],
       requiresMultipleApprovals: false,

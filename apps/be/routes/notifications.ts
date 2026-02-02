@@ -1,7 +1,8 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
-import { requireAuth } from "./authMiddleware";
 import { Role, NotificationType, NotificationChannel } from "@prisma/client";
+
+import { requireAuth } from "./authMiddleware";
 import { broadcastNotification } from "../kafka/notification-producer";
 
 /**

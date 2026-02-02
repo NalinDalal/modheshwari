@@ -7,7 +7,7 @@
 
 import prisma from "@modheshwari/db";
 import { verifyJWT } from "@modheshwari/utils";
-import { Kafka } from "kafkajs";
+
 import { kafka } from "../kafka/config";
 
 const producer = kafka.producer();

@@ -1,12 +1,13 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
-import { requireAuth } from "./authMiddleware";
 import { isRateLimited } from "@modheshwari/utils/rate-limit";
 import type { ApprovalStatus } from "@prisma/client";
 import {
   parsePagination,
   buildPaginationResponse,
 } from "@modheshwari/utils/pagination";
+
+import { requireAuth } from "./authMiddleware";
 
 /* =========================================================
    CREATE RESOURCE REQUEST (RATE LIMITED)

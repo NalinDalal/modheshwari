@@ -12,6 +12,7 @@
 
 import type { Consumer } from "kafkajs";
 import prisma from "@modheshwari/db";
+
 import { kafka } from "../config";
 import { publishToChannel } from "../notification-producer";
 

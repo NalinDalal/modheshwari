@@ -199,8 +199,8 @@ async function main() {
         ],
         gotra: gotraName,
         location: "Mumbai, Maharashtra",
-        status: "alive",
-        bloodGroup: ["A+", "B+", "O+", "AB+"][Math.floor(Math.random() * 4)],
+        status: true,
+        bloodGroup: ["A_POS", "B_POS", "O_POS", "AB_POS"][Math.floor(Math.random() * 4)],
       },
     });
 
@@ -233,8 +233,8 @@ async function main() {
           ],
           gotra: gotraName,
           location: "Mumbai, Maharashtra",
-          status: member.name.includes("grand") ? "alive" : "alive",
-          bloodGroup: ["A+", "B+", "O+", "AB+", "A-", "B-"][
+          status: true,
+          bloodGroup: ["A_POS", "B_POS", "O_POS", "AB_POS", "A_NEG", "B_NEG"][
             Math.floor(Math.random() * 6)
           ],
         },
@@ -333,7 +333,7 @@ async function main() {
     "Atri",
   );
 
-  // Create events
+  // Create events (at least 3 for visibility)
   const events = await Promise.all([
     prisma.event.create({
       data: {
@@ -374,6 +374,26 @@ async function main() {
         venue: "Community Hall B",
         createdById: family4.head.id,
         status: EventStatus.REJECTED,
+      },
+    }),
+    prisma.event.create({
+      data: {
+        name: "New Year Celebration 2025",
+        description: "Welcoming the new year with family and community.",
+        date: new Date("2025-01-01T19:00:00Z"),
+        venue: "Community Open Ground",
+        createdById: family1.head.id,
+        status: EventStatus.APPROVED,
+      },
+    }),
+    prisma.event.create({
+      data: {
+        name: "Summer Camp 2025",
+        description: "Educational and recreational camp for kids.",
+        date: new Date("2025-06-15T09:00:00Z"),
+        venue: "Community Center",
+        createdById: family2.head.id,
+        status: EventStatus.PENDING,
       },
     }),
   ]);
@@ -494,19 +514,72 @@ async function main() {
 
   console.log("Created payments");
 
-  // Create resource requests
+  // Create resources first
+  const resourcesData = [
+    {
+      name: "Hall 1",
+      type: "marriage_hall",
+      description: "Main banquet hall - capacity 200",
+      capacity: 200,
+    },
+    {
+      name: "Hall 2",
+      type: "marriage_hall",
+      description: "Secondary banquet hall - capacity 150",
+      capacity: 150,
+    },
+    {
+      name: "Hall 3",
+      type: "marriage_hall",
+      description: "Community hall - capacity 100",
+      capacity: 100,
+    },
+  ];
+
+  const resources = [];
+  for (const resourceData of resourcesData) {
+    try {
+      const existing = await prisma.resource.findFirst({
+        where: { name: resourceData.name },
+      });
+
+      if (!existing) {
+        const created = await prisma.resource.create({
+          data: {
+            ...resourceData,
+            status: "AVAILABLE",
+          },
+        });
+        resources.push(created);
+        console.log(`✓ Created resource: ${resourceData.name}`);
+      } else {
+        resources.push(existing);
+        console.log(`• Resource already exists: ${resourceData.name}`);
+      }
+    } catch (err) {
+      console.error(`✗ Error creating resource ${resourceData.name}:`, err);
+    }
+  }
+
+  console.log("Created resources");
+
+  // Create resource requests (at least 6 for visibility)
   const resourceRequests = await Promise.all([
     prisma.resourceRequest.create({
       data: {
         userId: family1.head.id,
-        resource: "Community Hall booking for private function",
+        resourceId: resources[0].id,
+        startDate: new Date("2025-03-20T18:00:00Z"),
+        endDate: new Date("2025-03-20T23:00:00Z"),
         status: ApprovalStatus.PENDING,
       },
     }),
     prisma.resourceRequest.create({
       data: {
         userId: family2.head.id,
-        resource: "Sports equipment for youth training",
+        resourceId: resources[1].id,
+        startDate: new Date("2025-04-10T10:00:00Z"),
+        endDate: new Date("2025-04-10T18:00:00Z"),
         status: ApprovalStatus.APPROVED,
         approverId: communityHeads[0].id,
         approverName: communityHeads[0].name,
@@ -515,17 +588,41 @@ async function main() {
     prisma.resourceRequest.create({
       data: {
         userId: family3.head.id,
-        resource: "Audio system for cultural program",
+        resourceId: resources[0].id,
+        startDate: new Date("2025-05-15T18:00:00Z"),
+        endDate: new Date("2025-05-15T22:00:00Z"),
         status: ApprovalStatus.CHANGES_REQUESTED,
       },
     }),
     prisma.resourceRequest.create({
       data: {
         userId: family4.head.id,
-        resource: "Catering support for family event",
+        resourceId: resources[2].id,
+        startDate: new Date("2025-02-28T14:00:00Z"),
+        endDate: new Date("2025-02-28T20:00:00Z"),
         status: ApprovalStatus.REJECTED,
         approverId: gotraHeads[0].id,
         approverName: gotraHeads[0].name,
+      },
+    }),
+    prisma.resourceRequest.create({
+      data: {
+        userId: family1.members[0].id,
+        resourceId: resources[1].id,
+        startDate: new Date("2025-06-20T10:00:00Z"),
+        endDate: new Date("2025-06-20T16:00:00Z"),
+        status: ApprovalStatus.PENDING,
+      },
+    }),
+    prisma.resourceRequest.create({
+      data: {
+        userId: family2.members[1].id,
+        resourceId: resources[2].id,
+        startDate: new Date("2025-07-10T18:00:00Z"),
+        endDate: new Date("2025-07-10T23:00:00Z"),
+        status: ApprovalStatus.APPROVED,
+        approverId: communityHeads[1].id,
+        approverName: communityHeads[1].name,
       },
     }),
   ]);
@@ -711,7 +808,7 @@ async function main() {
 
   console.log("Created status update approvals");
 
-  // Create notifications
+  // Create notifications (at least 10 for visibility)
   await Promise.all([
     prisma.notification.create({
       data: {
@@ -734,11 +831,29 @@ async function main() {
     }),
     prisma.notification.create({
       data: {
+        userId: family3.head.id,
+        type: NotificationType.EVENT_APPROVAL,
+        channel: NotificationChannel.IN_APP,
+        message: "Event 'Annual Sports Day' requires your review",
+        eventId: events[2].id,
+      },
+    }),
+    prisma.notification.create({
+      data: {
         userId: family1.members[0].id,
         type: NotificationType.EVENT_REGISTRATION,
         channel: NotificationChannel.IN_APP,
         message: "You have successfully registered for Holi Festival 2025",
         eventId: events[1].id,
+      },
+    }),
+    prisma.notification.create({
+      data: {
+        userId: family2.members[1].id,
+        type: NotificationType.EVENT_REGISTRATION,
+        channel: NotificationChannel.PUSH,
+        message: "You have successfully registered for Annual Sports Day",
+        eventId: events[2].id,
       },
     }),
     prisma.notification.create({
@@ -753,10 +868,19 @@ async function main() {
     }),
     prisma.notification.create({
       data: {
+        userId: family3.members[0].id,
+        type: NotificationType.PAYMENT_RECEIPT,
+        channel: NotificationChannel.EMAIL,
+        message: "Payment of Rs. 300 received for Annual Sports Day",
+        paymentId: payments[2].id,
+      },
+    }),
+    prisma.notification.create({
+      data: {
         userId: family1.head.id,
         type: NotificationType.RESOURCE_REQUEST,
         channel: NotificationChannel.IN_APP,
-        message: "Your resource request is pending approval",
+        message: "Your resource request for Hall 1 is pending approval",
         resourceRequestId: resourceRequests[0].id,
       },
     }),
@@ -765,9 +889,18 @@ async function main() {
         userId: family2.head.id,
         type: NotificationType.RESOURCE_REQUEST,
         channel: NotificationChannel.PUSH,
-        message: "Your resource request has been approved",
+        message: "Your resource request for Hall 2 has been approved",
         read: true,
         resourceRequestId: resourceRequests[1].id,
+      },
+    }),
+    prisma.notification.create({
+      data: {
+        userId: family3.head.id,
+        type: NotificationType.RESOURCE_REQUEST,
+        channel: NotificationChannel.IN_APP,
+        message: "Changes requested for your Hall 1 booking",
+        resourceRequestId: resourceRequests[2].id,
       },
     }),
     prisma.notification.create({
@@ -787,52 +920,18 @@ async function main() {
         message: "New event approval request requires your attention",
       },
     }),
+    prisma.notification.create({
+      data: {
+        userId: communityHeads[0].id,
+        type: NotificationType.GENERIC,
+        channel: NotificationChannel.IN_APP,
+        message: "New resource request for Summer Camp submitted",
+        read: true,
+      },
+    }),
   ]);
 
   console.log("Created notifications");
-
-  const resources = [
-    {
-      name: "Hall 1",
-      type: "marriage_hall",
-      description: "Main banquet hall - capacity 200",
-      capacity: 200,
-    },
-    {
-      name: "Hall 2",
-      type: "marriage_hall",
-      description: "Secondary banquet hall - capacity 150",
-      capacity: 150,
-    },
-    {
-      name: "Hall 3",
-      type: "marriage_hall",
-      description: "Community hall - capacity 100",
-      capacity: 100,
-    },
-  ];
-
-  for (const resource of resources) {
-    try {
-      const existing = await prisma.resource.findFirst({
-        where: { name: resource.name },
-      });
-
-      if (!existing) {
-        await prisma.resource.create({
-          data: {
-            ...resource,
-            status: "AVAILABLE",
-          },
-        });
-        console.log(`✓ Created resource: ${resource.name}`);
-      } else {
-        console.log(`• Resource already exists: ${resource.name}`);
-      }
-    } catch (err) {
-      console.error(`✗ Error creating resource ${resource.name}:`, err);
-    }
-  }
 
   console.log("Database seeding completed");
 }

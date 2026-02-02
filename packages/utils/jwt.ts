@@ -1,7 +1,6 @@
 //auth continuation — managing session identity after login.
 import { config } from "dotenv";
 import jwt from "jsonwebtoken";
-import type { JwtPayload } from "jsonwebtoken";
 import { join } from "path";
 
 // Load .env from monorepo root if not already loaded

@@ -1,7 +1,6 @@
 import prisma from "@modheshwari/db";
 import { verifyJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
-import { z } from "zod";
 
 // Helper to extract userId from JWT
 /**

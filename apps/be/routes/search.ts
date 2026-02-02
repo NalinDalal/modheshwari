@@ -13,16 +13,16 @@ import {
   parsePagination,
   buildPaginationResponse,
 } from "@modheshwari/utils/pagination";
+import { isRateLimited } from "@modheshwari/utils/rate-limit";
+
 import {
   parseQuery,
   SearchMode,
   isValidBloodGroup,
-  normalizeBloodGroup,
   normalizeRole,
   buildWhereClause,
   buildSelectClause,
 } from "../utils/searchParser";
-import { isRateLimited } from "@modheshwari/utils/rate-limit";
 
 type CacheEntry = { ts: number; data: any };
 const CACHE_TTL = 60 * 1000; // 60 seconds

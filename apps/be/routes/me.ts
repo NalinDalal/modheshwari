@@ -2,12 +2,13 @@ import prisma from "@modheshwari/db";
 import { verifyJWT } from "@modheshwari/utils/jwt";
 import type { AuthPayload } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
+import type { bloodGroup as PrismaBloodGroup } from "@prisma/client";
+
 import { extractAndVerifyToken } from "../utils/auth";
 import {
   isValidBloodGroup,
   normalizeBloodGroup,
 } from "../utils/searchParser";
-import type { bloodGroup as PrismaBloodGroup } from "@prisma/client";
 
 /**
  * GET /api/me

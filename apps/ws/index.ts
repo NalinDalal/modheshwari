@@ -5,6 +5,7 @@ import { join } from "path";
 import { NotificationChannel } from "@prisma/client";
 import { verifyJWT } from "@modheshwari/utils/jwt";
 import prisma from "@modheshwari/db";
+
 import { logger } from "./logger";
 
 // Load env from monorepo root

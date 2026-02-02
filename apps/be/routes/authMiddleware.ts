@@ -3,8 +3,9 @@
  * @description Authentication middleware that validates JWT tokens for protected routes.
  */
 
-import { extractAndVerifyToken } from "../utils/auth";
 import { verifyJWT } from "@modheshwari/utils/jwt";
+
+import { extractAndVerifyToken } from "../utils/auth";
 
 interface HttpError extends Error {
   status?: number;

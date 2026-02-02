@@ -2,23 +2,21 @@ import { serve } from "bun";
 import { config } from "dotenv";
 import { join } from "path";
 
-import prisma from "@modheshwari/db";
-
 // Load env first
 config({ path: join(process.cwd(), "../../.env") });
 
 // CORS
-import { handleCors, withCorsHeaders } from "./utils/cors";
 
 // utility functions
 import { match } from "@modheshwari/utils/match";
 import { isRateLimited } from "@modheshwari/utils/rate-limit";
 
+import { handleCors, withCorsHeaders } from "./utils/cors";
+
 // Auth
 import { handleAdminLogin, handleAdminSignup } from "./routes/auth/admin";
 import { handleFHLogin, handleFHSignup } from "./routes/auth/fh";
 import { handleMemberLogin, handleMemberSignup } from "./routes/auth/fm";
-
 import { handleGetMe, handleUpdateMe } from "./routes/me";
 import { handleGetNearbyUsers } from "./routes/nearby";
 
@@ -54,7 +52,6 @@ import {
 import {
   handleCreateNotification,
   handleListNotifications,
-  handleMarkNotificationRead,
 } from "./routes/notifications";
 
 // Notification Read Tracking

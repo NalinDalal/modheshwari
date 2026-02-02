@@ -1,5 +1,6 @@
-import { createConsumer, TOPICS } from "../config";
 import type { EachMessagePayload } from "kafkajs";
+
+import { createConsumer, TOPICS } from "../config";
 import type { NotificationEvent } from "../notification-producer";
 
 /**

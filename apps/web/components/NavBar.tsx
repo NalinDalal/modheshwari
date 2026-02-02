@@ -3,7 +3,6 @@
 import { useEffect, useState, type ComponentType } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { API_BASE } from "../lib/config";
 import {
   Search,
   Menu,
@@ -15,6 +14,8 @@ import {
   Phone,
   MessageSquare
 } from "lucide-react";
+
+import { API_BASE } from "../lib/config";
 
 interface User {
   id: string;

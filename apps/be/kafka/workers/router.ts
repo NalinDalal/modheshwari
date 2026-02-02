@@ -1,9 +1,11 @@
-import { createConsumer, TOPICS } from "../config";
 import type { EachMessagePayload } from "kafkajs";
+import prisma from "@modheshwari/db";
+
+import { createConsumer, TOPICS } from "../config";
 import { publishToChannel } from "../notification-producer";
 import type { NotificationEvent } from "../notification-producer";
 import { scheduleEscalation } from "./escalation";
-import prisma from "@modheshwari/db";
+
 
 /**
  * Retrieve recipient details (email, FCM token, phone, preferences)

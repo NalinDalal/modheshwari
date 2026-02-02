@@ -1,7 +1,9 @@
-import { createConsumer, TOPICS } from "../config";
 import type { EachMessagePayload } from "kafkajs";
-import type { NotificationEvent } from "../notification-producer";
 import { createHash } from "crypto";
+
+import { createConsumer, TOPICS } from "../config";
+import type { NotificationEvent } from "../notification-producer";
+
 
 /**
  * Email transporter configuration

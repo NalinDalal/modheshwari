@@ -1,6 +1,7 @@
-import { producer, TOPICS } from "./config";
 import { NotificationType, NotificationChannel } from "@prisma/client";
 import { randomUUID } from "crypto";
+
+import { producer, TOPICS } from "./config";
 
 export type DeliveryStrategy = "BROADCAST" | "ESCALATION";
 export type NotificationPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
