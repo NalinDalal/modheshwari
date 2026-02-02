@@ -1,9 +1,98 @@
 import { createConsumer, TOPICS } from "../config";
 import type { EachMessagePayload } from "kafkajs";
+import type { NotificationEvent } from "../notification-producer";
 
 /**
- * Performs start push consumer operation.
- * @returns {Promise<void>} Description of return value
+ * Firebase Cloud Messaging (FCM) push notification service
+ * Sends push notifications to registered devices via FCM
+ * 
+ * Environment variables required:
+ * - FIREBASE_PROJECT_ID
+ * - FIREBASE_PRIVATE_KEY
+ * - FIREBASE_CLIENT_EMAIL
+ */
+
+interface FCMMessage {
+  token: string;
+  notification: {
+    title: string;
+    body: string;
+  };
+  data: {
+    eventId: string;
+    type: string;
+    priority: string;
+    timestamp: string;
+  };
+}
+
+/**
+ * Send push notification via FCM
+ * Note: Requires firebase-admin SDK to be installed and initialized
+ */
+async function sendPushNotification(message: FCMMessage): Promise<boolean> {
+  try {
+    // Check if Firebase Admin SDK is available
+    try {
+      // @ts-ignore - firebase-admin is optional
+      const admin = await import("firebase-admin");
+      
+      // Only initialize once
+      if (!admin.apps.length) {
+        const serviceAccount = {
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        };
+
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+        });
+      }
+
+      const response = await admin.messaging().send(message);
+      console.log(`✓ Push notification sent successfully. Message ID: ${response}`);
+      return true;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("Cannot find module")) {
+        console.warn(
+          "[Push] firebase-admin not installed. To enable push notifications, run: bun add firebase-admin",
+        );
+        console.log("[Push] Message queued but not sent:", message);
+        return false; // SDK not available, not sent
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error("[Push] Failed to send push notification:", error instanceof Error ? error.message : error);
+    return false;
+  }
+}
+
+/**
+ * Build FCM message from notification event
+ */
+function buildFCMMessage(
+  event: NotificationEvent & { recipientId: string; fcmToken: string },
+): FCMMessage {
+  return {
+    token: event.fcmToken,
+    notification: {
+      title: event.subject || event.type.replace(/_/g, " "),
+      body: event.message.substring(0, 150), // FCM has character limits
+    },
+    data: {
+      eventId: event.eventId,
+      type: event.type,
+      priority: event.priority,
+      timestamp: event.timestamp,
+    },
+  };
+}
+
+/**
+ * Push notification consumer worker
+ * Consumes push notification events from Kafka and sends them via FCM
  */
 export async function startPushConsumer(): Promise<void> {
   const consumer = createConsumer("notifications-push");
@@ -11,18 +100,49 @@ export async function startPushConsumer(): Promise<void> {
   await consumer.connect();
   await consumer.subscribe({
     topic: TOPICS.NOTIFICATION_PUSH,
-    fromBeginning: true,
+    fromBeginning: false,
   });
+
+  console.log("[Push] Consumer started, listening for push notifications...");
 
   await consumer.run({
     eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
-      console.log("[Push] Received:", {
-        topic,
-        partition,
-        key: message.key?.toString(),
-        value: message.value?.toString(),
-      });
-      // TODO: deliver push notification
+      try {
+        if (!message.value) {
+          console.warn("[Push] Received message with no value");
+          return;
+        }
+
+        const event = JSON.parse(message.value.toString()) as NotificationEvent & {
+          recipientId: string;
+          fcmToken: string;
+        };
+
+        // Skip if no FCM token
+        if (!event.fcmToken) {
+          console.log(`[Push] No FCM token for recipient ${event.recipientId}, skipping`);
+          return;
+        }
+
+        console.log(`[Push] Processing push notification for ${event.recipientId}`);
+
+        // Build FCM message
+        const fcmMessage = buildFCMMessage(event);
+
+        // Send push notification
+        const success = await sendPushNotification(fcmMessage);
+
+        if (success) {
+          console.log(`✓ Notification ${event.eventId} delivered via push to device ${event.fcmToken.substring(0, 10)}...`);
+        } else {
+          console.error(
+            `✗ Failed to send push notification to ${event.recipientId}. Event ID: ${event.eventId}`,
+          );
+        }
+      } catch (error) {
+        console.error("[Push] Error processing message:", error instanceof Error ? error.message : error);
+      }
     },
   });
 }
+

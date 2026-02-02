@@ -416,14 +416,17 @@ model Message {
 //
 
 model Notification {
-  id        String              @id @default(uuid())
-  user      User                @relation(fields: [userId], references: [id])
-  userId    String
-  type      NotificationType // e.g. EVENT_APPROVAL, RESOURCE_REQUEST
-  channel   NotificationChannel @default(IN_APP)
-  message   String
-  read      Boolean             @default(false)
-  createdAt DateTime            @default(now())
+  id               String                   @id @default(uuid())
+  user             User                     @relation(fields: [userId], references: [id])
+  userId           String
+  type             NotificationType // e.g. EVENT_APPROVAL, RESOURCE_REQUEST
+  channel          NotificationChannel      @default(IN_APP)
+  message          String
+  read             Boolean                  @default(false)
+  readAt           DateTime? // When the notification was read
+  deliveryStrategy DeliveryStrategy         @default(BROADCAST) // BROADCAST or ESCALATION
+  priority         NotificationPriority     @default(MEDIUM) // Priority level
+  createdAt        DateTime                 @default(now())
 
   // Optional links to related entities
   event             Event?           @relation(fields: [eventId], references: [id])
@@ -437,10 +440,36 @@ model Notification {
   statusUpdateRequestId String?
 
   // Additional metadata for rich notifications
-  metadata  Json?  // Store event-specific data, action URLs, etc.
+  metadata Json? // Store event-specific data, action URLs, etc.
+
+  // Delivery tracking
+  deliveries NotificationDelivery[]
 
   @@index([userId, read])
   @@index([createdAt])
+  @@index([deliveryStrategy, read])
+}
+
+// -------------------- NOTIFICATION DELIVERY --------------------
+// Tracks individual delivery attempts across channels for escalation pattern
+model NotificationDelivery {
+  id             String              @id @default(uuid())
+  notification   Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  notificationId String
+  channel        NotificationChannel
+  status         DeliveryStatus      @default(PENDING)
+  attemptCount   Int                 @default(0)
+  lastAttemptAt  DateTime?
+  deliveredAt    DateTime?
+  scheduledFor   DateTime? // When to attempt delivery (for escalation delays)
+  error          String? // Error message if delivery failed
+  metadata       Json? // Channel-specific delivery metadata
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([notificationId])
+  @@index([status, scheduledFor])
+  @@index([channel, status])
 }
 
 // Centralized enums for approval lifecycle and notifications
@@ -455,6 +484,7 @@ enum NotificationChannel {
   EMAIL
   IN_APP
   PUSH
+  SMS
 }
 
 enum NotificationType {
@@ -464,6 +494,27 @@ enum NotificationType {
   PAYMENT_RECEIPT
   GENERIC
   STATUS_UPDATE_REQUEST
+}
+
+enum DeliveryStrategy {
+  BROADCAST // Send to all channels immediately
+  ESCALATION // Start with in-app, escalate if not read
+}
+
+enum DeliveryStatus {
+  PENDING // Waiting to be sent
+  SCHEDULED // Scheduled for future delivery
+  SENT // Successfully sent
+  DELIVERED // Confirmed delivery (if available)
+  FAILED // Delivery failed
+  CANCELLED // Cancelled (e.g., user read notification)
+}
+
+enum NotificationPriority {
+  LOW // Non-urgent, can use escalation
+  MEDIUM // Standard priority
+  HIGH // Important, prefer broadcast
+  CRITICAL // Critical, always broadcast to all channels
 }
 
 // -------------------- MEMBER INVITE --------------------

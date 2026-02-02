@@ -58,6 +58,14 @@ import {
   handleMarkNotificationRead,
 } from "./routes/notifications";
 
+// Notification Read Tracking
+import {
+  handleMarkAsRead,
+  handleMarkMultipleAsRead,
+  handleMarkAllAsRead,
+  handleGetDeliveryStatus,
+} from "./routes/notificationRead";
+
 // Messages
 import {
   handleGetConversations,
@@ -467,6 +475,30 @@ const server = serve({
 
       if (url.pathname === "/api/notifications" && method === "POST") {
         return withCorsHeaders(await handleCreateNotification(req));
+      }
+
+      // Mark notification as read
+      const mMarkAsRead = match(url.pathname, "/api/notifications/:id/read");
+      if (mMarkAsRead && method === "POST") {
+        const id = mMarkAsRead.id as string;
+        return withCorsHeaders(await handleMarkAsRead(req, id));
+      }
+
+      // Mark multiple notifications as read
+      if (url.pathname === "/api/notifications/read-multiple" && method === "POST") {
+        return withCorsHeaders(await handleMarkMultipleAsRead(req));
+      }
+
+      // Mark all notifications as read
+      if (url.pathname === "/api/notifications/read-all" && method === "POST") {
+        return withCorsHeaders(await handleMarkAllAsRead(req));
+      }
+
+      // Get delivery status
+      const mDeliveryStatus = match(url.pathname, "/api/notifications/:id/delivery-status");
+      if (mDeliveryStatus && method === "GET") {
+        const id = mDeliveryStatus.id as string;
+        return withCorsHeaders(await handleGetDeliveryStatus(req, id));
       }
 
       // ------------------ Messages/Chat ------------------

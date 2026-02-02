@@ -12,10 +12,10 @@ async function main() {
 
     // Connect producer and consumer
     await producer.connect();
-    console.log("✓ Producer connected");
+    console.log("Producer connected");
 
     await consumer.connect();
-    console.log("✓ Consumer connected\n");
+    console.log("Consumer connected\n");
 
     // Subscribe to topics
     await consumer.subscribe({
@@ -28,12 +28,12 @@ async function main() {
       fromBeginning: true,
     });
 
-    console.log("✓ Subscribed to topics\n");
+    console.log("Subscribed to topics\n");
 
     // Start consuming messages
     consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
-        console.log("📨 Message received:");
+        console.log("Message received:");
         console.log({
           topic: topic,
           partition: partition,
@@ -57,7 +57,7 @@ async function main() {
         },
       ],
     });
-    console.log("✓ Sent message to quickstart-events");
+    console.log("Sent message to quickstart-events");
 
     // Message with key (for partitioning)
     await producer.send({
@@ -73,7 +73,7 @@ async function main() {
         },
       ],
     });
-    console.log("✓ Sent payment message for user1\n");
+    console.log("Sent payment message for user1\n");
 
     // Keep the process running to receive messages
     console.log("Listening for messages... (Press Ctrl+C to exit)\n");
@@ -83,11 +83,11 @@ async function main() {
       console.log("\n\nShutting down...");
       await producer.disconnect();
       await consumer.disconnect();
-      console.log("✓ Disconnected");
+      console.log("Disconnected");
       process.exit(0);
     });
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error("Error:", error);
     await producer.disconnect();
     await consumer.disconnect();
     process.exit(1);
