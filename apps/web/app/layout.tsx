@@ -31,13 +31,18 @@ export default function RootLayout({
       <body
         className="
           min-h-screen 
-          bg-gradient-to-br 
-          from-neutral-50 to-neutral-100 
-          dark:from-neutral-950 dark:to-neutral-900 
-          text-neutral-900 dark:text-neutral-50 
+          bg-white
+          text-gray-900
           transition-colors duration-300
           font-sans
         "
+        style={{
+          backgroundImage: `
+            radial-gradient(125% 125% at 50% 90%, #ffffff 40%, #ec4899 100%)
+          `,
+          backgroundSize: "100% 100%",
+          backgroundAttachment: "fixed",
+        }}
       >
         <ThemeInitializer />
         <NavBar />

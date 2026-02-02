@@ -10,6 +10,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "bunx turbo run check-types",
     "docs:gen": "bun run packages/scripts/generate-docs.ts",
+    "openapi:gen": "bun run packages/scripts/generate-openapi.ts",
     "db:seed": "tsx packages/db/seed.ts",
     "stress-test": "bash ./scripts/run-stress-test.sh"
   },
@@ -20,6 +21,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-unused-imports": "^4.3.0",
+    "js-yaml": "^4.1.1",
     "jsdoc": "^4.0.5",
     "prettier": "^3.6.2",
     "prisma": "6.18.0",
