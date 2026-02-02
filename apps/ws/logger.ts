@@ -7,7 +7,9 @@ const LEVEL_ORDER: Record<LogLevel, number> = {
   ERROR: 40,
 } as const;
 
-const envPretty = process.env.LOG_PRETTY === "true";
+const envPretty = process.env.LOG_PRETTY
+  ? process.env.LOG_PRETTY === "true"
+  : process.env.NODE_ENV !== "production";
 const envLevel = (process.env.LOG_LEVEL?.toUpperCase() || "DEBUG") as LogLevel;
 const minLevel = LEVEL_ORDER[envLevel] ?? LEVEL_ORDER.DEBUG;
 
