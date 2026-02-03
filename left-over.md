@@ -281,8 +281,6 @@ WS_SECRET=your_jwt_secret
 3. Push Notifications (mobile support)
 4. Notification Preferences UI (user control)
 
-SNS to Queue to Kafka
-
 ---
 
 ### 7. Fan-Out Services
@@ -419,22 +417,6 @@ await producer.send({
 **Estimated Time:** 3-4 days  
 **Impact:** Enables paid events
 
-Payment must be made in real life, yes put up a payment gateway, do like once a event is approved, then user gets a push notifications to complete payment within specified time limit
-
-15 din baad ka hi aap schedule kr skte ho
-
-So if available for booking so then u pay partially and do the booking
-Else if in future reschedule
-Calcom like shit
-
-Payment kese hota h ab, upi allows for free transaction for a day upto 1 lakh, then u have to pay tax
-
-[Docs/reference](https://www.cashfree.com/blog/upi-integration/)
-
-[Best usecase for india](https://docs.billdesk.io/)
-
-[freecode docs](https://www.freecodecamp.org/news/build-a-payroll-system-with-express-and-monnify-using-background-jobs/)
-
 ---
 
 ### 3. Forum System
@@ -486,24 +468,25 @@ Payment kese hota h ab, upi allows for free transaction for a day upto 1 lakh, t
 
 ## Quick Reference: File Status
 
-| Component           | Model | API | Frontend            | Status                |
-| ------------------- | ----- | --- | ------------------- | --------------------- |
-| User Management     | ✅    | ✅  | ✅                  | Complete              |
-| Family Management   | ✅    | ✅  | ✅                  | Complete              |
-| Resource Requests   | ✅    | ✅  | ✅                  | Complete              |
-| Event Management    | ✅    | ⚠️  | ❌                  | Partial               |
-| Payments            | ⚠️    | ❌  | ❌                  | Scaffolding           |
-| Events QR Codes     | ❌    | ❌  | ❌                  | Not Started           |
-| Forums              | ❌    | ❌  | ❌                  | Not Started           |
-| Calendar            | ❌    | ❌  | ❌                  | Not Started           |
-| Location Services   | ✅    | ✅  | ❌                  | Complete (API only)   |
-| Family Tree         | ✅    | ✅  | ⚠️                  | Mostly Done           |
-| User Relations      | ✅    | ❌  | ❌                  | Schema Only           |
-| Profiles            | ✅    | ✅  | ✅                  | Complete (via search) |
-| Medical Info        | ✅    | ✅  | ❌                  | Partial               |
-| Notifications ✅    | ⚠️    | ⚠️  | 70% - Needs Workers |
-| Advanced Search     | ✅    | ✅  | ❌                  | Partial               |
-| WebSocket/Real-Time | ✅    | ⚠️  | ❌                  | Needs Redis           |
+| Component           | Model | API | Frontend | Status                |
+| ------------------- | ----- | --- | -------- | --------------------- |
+| User Management     | ✅    | ✅  | ✅       | Complete              |
+| Family Management   | ✅    | ✅  | ✅       | Complete              |
+| Resource Requests   | ✅    | ✅  | ✅       | Complete              |
+| Event Management    | ✅    | ⚠️  | ❌       | Partial               |
+| Payments            | ⚠️    | ❌  | ❌       | Scaffolding           |
+| Events QR Codes     | ❌    | ❌  | ❌       | Not Started           |
+| Forums              | ❌    | ❌  | ❌       | Not Started           |
+| Polls               | ❌    | ❌  | ❌       | Not Started           |
+| Calendar            | ❌    | ❌  | ❌       | Not Started           |
+| Location Services   | ✅    | ✅  | ❌       | Complete (API only)   |
+| Family Tree         | ✅    | ✅  | ⚠️       | Mostly Done           |
+| User Relations      | ✅    | ❌  | ❌       | Schema Only           |
+| Profiles            | ✅    | ✅  | ✅       | Complete (via search) |
+| Medical Info        | ✅    | ✅  | ❌       | Partial               |
+| Notifications       | ✅    | ⚠️  | ⚠️       | 70% - Needs Workers   |
+| Advanced Search     | ✅    | ✅  | ❌       | Partial               |
+| WebSocket/Real-Time | ✅    | ⚠️  | ❌       | Needs Redis           |
 
 ---
 
@@ -520,8 +503,9 @@ Hall wise resource should be visible,
 
 Someone wanna Notify/Message to gotra or whole body/community, family
 Notification to admins only
-Add priority selector, channel chooser, preview before sending
-WebSocket(new server in apps) to refresh notifications without page reload
+
+Admin change logic check it please
+What if wanna change admins
 
 ---
 
@@ -530,5 +514,10 @@ WebSocket(new server in apps) to refresh notifications without page reload
 
 ---
 
-blend [this](https://patterncraft.fun/) into ui
+Add priority selector, channel chooser, preview before sending
 
+WebSocket(new server in apps) to refresh notifications without page reload
+
+---
+
+blend [this](https://patterncraft.fun/) into ui

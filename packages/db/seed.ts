@@ -20,7 +20,7 @@ import {
   NotificationType,
   NotificationChannel,
 } from "@prisma/client";
-import { hashPassword } from "../utils/hash.ts";
+import { hashPassword } from "@modheshwari/utils/hash";
 
 const prisma = new PrismaClient();
 
