@@ -89,14 +89,14 @@ export default function ResourceRequestsPage(): React.JSX.Element {
   const [me, setMe] = useState<Me | null>(null);
 
   useEffect(() => {
-    void fetchMe();
+    void loadCurrentUser();
     void fetchRequests();
   }, []);
 
   /**
    * Fetches current user info from /api/me.
    */
-  async function fetchMe(): Promise<void> {
+  async function loadCurrentUser(): Promise<void> {
     try {
       const token = getToken();
       const url = API_BASE

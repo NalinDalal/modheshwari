@@ -81,7 +81,7 @@ export default function Medical() {
       return;
     }
 
-    async function fetchMe() {
+    async function loadUserProfile() {
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/me`,
@@ -106,7 +106,7 @@ export default function Medical() {
       }
     }
 
-    fetchMe();
+    loadUserProfile();
   }, [router]);
 
   // --- Convert user input to enum format ---

@@ -28,7 +28,7 @@ const prisma = new PrismaClient();
  * Performs main operation.
  * @returns {Promise<void>} Description of return value
  */
-async function main() {
+async function seedDatabase() {
   console.log("Starting database seed...");
 
   if (!process.env.DATABASE_URL) {
@@ -936,7 +936,7 @@ async function main() {
   console.log("Database seeding completed");
 }
 
-main()
+seedDatabase()
   .catch((e) => {
     console.error("Seeding failed:", e);
     process.exit(1);

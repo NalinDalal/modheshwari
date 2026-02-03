@@ -4,7 +4,7 @@ import { producer, TOPICS } from "./config";
  * Performs main operation.
  * @returns {Promise<void>} Description of return value
  */
-async function main() {
+async function startProducer() {
   try {
     // Connect the producer
     await producer.connect();
@@ -31,4 +31,4 @@ async function main() {
   }
 }
 
-main();
+startProducer();

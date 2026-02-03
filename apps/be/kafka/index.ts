@@ -4,7 +4,7 @@ import { producer, createConsumer, TOPICS } from "./config";
  * Performs main operation.
  * @returns {Promise<void>} Description of return value
  */
-async function main() {
+async function startKafka() {
   const consumer = createConsumer("modheshwari-demo-group");
 
   try {
@@ -71,4 +71,4 @@ async function main() {
   }
 }
 
-main();
+startKafka();

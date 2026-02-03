@@ -71,14 +71,14 @@ export default function NotificationsPage(): React.ReactElement {
   ]);
 
   useEffect(() => {
-    void fetchMe();
+    void loadCurrentUser();
     void fetchNotifications();
   }, []);
 
   /**
    * Fetch currently authenticated user.
    */
-  async function fetchMe(): Promise<void> {
+  async function loadCurrentUser(): Promise<void> {
     const token = getToken();
     if (!token) return;
 

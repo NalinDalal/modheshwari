@@ -4,7 +4,7 @@ import { createConsumer, TOPICS } from "./config";
  * Performs main operation.
  * @returns {Promise<void>} Description of return value
  */
-async function main() {
+async function startConsumer() {
   // Create a consumer with a unique group ID
   const consumer = createConsumer("modheshwari");
 
@@ -46,4 +46,4 @@ async function main() {
   }
 }
 
-main();
+startConsumer();

@@ -102,7 +102,7 @@ export default function MePage() {
       return;
     }
 
-    async function fetchMe() {
+    async function loadUserProfile() {
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/me`,
@@ -127,7 +127,7 @@ export default function MePage() {
       }
     }
 
-    fetchMe();
+    loadUserProfile();
   }, [router]);
 
   if (loading) {
