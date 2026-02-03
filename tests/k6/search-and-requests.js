@@ -48,10 +48,6 @@ function roleLoginPath(role) {
 }
 
 export function setup() {
-  console.log(
-    `Setting up test with ${parsedUsers.length} users from ${USERS_CSV}`,
-  );
-
   // Pre-warm tokens for all users defined in USERS_CSV
   const tokens = [];
   let successfulLogins = 0;
@@ -72,24 +68,17 @@ export function setup() {
           tokens.push({ email: u.email, role: u.role, token });
           successfulLogins++;
         } else {
-          console.warn(`Login succeeded but no token for ${u.email}`);
           tokens.push({ email: u.email, role: u.role, token: null });
         }
       } else {
-        console.warn(`Login failed for ${u.email}: ${res.status} ${res.body}`);
         tokens.push({ email: u.email, role: u.role, token: null });
       }
     } catch (e) {
-      console.error(`Exception logging in ${u.email}: ${e.message}`);
       tokens.push({ email: u.email, role: u.role, token: null });
     }
   }
 
   const runId = __ENV.TEST_RUN_ID || `k6-run-${Date.now()}`;
-  console.log(
-    `Setup complete: ${successfulLogins}/${parsedUsers.length} users logged in successfully`,
-  );
-  console.log(`Test run ID: ${runId}`);
 
   return { tokens, runId };
 }
@@ -101,7 +90,6 @@ export default function (data) {
 
   // Early exit if no tokens available
   if (!tokens.length) {
-    console.error("No tokens available - setup might have failed");
     errorRate.add(1);
     return;
   }
@@ -112,9 +100,6 @@ export default function (data) {
 
   if (!user || !user.token) {
     // Don't spam logs, but track the error
-    if (__ITER === 0) {
-      console.warn(`VU ${__VU}: No valid token for index ${idx}`);
-    }
     errorRate.add(1);
     return;
   }
@@ -139,9 +124,6 @@ export default function (data) {
 
     if (!check(searchRes, { "search:200": (r) => r.status === 200 })) {
       iterationHasError = true;
-      if (__ITER === 0) {
-        console.warn(`VU ${__VU}: Search failed with ${searchRes.status}`);
-      }
     }
 
     const rrRes = http.get(`${BASE}/api/resource-requests`, { headers });
@@ -170,11 +152,6 @@ export default function (data) {
       })
     ) {
       iterationHasError = true;
-      if (__ITER === 0) {
-        console.warn(
-          `VU ${__VU}: Create request failed with ${postRes.status}`,
-        );
-      }
     }
   } else {
     // 10% Admin-ish flow
@@ -206,7 +183,5 @@ export default function (data) {
 }
 
 export function teardown(data) {
-  console.log("Test completed");
   const validTokens = data.tokens.filter((t) => t.token !== null).length;
-  console.log(`Used ${validTokens}/${data.tokens.length} valid tokens`);
 }

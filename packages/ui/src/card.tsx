@@ -1,10 +1,13 @@
 import { type JSX } from "react";
 
 /**
- * Auto-generated documentation for Card
+ * Card component that renders a linked card with title and content.
  * @function Card
- * @param TODO: describe parameters
- * @returns TODO: describe return value
+ * @param {string} className - Optional CSS class name for styling
+ * @param {string} title - The title text to display in the card heading
+ * @param {React.ReactNode} children - The content to display in the card body
+ * @param {string} href - The URL to navigate to when card is clicked
+ * @returns {JSX.Element} A link element styled as a card
  */
 export function Card({
   className,
