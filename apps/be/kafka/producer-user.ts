@@ -8,7 +8,6 @@ async function main() {
   try {
     // Connect the producer
     await producer.connect();
-    console.log("Producer connected successfully");
 
     // Send a message with a key (for partitioning)
     // All messages with the same key will go to the same partition
@@ -22,8 +21,6 @@ async function main() {
       ],
     });
 
-    console.log("Message sent to payment-done topic with key 'user1'");
-
     // Send more messages to test partitioning
     for (let i = 1; i <= 5; i++) {
       await producer.send({
@@ -35,14 +32,11 @@ async function main() {
           },
         ],
       });
-      console.log(`Message ${i} sent`);
     }
 
     // Disconnect
     await producer.disconnect();
-    console.log("Producer disconnected");
   } catch (error) {
-    console.error("Error in producer:", error);
     process.exit(1);
   }
 }

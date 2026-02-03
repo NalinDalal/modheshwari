@@ -34,8 +34,6 @@ async function sendSMS(message: SMSMessage): Promise<boolean> {
       const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
       if (!accountSid || !authToken || !fromNumber) {
-        console.warn("[SMS] Twilio credentials not configured");
-        console.log("[SMS] Message dropped — missing credentials. eventId:", message.eventId);
         return false; // Credentials missing, not sent
       }
 
@@ -47,26 +45,17 @@ async function sendSMS(message: SMSMessage): Promise<boolean> {
         to: message.to,
       });
 
-      console.log(`✓ SMS sent successfully. SID: ${response.sid}`);
       return true;
     } catch (error) {
       if (
         error instanceof Error &&
         error.message.includes("Cannot find module")
       ) {
-        console.warn(
-          "[SMS] twilio SDK not installed. To enable SMS notifications, run: bun add twilio",
-        );
-        console.log("[SMS] Message dropped — SDK not available. eventId:", message.eventId);
         return false; // SDK not available, not sent
       }
       throw error;
     }
   } catch (error) {
-    console.error(
-      "[SMS] Failed to send SMS:",
-      error instanceof Error ? error.message : error,
-    );
     return false;
   }
 }
@@ -114,13 +103,10 @@ export async function startSmsConsumer(): Promise<void> {
     fromBeginning: false,
   });
 
-  console.log("[SMS] Consumer started, listening for SMS notifications...");
-
   await consumer.run({
     eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
       try {
         if (!message.value) {
-          console.warn("[SMS] Received message with no value");
           return;
         }
 
@@ -133,15 +119,8 @@ export async function startSmsConsumer(): Promise<void> {
 
         // Skip if no phone number
         if (!event.recipientPhone) {
-          console.log(
-            `[SMS] No phone number for recipient ${event.recipientId}, skipping`,
-          );
           return;
         }
-
-        console.log(
-          `[SMS] Processing SMS notification for ${event.recipientId}`,
-        );
 
         // Format SMS body
         const smsBody = formatSMSBody(event);
@@ -154,21 +133,7 @@ export async function startSmsConsumer(): Promise<void> {
         };
 
         const success = await sendSMS(smsMessage);
-
-        if (success) {
-          console.log(
-            `✓ Notification ${event.eventId} delivered via SMS to ${event.recipientPhone.slice(-4)}`,
-          );
-        } else {
-          console.error(
-            `✗ Failed to send SMS to ${event.recipientId}. Event ID: ${event.eventId}`,
-          );
-        }
       } catch (error) {
-        console.error(
-          "[SMS] Error processing message:",
-          error instanceof Error ? error.message : error,
-        );
       }
     },
   });

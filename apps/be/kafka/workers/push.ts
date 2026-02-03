@@ -66,20 +66,14 @@ async function sendPushNotification(message: FCMMessage): Promise<boolean> {
       }
 
       const response = await admin.messaging().send(message);
-      console.log(`✓ Push notification sent successfully. Message ID: ${response}`);
       return true;
     } catch (error) {
       if (error instanceof Error && error.message.includes("Cannot find module")) {
-        console.warn(
-          "[Push] firebase-admin not installed. To enable push notifications, run: bun add firebase-admin",
-        );
-        console.log("[Push] Message dropped: SDK not available", message);
         return false; // SDK not available, not sent
       }
       throw error;
     }
   } catch (error) {
-    console.error("[Push] Failed to send push notification:", error instanceof Error ? error.message : error);
     return false;
   }
 }
@@ -118,13 +112,10 @@ export async function startPushConsumer(): Promise<void> {
     fromBeginning: false,
   });
 
-  console.log("[Push] Consumer started, listening for push notifications...");
-
   await consumer.run({
     eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
       try {
         if (!message.value) {
-          console.warn("[Push] Received message with no value");
           return;
         }
 
@@ -135,27 +126,15 @@ export async function startPushConsumer(): Promise<void> {
 
         // Skip if no FCM token
         if (!event.fcmToken) {
-          console.log(`[Push] No FCM token for recipient ${event.recipientId}, skipping`);
           return;
         }
-
-        console.log(`[Push] Processing push notification for ${event.recipientId}`);
 
         // Build FCM message
         const fcmMessage = buildFCMMessage(event);
 
         // Send push notification
         const success = await sendPushNotification(fcmMessage);
-
-        if (success) {
-          console.log(`✓ Notification ${event.eventId} delivered via push to device ${event.fcmToken.substring(0, 10)}...`);
-        } else {
-          console.error(
-            `✗ Failed to send push notification to ${event.recipientId}. Event ID: ${event.eventId}`,
-          );
-        }
       } catch (error) {
-        console.error("[Push] Error processing message:", error instanceof Error ? error.message : error);
       }
     },
   });

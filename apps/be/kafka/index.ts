@@ -8,14 +8,10 @@ async function main() {
   const consumer = createConsumer("modheshwari-demo-group");
 
   try {
-    console.log("Starting Kafka demo...\n");
-
     // Connect producer and consumer
     await producer.connect();
-    console.log("Producer connected");
 
     await consumer.connect();
-    console.log("Consumer connected\n");
 
     // Subscribe to topics
     await consumer.subscribe({
@@ -28,25 +24,13 @@ async function main() {
       fromBeginning: true,
     });
 
-    console.log("Subscribed to topics\n");
-
     // Start consuming messages
     consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
-        console.log("Message received:");
-        console.log({
-          topic: topic,
-          partition: partition,
-          offset: message.offset,
-          key: message.key?.toString(),
-          value: message.value?.toString(),
-        });
-        console.log("");
       },
     });
 
     // Send some test messages
-    console.log("Sending test messages...\n");
 
     // Basic message
     await producer.send({
@@ -57,7 +41,6 @@ async function main() {
         },
       ],
     });
-    console.log("Sent message to quickstart-events");
 
     // Message with key (for partitioning)
     await producer.send({
@@ -73,21 +56,15 @@ async function main() {
         },
       ],
     });
-    console.log("Sent payment message for user1\n");
 
     // Keep the process running to receive messages
-    console.log("Listening for messages... (Press Ctrl+C to exit)\n");
-
     // Handle graceful shutdown
     process.on("SIGINT", async () => {
-      console.log("\n\nShutting down...");
       await producer.disconnect();
       await consumer.disconnect();
-      console.log("Disconnected");
       process.exit(0);
     });
   } catch (error) {
-    console.error("Error:", error);
     await producer.disconnect();
     await consumer.disconnect();
     process.exit(1);

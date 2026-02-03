@@ -30,9 +30,7 @@ async function ensureProducerConnected() {
     try {
       await producer.connect();
       producerReady = true;
-      console.log("📨 Kafka producer connected");
     } catch (error) {
-      console.error("❌ Failed to connect Kafka producer:", error);
       throw new Error("Kafka producer connection failed");
     }
   })();
@@ -69,9 +67,7 @@ async function publishReadEvent(notificationId: string, userId: string) {
         },
       ],
     });
-    console.log(`📖 Published read event for notification ${notificationId}`);
   } catch (error) {
-    console.error("❌ Error publishing read event:", error);
     // Don't fail the request if Kafka publish fails
   }
 }
@@ -137,8 +133,6 @@ export async function handleMarkAsRead(req: Request, id: string): Promise<Respon
       }
     );
   } catch (error) {
-    console.error("Error marking notification as read:", error);
-    
     // Check if error is Prisma record-not-found
     const isNotFound = 
       error && 
@@ -230,7 +224,6 @@ export async function handleMarkMultipleAsRead(req: Request): Promise<Response> 
       }
     );
   } catch (error) {
-    console.error("Error marking notifications as read:", error);
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : "Failed to mark notifications as read",
@@ -304,7 +297,6 @@ export async function handleMarkAllAsRead(req: Request): Promise<Response> {
       }
     );
   } catch (error) {
-    console.error("Error marking all notifications as read:", error);
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : "Failed to mark all notifications as read",

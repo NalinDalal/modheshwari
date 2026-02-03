@@ -34,8 +34,6 @@ import {
  */
 export async function handleMemberLogin(req: Request) {
   try {
-    console.log("login endpoint for family-member");
-
     const body: any = await (req as Request).json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
@@ -76,8 +74,6 @@ export async function handleMemberLogin(req: Request) {
     const token = signJWT({ userId: user.id, role: user.role });
 
     // --- Step 6: Respond with structured payload ---
-    console.log(`Member login successful: ${user.name}`);
-
     return success(
       "Login successful",
       {
@@ -93,7 +89,6 @@ export async function handleMemberLogin(req: Request) {
       200,
     );
   } catch (err) {
-    console.error("Member Login Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -117,8 +112,6 @@ export async function handleMemberLogin(req: Request) {
  */
 export async function handleMemberSignup(req: Request) {
   try {
-    console.log("signup endpoint for family-member");
-
     const body: any = await (req as Request).json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
@@ -174,10 +167,6 @@ export async function handleMemberSignup(req: Request) {
     }
 
     // --- Step 7: Return success response (no login yet) ---
-    console.log(
-      `Signup request submitted: ${user.name} (${user.email}) — Family: ${family?.name}`,
-    );
-
     return success(
       "Signup successful — pending approval from family head.",
       {
@@ -197,7 +186,6 @@ export async function handleMemberSignup(req: Request) {
       201,
     );
   } catch (err) {
-    console.error("Family Member Signup Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

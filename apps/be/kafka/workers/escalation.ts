@@ -65,8 +65,6 @@ async function processEscalation() {
             deliveredAt: now,
           },
         });
-
-        console.log(`✅ Escalated notification ${notification.id} to ${delivery.channel}`);
       } catch (error) {
         const nextAttemptCount = delivery.attemptCount + 1;
         const shouldFail = nextAttemptCount >= 3;
@@ -85,19 +83,13 @@ async function processEscalation() {
               : delivery.scheduledFor,
           },
         });
-
-        console.error(`❌ Failed to escalate notification ${notification.id}:`, error);
       }
       }
 
       processedCount += readyDeliveries.length;
     }
-
-    if (processedCount > 0) {
-      console.log(`📊 Processed ${processedCount} escalation deliveries`);
-    }
   } catch (error) {
-    console.error("❌ Error processing escalations:", error);
+    // Error processing escalations
   }
 }
 
@@ -182,12 +174,8 @@ async function cancelEscalation(notificationId: string) {
         updatedAt: new Date(),
       },
     });
-
-    if (result.count > 0) {
-      console.log(`🚫 Cancelled ${result.count} escalations for notification ${notificationId}`);
-    }
   } catch (error) {
-    console.error(`❌ Error cancelling escalation for ${notificationId}:`, error);
+    // Error cancelling escalation
   }
 }
 
@@ -231,8 +219,6 @@ export async function scheduleEscalation(
   if (createOperations.length > 0) {
     await prisma.$transaction(createOperations);
   }
-
-  console.log(`📅 Scheduled escalations for notification ${notificationId}`);
 }
 
 /**
@@ -251,8 +237,6 @@ async function startReadEventConsumer() {
   await readConsumer.connect();
   await readConsumer.subscribe({ topic: "notification.read", fromBeginning: false });
 
-  console.log("👀 Escalation worker listening for read events...");
-
   await readConsumer.run({
     eachMessage: async ({ topic, partition, message }) => {
       try {
@@ -266,7 +250,6 @@ async function startReadEventConsumer() {
           await cancelEscalation(notificationId);
         }
       } catch (error) {
-        console.error("❌ Error processing read event:", error);
       }
     },
   });
@@ -284,13 +267,10 @@ let shouldRunEscalation = true;
  * @returns {Promise<void>} Description of return value
  */
 async function startEscalationWorker() {
-  console.log("🚀 Starting Escalation Worker...");
-
   try {
     // Start the read event consumer
     await startReadEventConsumer();
   } catch (error) {
-    console.error("❌ Failed to start read event consumer:", error);
     throw error;
   }
 
@@ -306,26 +286,20 @@ async function startEscalationWorker() {
   // Initial processing
   await processEscalation();
   scheduleNextRun();
-
-  console.log("✅ Escalation Worker ready - checking every 30 seconds");
 }
 
 // Start the worker
 startEscalationWorker().catch((error) => {
-  console.error("❌ Failed to start escalation worker:", error);
   process.exit(1);
 });
 
 // Handle graceful shutdown
 process.on("SIGINT", async () => {
-  console.log("\n⏹️  Shutting down escalation worker...");
-  
   // Clear the escalation interval
   shouldRunEscalation = false;
   if (escalationTimeout) {
     clearTimeout(escalationTimeout);
     escalationTimeout = null;
-    console.log("✓ Escalation schedule cleared");
   }
 
   // Stop and disconnect Kafka consumer
@@ -333,28 +307,23 @@ process.on("SIGINT", async () => {
     try {
       await readConsumer.stop();
       await readConsumer.disconnect();
-      console.log("✓ Read event consumer disconnected");
     } catch (error) {
-      console.error("❌ Error disconnecting read consumer:", error);
+      // Error disconnecting read consumer
     }
   }
 
   // Disconnect Prisma
   await prisma.$disconnect();
-  console.log("✓ Prisma disconnected");
   
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  console.log("\n⏹️  SIGTERM: Shutting down escalation worker...");
-  
   // Clear the escalation interval
   shouldRunEscalation = false;
   if (escalationTimeout) {
     clearTimeout(escalationTimeout);
     escalationTimeout = null;
-    console.log("✓ Escalation schedule cleared");
   }
 
   // Stop and disconnect Kafka consumer
@@ -362,15 +331,13 @@ process.on("SIGTERM", async () => {
     try {
       await readConsumer.stop();
       await readConsumer.disconnect();
-      console.log("✓ Read event consumer disconnected");
     } catch (error) {
-      console.error("❌ Error disconnecting read consumer:", error);
+      // Error disconnecting read consumer
     }
   }
 
   // Disconnect Prisma
   await prisma.$disconnect();
-  console.log("✓ Prisma disconnected");
   
   process.exit(0);
 });

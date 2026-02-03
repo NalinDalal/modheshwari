@@ -20,9 +20,6 @@ async function getEmailTransporter() {
     const smtpPass = process.env.SMTP_PASS;
 
     if (!smtpHost || !smtpUser || !smtpPass) {
-      console.warn(
-        "[Email] SMTP credentials not configured. Emails will be logged but not sent.",
-      );
       // Return a test transporter for development
       return nodemailer.default.createTransport({
         host: "localhost",
@@ -40,7 +37,6 @@ async function getEmailTransporter() {
       },
     });
   } catch (error) {
-    console.error("[Email] nodemailer not installed. To enable emails, run: bun add nodemailer");
     return null;
   }
 }
@@ -153,7 +149,6 @@ async function sendEmailWithRetry(
   retries = 3,
 ): Promise<boolean> {
   if (!transporter) {
-    console.log("[Email] Transporter not available, skipping email");
     return false;
   }
 
@@ -168,16 +163,8 @@ async function sendEmailWithRetry(
         html,
       });
 
-      console.log(
-        `[Email] Sent (recipient: ${recipientId}, messageId: ${info.messageId}, attempt: ${attempt}/${retries})`,
-      );
       return true;
     } catch (error) {
-      console.error(
-        `[Email] Attempt ${attempt}/${retries} failed (recipient: ${recipientId}):`,
-        error instanceof Error ? error.message : error,
-      );
-
       if (attempt < retries) {
         // Exponential backoff: 2s, 4s, 8s
         await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
@@ -197,16 +184,14 @@ export async function startEmailConsumer(): Promise<void> {
   const transporter = await getEmailTransporter();
 
   if (!transporter) {
-    console.warn("[Email] Email worker disabled (nodemailer not installed)");
     return;
   }
 
   // Verify transporter connection
   try {
     await transporter.verify();
-    console.log("[Email] SMTP connection verified ✓");
   } catch (error) {
-    console.warn("[Email] SMTP verification failed:", error instanceof Error ? error.message : error);
+    // SMTP verification failed, continue anyway
   }
 
   await consumer.connect();
@@ -215,13 +200,10 @@ export async function startEmailConsumer(): Promise<void> {
     fromBeginning: false,
   });
 
-  console.log("[Email] Consumer started, listening for email notifications...");
-
   await consumer.run({
     eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
       try {
         if (!message.value) {
-          console.warn("[Email] Received message with no value");
           return;
         }
 
@@ -230,32 +212,17 @@ export async function startEmailConsumer(): Promise<void> {
           recipientEmail: string;
         };
 
-        const recipientLogId = toEmailLogId(event.recipientEmail);
-        console.log(`[Email] Processing notification for ${recipientLogId}`);
-
         // Generate email template
         const template = generateEmailTemplate(event);
         if (!template) {
-          console.warn("[Email] No template found for notification type:", event.type);
           return;
         }
         const { subject, html } = template;
 
         // Send email with retry logic
         const success = await sendEmailWithRetry(transporter, event.recipientEmail, subject, html);
-
-        if (success) {
-          console.log(
-            `[Email] Notification ${event.eventId} delivered (recipient: ${recipientLogId})`,
-          );
-        } else {
-          console.error(
-            `[Email] Failed to send email after retries (recipient: ${recipientLogId}, eventId: ${event.eventId})`,
-          );
-          // In production, you might want to log this to a DLQ (Dead Letter Queue)
-        }
       } catch (error) {
-        console.error("[Email] Error processing message:", error instanceof Error ? error.message : error);
+        // Error processing message
       }
     },
   });
