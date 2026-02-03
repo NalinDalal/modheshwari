@@ -1,4 +1,4 @@
-import { verifyJWT } from "@modheshwari/utils/jwt";
+import { extractAndVerifyToken } from "../../utils/auth";
 
 /**
  * Extract userId from JWT token in Authorization header
@@ -6,13 +6,9 @@ import { verifyJWT } from "@modheshwari/utils/jwt";
  * @returns User ID if authenticated, null otherwise
  */
 export function getUserIdFromRequest(req: Request): string | null {
-  const authHeader = req.headers.get("authorization") || "";
-  const token = authHeader.replace("Bearer ", "").trim();
-
-  if (!token) return null;
-
-  const decoded = verifyJWT(token);
-  const userId = decoded?.id || decoded?.userId;
-
-  return typeof userId === "string" ? userId : null;
+  try {
+    return extractAndVerifyToken(req);
+  } catch {
+    return null;
+  }
 }

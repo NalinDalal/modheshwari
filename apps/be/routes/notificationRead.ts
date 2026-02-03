@@ -407,21 +407,21 @@ async function shutdownProducer() {
   try {
     if (producerReady) {
       await producer.disconnect();
-      console.log("✓ Kafka producer disconnected");
+      console.log(" Kafka producer disconnected");
     }
   } catch (error) {
-    console.error("❌ Error disconnecting producer:", error);
+    console.error(" Error disconnecting producer:", error);
   }
 }
 
 process.on("SIGINT", async () => {
-  console.log("\n⏹️  SIGINT: Shutting down notification read handler...");
+  console.log("\n  SIGINT: Shutting down notification read handler...");
   await shutdownProducer();
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  console.log("\n⏹️  SIGTERM: Shutting down notification read handler...");
+  console.log("\n⏹  SIGTERM: Shutting down notification read handler...");
   await shutdownProducer();
   process.exit(0);
 });

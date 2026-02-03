@@ -1,23 +1,6 @@
 import prisma from "@modheshwari/db";
-import { verifyJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
-
-/**
- * Performs get user id from request operation.
- * @param {Request} req - Description of req
- * @returns {string} Description of return value
- */
-function getUserIdFromRequest(req: Request): string | null {
-  const authHeader = req.headers.get("authorization") || "";
-  const token = authHeader.replace("Bearer ", "").trim();
-
-  if (!token) return null;
-
-  const decoded = verifyJWT(token);
-  const userId = decoded?.id || decoded?.userId;
-
-  return typeof userId === "string" ? userId : null;
-}
+import { getUserIdFromRequest } from "./messages/auth";
 
 // GET /api/chat
 /**
