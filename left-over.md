@@ -12,37 +12,6 @@
 
 ## Not Implemented (0% Complete)
 
-### 1. Hindu Calendar Integration
-
-**Requirement:** FR6 in design doc  
-**Expected:** Display Hindu calendar with important dates, festivals, observances
-
-**What's Missing:**
-
-- No calendar data model
-- No API endpoints
-- No frontend calendar component
-- No integration with external calendar data
-
-**Files Affected:**
-
-- Need: `packages/db/schema.prisma` (add Calendar/CalendarEvent models)
-- Need: `apps/be/routes/calendar.ts`
-- Need: `apps/web/app/calendar/page.tsx`
-
-**Requirements:**
-
-- Calendar data source (API or local)
-- Display system
-- Festival reminders
-- Integration with events
-
-**Estimated Time:** 1 week  
-**Impact:** High visibility, important for community
-
-[link1](https://github.com/karthikraman/panchangam)
-[link2](https://gist.github.com/hrishikeshrt/0090a0460608728f32381164ea54865c)
-
 ### 2. Event Pass Generation with QR Codes
 
 **Requirement:** FR4 in design doc  
