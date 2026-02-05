@@ -5,6 +5,7 @@ import { WS_PORT } from "./config";
 import { authenticate } from "./utils";
 import { handleOpen, handleMessage, handleClose } from "./handlers";
 import { startKafkaConsumer, consumer } from "./kafka";
+import { startRedisSubscriber, stopRedisSubscriber } from './redis-sub';
 import { logger } from "./logger";
 
 export const server = serve<WSData>({
@@ -40,10 +41,20 @@ export const server = serve<WSData>({
  * Start the WebSocket server.
  */
 export async function startServer() {
-  await startKafkaConsumer().catch((err) => {
-    logger.error("Failed to start consumer", err instanceof Error ? err : String(err));
-    process.exit(1);
-  });
+  try {
+    await startKafkaConsumer();
+  } catch (err) {
+    logger.warn(
+      "Kafka consumer failed to start — continuing without real-time features (dev)",
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+
+  try {
+    await startRedisSubscriber();
+  } catch (err) {
+    logger.warn('Redis subscriber failed to start — continuing without Redis', err instanceof Error ? err.message : String(err));
+  }
 
   logger.info(`server running on ws://localhost:${WS_PORT}`);
 }
@@ -55,6 +66,7 @@ export async function shutdown() {
   logger.info("shutting down...");
   try {
     await consumer.disconnect();
+    await stopRedisSubscriber();
   } catch (err) {
     logger.error("consumer disconnect failed", err instanceof Error ? err : String(err));
   }

@@ -368,6 +368,13 @@ API → broadcastNotification(strategy, priority)
 
 ---
 
+## Update: Redis caching for fan-out (Feb 5, 2026)
+
+- **Motivation:** Large fan-outs were causing heavy spike writes to the primary DB which increased latency for other services.
+- **Change implemented:** Optional Redis-based caching in the fan-out worker path. When `NOTIFICATION_CACHE=true` the fanout consumer/worker writes per-user notifications into Redis lists `notifications:{userId}` (RPUSH) with a configurable TTL (`NOTIFICATION_CACHE_TTL_SECONDS`). The consumer still emits Kafka routing events so channel workers continue operating. A dedicated persistence/drain worker is recommended to flush cached entries back to the DB reliably.
+- **Env vars:** `NOTIFICATION_CACHE`, `REDIS_URL`, `NOTIFICATION_CACHE_TTL_SECONDS`.
+- **Impact on architecture:** Adds a short-lived Redis caching layer between fanout workers and persistent storage to absorb write spikes; improves fanout latency and reduces DB contention.
+
 ## What's Next?
 
 ### Planned Improvements

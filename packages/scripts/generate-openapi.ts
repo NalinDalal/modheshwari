@@ -27,6 +27,12 @@ const routes: RouteDefinition[] = [];
 const authTable = indexFile.getVariableDeclaration("authRouteTable");
 const staticTable = indexFile.getVariableDeclaration("staticRouteTable");
 
+/**
+ * Performs extract routes from table operation.
+ * @param {any} tableDecl - Description of tableDecl
+ * @param {boolean} requireAuth - Description of requireAuth
+ * @returns {void} Description of return value
+ */
 function extractRoutesFromTable(tableDecl: any, requireAuth = true) {
   const initializer = tableDecl?.getInitializer();
   if (!initializer || initializer.getKind() !== SyntaxKind.ArrayLiteralExpression) {

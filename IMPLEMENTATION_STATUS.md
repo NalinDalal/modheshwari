@@ -171,6 +171,11 @@
   - GOTRA_HEAD → own gotra members
   - FAMILY_HEAD → own family members
 
+### Recent Updates (Feb 5, 2026)
+
+- ✅ **Redis caching for fan-out**: Implemented optional Redis-based caching in the fan-out path to reduce DB load during large broadcasts. When enabled (`NOTIFICATION_CACHE=true`) the fanout consumer/worker caches per-user notifications into Redis lists `notifications:{userId}` (RPUSH) with a TTL controlled by `NOTIFICATION_CACHE_TTL_SECONDS` (default 7 days). The Kafka routing event is still emitted so channel workers continue to operate. A persistence/drain worker is recommended to reliably persist cached notifications to the DB.
+- **Env vars introduced:** `NOTIFICATION_CACHE`, `REDIS_URL`, `NOTIFICATION_CACHE_TTL_SECONDS`.
+
 ### Messaging System (WebSocket)
 
 - ✅ **WebSocket Server** - Separate server in `apps/ws/index.ts` (Jan 30, 2026)

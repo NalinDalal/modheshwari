@@ -5,6 +5,28 @@
 
 ---
 
+## Update: Redis cache for fan-out (Feb 5, 2026)
+
+To reduce DB write pressure during large fan-outs we implemented an optional Redis caching mode in the fan-out path.
+
+- **What changed:** When enabled (`NOTIFICATION_CACHE=true`) the fanout consumer/worker writes per-user notification objects into Redis lists keyed as `notifications:{userId}` (using `RPUSH`) instead of doing immediate `prisma.notification.createMany`. Each cached entry gets a `cachedAt` timestamp and the list is set with a TTL controlled by `NOTIFICATION_CACHE_TTL_SECONDS` (default 7 days).
+- **Why:** Absorb short-lived write spikes, reduce DB contention, and improve fan-out latency while preserving asynchronous routing via Kafka.
+- **Compatibility:** The Kafka routing event is still emitted (so channel workers like email/push/sms and in-app continue to function). Fanout audit records are still updated (PROCESSING/COMPLETED/FAILED).
+- **Env vars:** `NOTIFICATION_CACHE` (true/false), `REDIS_URL`, `NOTIFICATION_CACHE_TTL_SECONDS`.
+
+### How to try locally
+```bash
+export NOTIFICATION_CACHE=true
+export REDIS_URL=redis://localhost:6379
+export NOTIFICATION_CACHE_TTL_SECONDS=604800 # 7 days
+npx tsx apps/be/kafka/workers/fanout-consumer.ts
+```
+
+### Next steps (recommended)
+- Implement a persistence/drain worker that atomically reads `notifications:{userId}` lists and persists entries to the DB (batched, idempotent). This worker should mark persisted items or trim lists to avoid double-write.
+- Add end-to-end tests for fanout with caching enabled, and monitor Redis memory/TTL behavior under load.
+
+
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -1266,3 +1288,192 @@ Comprehensive hardening of the notification system with 15 security, reliability
 - Producer readiness: Test concurrent send requests on startup
 
 **All fixes documented and verified on Feb 2, 2026.**
+
+----
+
+**Feb 5, 2026**
+### 6. Notification System (Email + Push + Real-Time)
+
+**Status:** 70% Complete - Kafka infrastructure done, workers + WebSocket integration needed
+
+**What's Working:**
+
+- ✅ Notification model in database with multi-channel support (IN_APP, EMAIL, PUSH, SMS)
+- ✅ Kafka producer: `apps/be/kafka/notification-producer.ts`
+- ✅ Kafka infrastructure with topic: `notification.events`
+- ✅ WebSocket server: `apps/ws/index.ts` (separate process)
+- ✅ In-app notifications functional
+- ✅ Rate limiting on notification creation
+- ✅ Role-based notification scoping
+- ✅ Profile fields for preferences: `fcmToken`, `notificationPreferences` JSON
+
+**Production Architecture (scales to 100k+ users):**
+
+```
+API Server (Bun)
+    ↓ (Kafka produce, <5ms)
+Kafka Topic: notification.events
+    ↓ (Consumer)
+Router Worker (Route to channels)
+    ├→ Email Worker (SendGrid/SMTP) → Email Channel
+    ├→ Push Worker (Firebase FCM) → Push Notifications
+    ├→ In-App Worker → Redis Pub/Sub
+                          ↓
+WebSocket Servers (Redis clustered)
+    ↓
+Connected Clients (Real-time updates)
+```
+
+**Why This Scales (for 10-15k+ users):**
+
+- API doesn't block on email/push (Kafka queues events)
+- Multiple workers process in parallel (run 2-5 instances)
+- Redis Pub/Sub connects WebSocket servers (no single point of failure)
+- Kafka persists messages (no data loss on worker failure)
+- Each component scales independently
+
+**What's Missing (To Complete):**
+
+### Priority 1: Email Worker (2-3 hours)
+
+- Create: `apps/be/kafka/workers/email-worker.ts`
+- Subscribe to `notification.email` topic
+- Integrate SendGrid or Nodemailer
+- Add email template system
+- Handle retries with backoff
+
+### Priority 2: Push Notification Worker (2-3 hours)
+
+- Create: `apps/be/kafka/workers/push-worker.ts`
+- Subscribe to `notification.push` topic
+- Integrate Firebase Cloud Messaging (FCM)
+- Handle invalid tokens (delete from DB)
+- Add device token management
+
+### Priority 3: In-App + WebSocket Integration (2-3 hours)
+
+- Update: `apps/ws/index.ts` to use Redis Pub/Sub
+- Create: `apps/be/kafka/workers/in-app-worker.ts`
+- Connect WebSocket servers with Redis for clustering
+- Broadcast in-app notifications to connected users
+- Handle user presence tracking
+
+### Priority 4: Notification Preferences UI (1-2 hours)
+
+- Create: `apps/web/app/notifications/preferences/page.tsx`
+- Allow users to choose: Email, Push, In-App, SMS
+- Store preferences in `Profile.notificationPreferences`
+- Add unsubscribe links in emails (GDPR compliant)
+
+**Files to Create/Update:**
+
+```
+Backend:
+- ✅ apps/be/kafka/notification-producer.ts (done)
+- ❌ apps/be/kafka/workers/email-worker.ts (NEW)
+- ❌ apps/be/kafka/workers/push-worker.ts (NEW)
+- ❌ apps/be/kafka/workers/in-app-worker.ts (NEW)
+- ❌ apps/be/kafka/workers/router-worker.ts (OPTIONAL - route to channels)
+- 📝 apps/be/routes/notifications.ts (add email templates)
+- 📝 apps/ws/index.ts (add Redis Pub/Sub)
+
+Frontend:
+- ❌ apps/web/app/notifications/preferences/page.tsx (NEW)
+- 📝 apps/web/components/NotificationProvider.tsx (add WebSocket hook)
+
+Config:
+- 📝 .env.example (add SendGrid, FCM, Redis keys)
+```
+
+**Environment Variables Needed:**
+
+```bash
+# Email
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_USER=apikey
+SMTP_PASS=your_sendgrid_api_key
+SEND_FROM_EMAIL=notifications@modheshwari.com
+
+# Push (FCM)
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_PRIVATE_KEY=your_private_key
+FIREBASE_CLIENT_EMAIL=your_client_email
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# WebSocket
+WS_PORT=8080
+WS_SECRET=your_jwt_secret
+```
+
+**Estimated Effort:** 2-3 days (for all 4 priorities)
+
+**Implementation Order:**
+
+1. Email Worker (highest impact, most used)
+2. WebSocket + Redis (real-time delighter)
+3. Push Notifications (mobile support)
+4. Notification Preferences UI (user control)
+
+---
+
+### 7. Fan-Out Services
+
+**Status:** Not started (depends on notification system above)
+
+**Use Cases:**
+
+- Broadcast to entire gotra (1 message → 100+ people)
+- Community-wide announcements
+- Family group messages
+- Emergency alerts
+
+**What's Needed:**
+
+- Recipient resolution: Find all users in gotra/community/family
+- Batch notification creation (performance)
+- Targeting: Gotra, Community, Family scopes
+- Role-based filtering (notify only Family Heads, etc.)
+
+**Approach:**
+
+```typescript
+// Example: Fan-out to gotra
+const users = await prisma.user.findMany({
+  where: {
+    profile: { gotra: "Sharma" },
+    status: true,
+  },
+});
+
+// Batch create notifications (don't create 100 individual rows)
+await prisma.notification.createMany({
+  data: users.map((u) => ({
+    userId: u.id,
+    type: "ANNOUNCEMENT",
+    message: "New event in your gotra!",
+    // ... rest of fields
+  })),
+});
+
+// Then produce single Kafka event for fan-out
+await producer.send({
+  topic: "notification.events",
+  messages: [
+    {
+      value: JSON.stringify({
+        recipientIds: users.map((u) => u.id),
+        type: "ANNOUNCEMENT",
+        channels: ["IN_APP", "EMAIL"],
+      }),
+    },
+  ],
+});
+```
+
+**Estimated Effort:** 1-2 days (after email/push workers done)
+
+---
+done

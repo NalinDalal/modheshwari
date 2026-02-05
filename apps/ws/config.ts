@@ -15,3 +15,5 @@ export const HEARTBEAT_INTERVAL = 30000; // 30s
 export const CONNECTION_TIMEOUT = 60000; // 60s
 export const RATE_LIMIT_WINDOW = 60000; // 1 minute
 export const MAX_MESSAGES_PER_WINDOW = 100;
+
+export const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
