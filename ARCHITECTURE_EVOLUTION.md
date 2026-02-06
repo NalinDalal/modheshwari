@@ -405,5 +405,79 @@ API → broadcastNotification(strategy, priority)
 
 ---
 
-**Last Updated:** February 2, 2026  
+**Status (Feb 6, 2026): Implemented**
+
+Pagination support has been added to the listed endpoints. The handlers parse `page` and `limit` query parameters, validate limits, and use Prisma `skip`/`take`. The following route handlers already implement pagination:
+
+- `apps/be/routes/resourceReq.ts` — `handleListResourceRequests` (default limit 20, max 100)
+- `apps/be/routes/events.ts` — `handleListEvents` (default limit 10, max 100)
+- `apps/be/routes/familyMembers.ts` — `handleGetFamilyMembers` (default limit 50, max 100)
+- `apps/be/routes/search.ts` — `handleSearch` (default limit 20, max 100)
+
+Recommended next steps: add integration tests for these endpoints to validate pagination behaviour and include pagination examples in the API docs.
+
+
+
+
+
+## Quick Wins (Easy, High Impact)
+
+### 5. Medical Information Recording
+
+**Files to Create:**
+
+- [ ] Add `MedicalRecord` model to schema
+- [ ] `apps/be/routes/medical-records.ts`
+- [ ] `apps/web/app/medical/records/page.tsx`
+
+**Estimated Time:** 4-5 hours  
+**Impact:** Completes medical module
+
+
+
+### 5. Medical Information
+
+**Status:** Route file exists but incomplete
+
+**What's Working:**
+
+- ✅ Route file created: `apps/be/routes/medical.ts`
+- ✅ Status update for deceased workflow partially implemented
+
+**What's Missing:**
+
+- ❌ Medical history model
+- ❌ Blood type tracking
+- ❌ Allergies/conditions field
+- ❌ Medical records management
+- ❌ Complete API endpoints
+- ❌ Frontend UI
+
+**Database Models Needed:**
+
+```prisma
+model MedicalRecord {
+  id String @id @default(uuid())
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  bloodType String?
+  allergies String?
+  conditions String?
+  medications String?
+  notes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+**Files to Complete:**
+
+- `apps/be/routes/medical.ts` (full implementation)
+- `apps/web/app/medical/page.tsx` (UI)
+
+**Estimated Effort:** 1-2 days
+
+---
+
+**Last Updated:** February 6, 2026  
 **Maintained By:** Modheshwari Core Team
