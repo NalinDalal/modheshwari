@@ -172,6 +172,19 @@
 
 ---
 
+### 5. Phone No
+
+    Take input from the user.
+    Identify the country of the user. (You can either use the IP address of the user to identify this or ask
+ for country-input )
+    Check the formatting of the phone number and compare with that country’s format
+    If Invalid, prompt the user to re-enter
+    If Valid, convert the format into E.164 in string and store in your DB.
+    Hence, you need to employ various processes before you store them. You can either build these processes 
+by yourself or use various APIs available. BigDataCloud has a FREE API which you can use to solve all your phone verification challenges.
+
+---
+
 ## Quick Reference: File Status
 
 | Component           | Model | API | Frontend | Status                |
@@ -201,17 +214,6 @@
 - ✅ = Complete & Working
 - ⚠️ = Partial / Scaffolding
 - ❌ = Not Started
-
----
-
-Modheshwari:
-Hall wise resource should be visible,
-
-Someone wanna Notify/Message to gotra or whole body/community, family
-Notification to admins only
-
-Admin change logic check it please
-What if wanna change admins
 
 ---
 

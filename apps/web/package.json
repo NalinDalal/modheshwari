@@ -17,6 +17,7 @@
     "next": "^15.5.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "swr": "^2.2.0",
     "vis-network": "^10.0.2"
   },
   "devDependencies": {

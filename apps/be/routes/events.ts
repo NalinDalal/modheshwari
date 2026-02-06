@@ -116,6 +116,25 @@ export async function handleListEvents(req: Request): Promise<Response> {
       where.status = "APPROVED";
     }
 
+    // Optional date range filtering to support calendar and server-side range queries
+    const startDate = url.searchParams.get("startDate") || url.searchParams.get("from");
+    const endDate = url.searchParams.get("endDate") || url.searchParams.get("to");
+
+    if (startDate || endDate) {
+      const dateFilter: any = {};
+      if (startDate) {
+        const sd = new Date(startDate);
+        if (!isNaN(sd.getTime())) dateFilter.gte = sd;
+      }
+      if (endDate) {
+        const ed = new Date(endDate);
+        if (!isNaN(ed.getTime())) dateFilter.lte = ed;
+      }
+      if (Object.keys(dateFilter).length > 0) {
+        where.date = dateFilter;
+      }
+    }
+
     // Get total count
     const total = await prisma.event.count({ where });
 
@@ -140,6 +159,51 @@ export async function handleListEvents(req: Request): Promise<Response> {
     );
   } catch (err) {
     console.error("ListEvents Error:", err);
+    return failure("Internal server error", "Unexpected Error", 500);
+  }
+}
+
+/**
+ * GET /api/events/compact
+ * Lightweight endpoint returning compact event objects for a date range.
+ * Query params: startDate, endDate, status (optional), limit (optional)
+ */
+export async function handleListEventsCompact(req: Request): Promise<Response> {
+  try {
+    const url = new URL(req.url);
+    const statusFilter = url.searchParams.get("status");
+    const startDate = url.searchParams.get("startDate") || url.searchParams.get("from");
+    const endDate = url.searchParams.get("endDate") || url.searchParams.get("to");
+
+    const where: any = {};
+    if (statusFilter) where.status = statusFilter.toUpperCase();
+
+    if (startDate || endDate) {
+      const dateFilter: any = {};
+      if (startDate) {
+        const sd = new Date(startDate);
+        if (!isNaN(sd.getTime())) dateFilter.gte = sd;
+      }
+      if (endDate) {
+        const ed = new Date(endDate);
+        if (!isNaN(ed.getTime())) dateFilter.lte = ed;
+      }
+      if (Object.keys(dateFilter).length > 0) where.date = dateFilter;
+    }
+
+    const limitParam = Number(url.searchParams.get("limit") || 500);
+    const take = Math.min(Math.max(1, limitParam || 100), 2000);
+
+    const rows = await prisma.event.findMany({
+      where,
+      select: { id: true, name: true, date: true },
+      orderBy: { date: "asc" },
+      take,
+    });
+
+    return success("Events fetched (compact)", { events: rows });
+  } catch (err) {
+    console.error("ListEventsCompact Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
