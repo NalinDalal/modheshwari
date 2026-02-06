@@ -9,6 +9,7 @@ import {
   isValidBloodGroup,
   normalizeBloodGroup,
 } from "../utils/searchParser";
+import { validatePhone, formatE164 } from "@modheshwari/utils/phone";
 
 /**
  * GET /api/me
@@ -113,6 +114,8 @@ type UpdateProfileBody = {
   location?: string;
   locationLat?: number;
   locationLng?: number;
+  phone?: string;
+  phoneCountry?: string; // optional ISO2 country hint for parsing
 };
 
 /**
@@ -143,7 +146,8 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
       !profession &&
       location === undefined &&
       locationLat === undefined &&
-      locationLng === undefined
+      locationLng === undefined &&
+      body.phone === undefined
     ) {
       return failure(
         "No valid fields provided for update",
@@ -192,6 +196,22 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
     if (location !== undefined) updateData.location = location;
     if (locationLat !== undefined) updateData.locationLat = locationLat;
     if (locationLng !== undefined) updateData.locationLng = locationLng;
+
+    // Phone validation & normalization
+    if (body.phone !== undefined) {
+      const phoneRaw = String(body.phone || "").trim();
+      if (phoneRaw.length === 0) {
+        // allow clearing phone
+        updateData.phone = null;
+      } else {
+        const countryHint = body.phoneCountry || undefined;
+        const v = validatePhone(phoneRaw, countryHint);
+        if (!v.valid) {
+          return failure("Invalid phone number", "Validation Error", 400);
+        }
+        updateData.phone = v.e164 ?? formatE164(phoneRaw, countryHint);
+      }
+    }
 
     // --- Step 3: Update profile ---
     // Note: locationGeo is auto-updated via DB trigger when locationLat/locationLng change
