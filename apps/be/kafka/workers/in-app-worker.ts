@@ -1,5 +1,5 @@
 import { createConsumer, TOPICS } from '../config';
-import { createClient } from 'redis';
+import getRedisClient from '../../lib/redisClient';
 import type { RedisClientType } from 'redis';
 
 interface NotificationEvent {
@@ -16,11 +16,9 @@ interface NotificationEvent {
  * @param {string} redisUrl - Description of redisUrl
  * @returns {Promise<void>} Description of return value
  */
-export async function runInAppWorker(redisUrl = process.env.REDIS_URL || 'redis://localhost:6379') {
+export async function runInAppWorker() {
   const consumer = createConsumer('in-app-worker-group');
-  const redis: RedisClientType = createClient({ url: redisUrl });
-
-  await redis.connect();
+  const redis: RedisClientType = await getRedisClient();
   await consumer.connect();
   await consumer.subscribe({ topic: TOPICS.NOTIFICATION_EVENTS, fromBeginning: false });
 
@@ -35,11 +33,22 @@ export async function runInAppWorker(redisUrl = process.env.REDIS_URL || 'redis:
 
         if (!payload.channels.includes('IN_APP')) return; // only handle in-app here
 
-        // publish per-recipient to redis channel
+        // publish per-recipient to redis channel, unless a preview was recently sent
         for (const rid of payload.recipientIds) {
-          const payloadMsg = JSON.stringify({ recipientId: rid, notification: payload });
-          // channel: inapp:{userId}
-          await redis.publish(`inapp:${rid}`, payloadMsg);
+          try {
+            const previewKey = `notification_preview:${rid}:${payload.eventId}`;
+            const exists = payload.eventId ? await redis.exists(previewKey) : 0;
+            if (exists) {
+              // preview already sent recently for this recipient+eventId; skip to avoid duplicate
+              continue;
+            }
+
+            const payloadMsg = JSON.stringify({ recipientId: rid, notification: payload });
+            // channel: inapp:{userId}
+            await redis.publish(`inapp:${rid}`, payloadMsg);
+          } catch (e) {
+            console.error('Failed to publish in-app message for', rid, e);
+          }
         }
       } catch (err) {
         console.error('in-app worker error', err);

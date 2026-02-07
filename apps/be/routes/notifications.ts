@@ -191,12 +191,20 @@ export async function handleCreateNotification(req: Request) {
       try {
         const redis = await getRedisClient();
         const now = new Date().toISOString();
-        // use a stable previewId so clients can dedupe/replace when persisted arrives
-        const previewId = randomUUID();
+        // use eventId when available so previews can be correlated with persisted events
+        const previewId = result?.eventId || randomUUID();
+        const PREVIEW_TTL = Number(process.env.NOTIFICATION_PREVIEW_TTL_SECONDS || 60);
         for (const u of users) {
           const payload = JSON.stringify({ recipientId: u.id, notification: { previewId, message, subject: subject ?? null, createdAt: now } });
           // publish to channel `inapp:{userId}` which ws redis-sub listens for via pSubscribe
-          await redis.publish(`inapp:${u.id}`, payload);
+          try {
+            await redis.publish(`inapp:${u.id}`, payload);
+            // mark that this recipient received a preview for this eventId so duplicates can be suppressed
+            const key = `notification_preview:${u.id}:${previewId}`;
+            await redis.set(key, '1', { EX: PREVIEW_TTL });
+          } catch (e) {
+            console.warn('Failed to publish preview to redis for', u.id, e instanceof Error ? e.message : String(e));
+          }
         }
       } catch (err) {
         console.warn("Realtime publish failed", err instanceof Error ? err.message : String(err));
