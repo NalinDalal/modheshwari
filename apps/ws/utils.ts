@@ -49,17 +49,10 @@ export function getMessageSize(message: string | Uint8Array): number {
  * @returns User ID if authenticated, null otherwise
  */
 export function authenticate(req: Request): string | null {
-  // Accept token from Authorization header or `token` query param (browser ws clients)
+  // Accept token only from Authorization header on upgrade.
+  // Query-token is deprecated and no longer accepted for security reasons.
   const authHeader = req.headers.get("authorization") || "";
-  let token = authHeader.replace("Bearer ", "").trim();
-  if (!token) {
-    try {
-      const url = new URL(req.url);
-      token = url.searchParams.get("token") || "";
-    } catch (_) {
-      token = "";
-    }
-  }
+  const token = authHeader.replace("Bearer ", "").trim();
   if (!token) return null;
 
   const decoded = verifyJWT(token);

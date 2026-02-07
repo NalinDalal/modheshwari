@@ -12,13 +12,18 @@ export const server = serve<WSData>({
   port: WS_PORT,
   async fetch(req) {
     if (req.headers.get("upgrade") === "websocket") {
+      // Allow upgrade for unauthenticated clients; require an auth message shortly after connect.
       const userId = authenticate(req);
-      if (!userId) {
-        return new Response("Unauthorized", { status: 401 });
+      if (userId) {
+        server.upgrade(req, {
+          data: { userId, lastSeen: Date.now(), authenticated: true } satisfies WSData,
+        });
+        return;
       }
 
+      // upgrade without userId; client must send an auth message within the timeout
       server.upgrade(req, {
-        data: { userId, lastSeen: Date.now() } satisfies WSData,
+        data: { userId: "", lastSeen: Date.now(), authenticated: false } satisfies WSData,
       });
       return;
     }

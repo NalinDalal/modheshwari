@@ -68,6 +68,15 @@ export default function ChatPage() {
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
+    ws.addEventListener('open', () => {
+      if (token) {
+        try {
+          ws.send(JSON.stringify({ type: 'auth', token }));
+        } catch (e) {
+          console.error('Failed to send auth message', e);
+        }
+      }
+    });
 
     ws.addEventListener("message", (ev) => {
       try {

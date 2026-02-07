@@ -10,6 +10,21 @@ import { logger } from "./logger";
  * Handle new WebSocket connection.
  */
 export function handleOpen(ws: ServerWebSocket<WSData>) {
+  // If not authenticated, set an auth timeout and wait for auth handshake message
+  if (!ws.data.authenticated) {
+    const authTimeout = setTimeout(() => {
+      try {
+        ws.send(JSON.stringify({ type: 'error', message: 'Authentication required' }));
+      } catch {}
+      try {
+        ws.close();
+      } catch {}
+    }, 5000) as unknown as number;
+    ws.data.authTimeoutId = authTimeout;
+    ws.data.lastSeen = Date.now();
+    return;
+  }
+
   addSocket(ws.data.userId, ws);
   logger.info("WebSocket connected", { userId: ws.data.userId });
 
@@ -44,6 +59,53 @@ export async function handleMessage(ws: ServerWebSocket<WSData>, message: string
   const userId = ws.data.userId;
   const size = getMessageSize(message);
   
+  // If not authenticated, only accept auth handshake messages
+  if (!ws.data.authenticated) {
+    try {
+      const raw = typeof message === 'string' ? message : new TextDecoder().decode(message as Uint8Array);
+      const parsed = JSON.parse(raw);
+      if (parsed?.type === 'auth' && typeof parsed.token === 'string') {
+        // validate token
+        try {
+          const decoded = (await import('@modheshwari/utils/jwt')).verifyJWT(parsed.token);
+          const authUserId = decoded?.id || decoded?.userId;
+          if (!authUserId) {
+            ws.send(JSON.stringify({ type: 'error', message: 'Invalid token' }));
+            ws.close();
+            return;
+          }
+          // clear auth timeout
+          if (ws.data.authTimeoutId) clearTimeout(ws.data.authTimeoutId);
+          ws.data.userId = authUserId;
+          ws.data.authenticated = true;
+          // register socket and start heartbeat
+          addSocket(ws.data.userId, ws);
+          ws.send(JSON.stringify({ type: 'connected', userId: ws.data.userId }));
+          ws.data.lastSeen = Date.now();
+          const heartbeatId = setInterval(() => {
+            const now = Date.now();
+            if (now - ws.data.lastSeen > CONNECTION_TIMEOUT) {
+              try { ws.close(); } catch {}
+              return;
+            }
+            try { ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() })); } catch {}
+          }, HEARTBEAT_INTERVAL) as unknown as number;
+          ws.data.heartbeatId = heartbeatId;
+        } catch (e) {
+          try { ws.send(JSON.stringify({ type: 'error', message: 'Authentication failed' })); } catch {}
+          try { ws.close(); } catch {}
+        }
+      } else {
+        try { ws.send(JSON.stringify({ type: 'error', message: 'Authentication required' })); } catch {}
+        try { ws.close(); } catch {}
+      }
+    } catch (err) {
+      try { ws.send(JSON.stringify({ type: 'error', message: 'Invalid auth message' })); } catch {}
+      try { ws.close(); } catch {}
+    }
+    return;
+  }
+
   if (!checkRateLimit(userId)) {
     try {
       ws.send(JSON.stringify({ type: "error", message: "Rate limit exceeded" }));
