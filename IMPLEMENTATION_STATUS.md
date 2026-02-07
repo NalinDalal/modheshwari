@@ -176,6 +176,26 @@
 - ✅ **Redis caching for fan-out**: Implemented optional Redis-based caching in the fan-out path to reduce DB load during large broadcasts. When enabled (`NOTIFICATION_CACHE=true`) the fanout consumer/worker caches per-user notifications into Redis lists `notifications:{userId}` (RPUSH) with a TTL controlled by `NOTIFICATION_CACHE_TTL_SECONDS` (default 7 days). The Kafka routing event is still emitted so channel workers continue to operate. A persistence/drain worker is recommended to reliably persist cached notifications to the DB.
 - **Env vars introduced:** `NOTIFICATION_CACHE`, `REDIS_URL`, `NOTIFICATION_CACHE_TTL_SECONDS`.
 
+## Update: Notifications UI, WebSocket tuning & Phone verification (Feb 7, 2026)
+
+- **What we added today:** UX and runtime changes to make notifications composable, previewable, and realtime-friendly, plus a lightweight phone verification API and UI.
+  - Admin notification composer with **priority selector**, **channel chooser** (IN_APP / EMAIL / PUSH / SMS), **target role** selector, and **preview before send** (`apps/web/app/admin/notifications/page.tsx`).
+  - Notifications listing page with **WebSocket live updates** so new notifications and updates appear without page refresh (`apps/web/app/notifications/page.tsx`).
+  - WebSocket auth convenience: browser clients can now pass JWT via `?token=` query param for WS upgrades (temporary, see notes) — change in `apps/ws/utils.ts`.
+  - Phone verification: added `POST /api/phone/verify` for local format validation and a small interactive UI at `/phone/verify` that normalizes input to E.164 and persists the profile on success (`apps/be/routes/phone.ts`, `apps/web/app/phone/verify/page.tsx`).
+
+- **Why this matters:**
+  - Admins can craft richer notifications and preview them before broadcasting, reducing mistakes and enabling multi-channel targeting.
+  - Users receive notifications in real-time, improving engagement and lowering poll/refresh load.
+  - Phone normalization UI + API reduces invalid phone inputs and centralizes E.164 storage for downstream flows (OTP, SMS delivery).
+
+- **Follow-ups / TODOs created:**
+  - Implement SMS OTP send/verify endpoints and UI (pluggable providers) — added to backlog as high-priority for phone ownership verification.
+  - Harden WS auth (issue short-lived WS tokens instead of passing full JWT via query string).
+  - Wire server-side notification events to emit `notification:new` and `notification:update` messages to WS channels (if not already wired) for immediate client delivery.
+
+**Notes:** the phone verify API currently performs local validation (libphonenumber-js). For production ownership verification, implement SMS OTP or integrate a provider (Twilio Verify / MessageBird). The WebSocket `?token=` behavior is a pragmatic dev convenience and should be replaced with a secure handshake token before production roll-out.
+
 ### Messaging System (WebSocket)
 
 - ✅ **WebSocket Server** - Separate server in `apps/ws/index.ts` (Jan 30, 2026)
@@ -307,13 +327,6 @@
 ---
 
 ## ❌ NOT IMPLEMENTED (0%)
-
-### Hindu Calendar Integration
-
-- No calendar data model
-- No API endpoints
-- No frontend component
-- **Effort:** 1 week
 
 ### Event Pass Generation with QR Codes
 

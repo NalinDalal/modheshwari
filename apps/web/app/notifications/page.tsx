@@ -1,17 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 /**
  * Single notification item returned from backend.
  */
 interface Notification {
-  id: string;
-  type: string;
+  id?: string;
+  previewId?: string;
+  type?: string;
   message: string;
   createdAt: string;
-  read: boolean;
+  read?: boolean;
 }
 
 /**
@@ -75,6 +76,32 @@ export default function NotificationsPage(): React.ReactElement {
     void fetchNotifications();
   }, []);
 
+  const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    const token = getToken();
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsUrl = `${proto}://${window.location.hostname}:3002/?token=${encodeURIComponent(token || "")}`;
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+    ws.addEventListener("message", (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data.type === "notification") {
+          const incoming = data.notification as Notification;
+          upsertNotification(incoming);
+        }
+      } catch (err) {
+        console.error("WS parse error", err);
+      }
+    });
+
+    return () => {
+      ws.close();
+      wsRef.current = null;
+    };
+  }, []);
+
   /**
    * Fetch currently authenticated user.
    */
@@ -117,10 +144,58 @@ export default function NotificationsPage(): React.ReactElement {
       if (!res.ok) return;
 
       const js = await res.json();
-      setNotifications(js.data?.notifications ?? []);
+      const fetched: Notification[] = js.data?.notifications ?? [];
+      // Merge fetched persisted notifications with any in-memory previews
+      setNotifications((prev) => mergePersisted(prev, fetched));
     } catch (err) {
       console.error("Failed to fetch notifications", err);
     }
+  }
+
+  function upsertNotification(incoming: Notification) {
+    setNotifications((prev) => {
+      // if incoming has id (persisted)
+      if (incoming.id) {
+        // replace any preview with same previewId
+        const byPreview = incoming.previewId
+          ? prev.findIndex((p) => p.previewId === incoming.previewId)
+          : -1;
+        if (byPreview >= 0) {
+          const next = [...prev];
+          next[byPreview] = { ...incoming };
+          return next;
+        }
+        // if already exists by id, ignore
+        if (prev.some((p) => p.id === incoming.id)) return prev;
+        // prepend persisted
+        return [{ ...incoming }, ...prev];
+      }
+
+      // incoming is a preview (no id)
+      if (incoming.previewId) {
+        if (prev.some((p) => p.previewId === incoming.previewId)) return prev;
+        return [{ ...incoming }, ...prev];
+      }
+
+      // fallback: dedupe by message+createdAt
+      if (prev.some((p) => p.message === incoming.message && p.createdAt === incoming.createdAt)) return prev;
+      return [{ ...incoming }, ...prev];
+    });
+  }
+
+  function mergePersisted(prev: Notification[], fetched: Notification[]) {
+    // Start with persisted list, but ensure any existing previews that match by previewId are replaced
+    const next = [...fetched];
+    const previewMap = new Map<string, Notification>();
+    for (const p of prev) {
+      if (p.previewId) previewMap.set(p.previewId, p);
+    }
+    // prepend any previews that don't match fetched items
+    for (const [previewId, p] of previewMap.entries()) {
+      const exists = next.some((n) => n.previewId === previewId || n.message === p.message && n.createdAt === p.createdAt);
+      if (!exists) next.unshift(p);
+    }
+    return next;
   }
 
   /**

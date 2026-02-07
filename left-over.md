@@ -160,11 +160,4 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 - ❌ = Not Started
 
 ---
-
-Add priority selector, channel chooser, preview before sending
-
-WebSocket(new server in apps) to refresh notifications without page reload
-
----
-
 blend [this](https://patterncraft.fun/) into ui

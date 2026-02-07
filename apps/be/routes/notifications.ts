@@ -4,6 +4,10 @@ import { Role, NotificationType, NotificationChannel } from "@prisma/client";
 
 import { requireAuth } from "./authMiddleware";
 import { broadcastNotification } from "../kafka/notification-producer";
+import { randomUUID } from "crypto";
+import getRedisClient from "../lib/redisClient";
+
+const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
 /**
  * Shape of create notification request body
@@ -180,6 +184,24 @@ export async function handleCreateNotification(req: Request) {
       senderId,
       priority,
     });
+
+    // If IN_APP channel requested, publish lightweight realtime preview events to Redis
+    // so WS subscribers can receive an immediate preview before DB persistence.
+    if (channels.includes(NotificationChannel.IN_APP)) {
+      try {
+        const redis = await getRedisClient();
+        const now = new Date().toISOString();
+        // use a stable previewId so clients can dedupe/replace when persisted arrives
+        const previewId = randomUUID();
+        for (const u of users) {
+          const payload = JSON.stringify({ recipientId: u.id, notification: { previewId, message, subject: subject ?? null, createdAt: now } });
+          // publish to channel `inapp:{userId}` which ws redis-sub listens for via pSubscribe
+          await redis.publish(`inapp:${u.id}`, payload);
+        }
+      } catch (err) {
+        console.warn("Realtime publish failed", err instanceof Error ? err.message : String(err));
+      }
+    }
 
     return success(
       "Notifications queued for delivery",
