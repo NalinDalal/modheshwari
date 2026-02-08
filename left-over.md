@@ -119,7 +119,7 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 | User Management     | ✅    | ✅  | ✅       | Complete              |
 | Family Management   | ✅    | ✅  | ✅       | Complete              |
 | Resource Requests   | ✅    | ✅  | ✅       | Complete              |
-| Event Management    | ✅    | ⚠️  | ❌       | Partial               |
+| Event Management    | ✅    | ✅  | ✅       | Partial               |
 | Payments            | ⚠️    | ❌  | ❌       | Scaffolding           |
 | Events QR Codes     | ❌    | ❌  | ❌       | Not Started           |
 | Calendar            | ✅    | ✅  | ✅       | Complete              |

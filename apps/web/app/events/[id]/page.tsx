@@ -31,6 +31,38 @@ interface EventDetails {
     name: string;
     email: string;
   };
+
+  const handleModeration = async (status: "APPROVED" | "REJECTED") => {
+    if (!token) return alert("You must be signed in as an admin to moderate.");
+
+    setModerating(true);
+    try {
+      const res = await fetch(`${API_BASE}/events/${eventId}/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status, remarks: moderationRemarks }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to record moderation");
+      }
+
+      // Refresh event to reflect new status/approvals
+      setModerationRemarks("");
+      await fetchEvent();
+      alert(`Moderation recorded: ${status}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(msg || "Moderation failed");
+    } finally {
+      setModerating(false);
+    }
+  };
   approvals: Array<{
     id: string;
     status: string;
@@ -70,10 +102,13 @@ export default function EventDetailsPage() {
   const [hydrated, setHydrated] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [event, setEvent] = useState<EventDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [moderating, setModerating] = useState(false);
+  const [moderationRemarks, setModerationRemarks] = useState("");
 
   const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
@@ -90,6 +125,7 @@ export default function EventDetailsPage() {
         if (parts.length >= 2) {
           const payload = JSON.parse(atob(parts[1]!));
           setUserId(payload.userId || payload.id);
+          setUserRole(payload.role || payload.userRole || null);
         }
       } catch (err) {
         console.error("Failed to decode token:", err);
@@ -235,6 +271,11 @@ export default function EventDetailsPage() {
       minute: "2-digit",
     });
   };
+
+  const isAdmin = !!(
+    userRole &&
+    ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"].includes(userRole)
+  );
 
   if (hydrated && !token) return <NotAuthenticated />;
   if (!hydrated) return null;
@@ -430,6 +471,72 @@ export default function EventDetailsPage() {
                   </span>
                 </div>
               ))}
+            </div>
+          </motion.div>
+        )}
+        {/* Moderation Area - visible to admins */}
+        {isAdmin && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="mt-6 bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-6"
+          >
+            <h2 className="text-lg font-semibold mb-3">Moderation</h2>
+            <p className="text-sm text-gray-400 mb-4">
+              You can approve or reject this event, or suggest changes. Your
+              action will be recorded.
+            </p>
+
+            <textarea
+              value={moderationRemarks}
+              onChange={(e) => setModerationRemarks(e.target.value)}
+              placeholder="Optional remarks / suggested changes"
+              className="w-full min-h-[80px] p-3 rounded-md bg-white/5 border border-white/10 text-sm text-gray-200 mb-4"
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleModeration("APPROVED")}
+                disabled={moderating}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-60"
+              >
+                {moderating ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" /> Approving...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4" /> Approve
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => handleModeration("REJECTED")}
+                disabled={moderating}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
+              >
+                {moderating ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" /> Rejecting...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-4 h-4" /> Reject
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  const url = `/events/${event.id}/edit`;
+                  router.push(url);
+                }}
+                className="px-4 py-2 bg-white/5 text-sm rounded-lg border border-white/10 text-gray-200 hover:bg-white/7"
+              >
+                Suggest Changes
+              </button>
             </div>
           </motion.div>
         )}

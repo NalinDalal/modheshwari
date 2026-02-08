@@ -375,6 +375,39 @@ API → broadcastNotification(strategy, priority)
 - **Env vars:** `NOTIFICATION_CACHE`, `REDIS_URL`, `NOTIFICATION_CACHE_TTL_SECONDS`.
 - **Impact on architecture:** Adds a short-lived Redis caching layer between fanout workers and persistent storage to absorb write spikes; improves fanout latency and reduces DB contention.
 
+## Update: Realtime & Redis refactor, AsyncAPI automation (Feb 8, 2026)
+
+- **Shared Redis client:** Introduced a shared Redis client singleton (`apps/be/lib/redisClient.ts`) and migrated the WebSocket subscriber, in-app worker, and backend preview publisher to use it. This reduces connection churn and improves reliability across services.
+
+- **Preview dedupe for in-app notifications:** When creating notifications the API now publishes lightweight in-app previews to Redis per-recipient and sets a short-lived preview marker key `notification_preview:{userId}:{previewId}` (TTL configurable via `NOTIFICATION_PREVIEW_TTL_SECONDS`, default 60s). The in-app worker skips publishing persisted in-app messages to recipients who have a recent preview marker, preventing duplicate deliveries.
+
+- **Client-side dedupe and merge:** The web client for notifications (`apps/web/app/notifications/page.tsx`) now upserts incoming preview messages (via WS) and merges them with persisted notifications fetched from the API. Previews contain a `previewId` allowing the client to replace previews with the persisted notification once it arrives.
+
+- **WebSocket auth handshake:** Hardened WS auth by removing permissive `?token=` acceptance. The server accepts unauthenticated upgrades but requires an initial `{type: 'auth', token: '<JWT>'}` handshake message within 5s; on successful validation the socket is registered. This avoids leaking tokens in URLs while remaining browser-compatible.
+
+- **Notification route changes:** The `POST /api/notifications` path now publishes per-recipient previews to Redis (when `IN_APP` channel is requested) and writes the preview markers. It still broadcasts to Kafka via `broadcastNotification()` so workers continue to process full delivery paths.
+
+- **AsyncAPI generation automation:** Added `packages/scripts/generate-asyncapi.ts` and an `asyncapi:gen` script to discover Kafka topics from `apps/be/kafka/config.ts` and emit a minimal `asyncapi.generated.yaml`. This is a first step to keep async contracts in source control; we can iteratively enrich payload schemas from TypeScript types.
+
+- **Deploy docs & CI:** Updated `deploy.md` to mention the separate WS & worker services, Redis/Kafka env vars (`REDIS_URL`, `KAFKA_BROKERS`), and the WS auth handshake behavior. Also added guidance to build/push `modheshwari-ws` in CI.
+
+- **Files touched (high-level):**
+  - Backend: `apps/be/lib/redisClient.ts`, `apps/be/routes/notifications.ts`, `apps/be/kafka/workers/in-app-worker.ts`, `apps/be/kafka/workers/fanout-worker.ts`
+  - WebSocket: `apps/ws/redis-sub.ts`, `apps/ws/server.ts`, `apps/ws/handlers.ts`, `apps/ws/utils.ts`
+  - Frontend: `apps/web/app/notifications/page.tsx`, `apps/web/app/chat/page.tsx`
+  - Docs/tools: `packages/scripts/generate-asyncapi.ts`, `package.json` (script), `deploy.md`, `IMPLEMENTATION_STATUS.md`
+
+- **Why this matters:**
+  - Reduces DB load and duplicate notifications during fan-out.
+  - Improves real-time delivery reliability across clustered WS servers.
+  - Hardens WS authentication to avoid token leakage while preserving browser compatibility.
+  - Starts automating AsyncAPI surface so Kafka topics and channels stay in sync with code.
+
+**Follow-ups:**
+- Implement persistence/drain worker to flush cached Redis notifications into the DB reliably (recommended when `NOTIFICATION_CACHE=true`).
+- Enrich AsyncAPI with concrete message schemas derived from TypeScript types used by Kafka producers.
+- Add a CI job to regenerate specs and either fail the build on diffs or open an automated PR with changes.
+
 ## What's Next?
 
 ### Planned Improvements
@@ -415,68 +448,6 @@ Pagination support has been added to the listed endpoints. The handlers parse `p
 - `apps/be/routes/search.ts` — `handleSearch` (default limit 20, max 100)
 
 Recommended next steps: add integration tests for these endpoints to validate pagination behaviour and include pagination examples in the API docs.
-
-
-
-
-
-## Quick Wins (Easy, High Impact)
-
-### 5. Medical Information Recording
-
-**Files to Create:**
-
-- [ ] Add `MedicalRecord` model to schema
-- [ ] `apps/be/routes/medical-records.ts`
-- [ ] `apps/web/app/medical/records/page.tsx`
-
-**Estimated Time:** 4-5 hours  
-**Impact:** Completes medical module
-
-
-
-### 5. Medical Information
-
-**Status:** Route file exists but incomplete
-
-**What's Working:**
-
-- ✅ Route file created: `apps/be/routes/medical.ts`
-- ✅ Status update for deceased workflow partially implemented
-
-**What's Missing:**
-
-- ❌ Medical history model
-- ❌ Blood type tracking
-- ❌ Allergies/conditions field
-- ❌ Medical records management
-- ❌ Complete API endpoints
-- ❌ Frontend UI
-
-**Database Models Needed:**
-
-```prisma
-model MedicalRecord {
-  id String @id @default(uuid())
-  user User @relation(fields: [userId], references: [id])
-  userId String
-  bloodType String?
-  allergies String?
-  conditions String?
-  medications String?
-  notes String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-```
-
-**Files to Complete:**
-
-- `apps/be/routes/medical.ts` (full implementation)
-- `apps/web/app/medical/page.tsx` (UI)
-
-**Estimated Effort:** 1-2 days
-
 ---
 
 **Last Updated:** February 6, 2026  
