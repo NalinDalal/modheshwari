@@ -1,12 +1,12 @@
 # Modheshwari - Complete Implementation Status
 
-**Last Updated:** February 2, 2026  
+**Last Updated:** February 7, 2026  
 **Total Completion:** ~88% of design doc  
-**Project Duration:** Oct 7, 2025 → Feb 2, 2026 (146 commits)
+**Project Duration:** Oct 7, 2025 → Feb 7, 2026 (177 commits)
 
 ---
 
-## 📅 DEVELOPMENT TIMELINE
+## DEVELOPMENT TIMELINE
 
 | Phase | Period | Major Milestones |
 |-------|--------|------------------|
@@ -178,23 +178,26 @@
 
 ## Update: Notifications UI, WebSocket tuning & Phone verification (Feb 7, 2026)
 
-- **What we added today:** UX and runtime changes to make notifications composable, previewable, and realtime-friendly, plus a lightweight phone verification API and UI.
+- **What we added today:** UX and runtime changes to make notifications composable, previewable, realtime-friendly, plus a lightweight phone verification API and UI.
   - Admin notification composer with **priority selector**, **channel chooser** (IN_APP / EMAIL / PUSH / SMS), **target role** selector, and **preview before send** (`apps/web/app/admin/notifications/page.tsx`).
   - Notifications listing page with **WebSocket live updates** so new notifications and updates appear without page refresh (`apps/web/app/notifications/page.tsx`).
-  - WebSocket auth convenience: browser clients can now pass JWT via `?token=` query param for WS upgrades (temporary, see notes) — change in `apps/ws/utils.ts`.
+  - Shared Redis client: backend services (WS subscriber, in-app worker, fanout worker path) now use a shared Redis client singleton to avoid connection churn and reduce latency (`apps/be/lib/redisClient.ts`).
+  - Server-side preview dedupe: previews now include a stable `previewId` (uses Kafka `eventId` when available) and the backend sets a per-recipient preview marker `notification_preview:{userId}:{previewId}` with a short TTL (env `NOTIFICATION_PREVIEW_TTL_SECONDS`, default 60s). Persisted in-app publishes skip recipients who recently received a preview to avoid duplicates (`apps/be/routes/notifications.ts`, `apps/be/kafka/workers/in-app-worker.ts`).
+  - WebSocket auth hardening: browser clients now perform an initial auth handshake message (`{type: 'auth', token}`) immediately after connecting; the server accepts unauthenticated upgrades but requires that message within 5s to register the socket. The `?token=` query param is deprecated and no longer accepted by `apps/ws/utils.ts`.
   - Phone verification: added `POST /api/phone/verify` for local format validation and a small interactive UI at `/phone/verify` that normalizes input to E.164 and persists the profile on success (`apps/be/routes/phone.ts`, `apps/web/app/phone/verify/page.tsx`).
 
 - **Why this matters:**
   - Admins can craft richer notifications and preview them before broadcasting, reducing mistakes and enabling multi-channel targeting.
   - Users receive notifications in real-time, improving engagement and lowering poll/refresh load.
-  - Phone normalization UI + API reduces invalid phone inputs and centralizes E.164 storage for downstream flows (OTP, SMS delivery).
+  - Shared Redis and server-side dedupe reduce duplicate deliveries and lower DB pressure during fan-outs.
+  - WebSocket auth handshake avoids leaking tokens in URLs and improves security posture while keeping browser compatibility.
 
 - **Follow-ups / TODOs created:**
   - Implement SMS OTP send/verify endpoints and UI (pluggable providers) — added to backlog as high-priority for phone ownership verification.
-  - Harden WS auth (issue short-lived WS tokens instead of passing full JWT via query string).
-  - Wire server-side notification events to emit `notification:new` and `notification:update` messages to WS channels (if not already wired) for immediate client delivery.
+  - Implement persistence/drain worker to flush cached Redis notifications into the DB reliably (recommended when `NOTIFICATION_CACHE=true`).
+  - Add server-side token revocation checks / blacklist during WS auth and rotate short-lived handshake tokens.
 
-**Notes:** the phone verify API currently performs local validation (libphonenumber-js). For production ownership verification, implement SMS OTP or integrate a provider (Twilio Verify / MessageBird). The WebSocket `?token=` behavior is a pragmatic dev convenience and should be replaced with a secure handshake token before production roll-out.
+**Notes:** the phone verify API currently performs local validation (libphonenumber-js). For production ownership verification, implement SMS OTP or integrate a provider (Twilio Verify / MessageBird). The WebSocket `?token=` behavior has been removed; clients should perform the auth handshake or use HttpOnly cookies for upgrade authentication in production.
 
 ### Messaging System (WebSocket)
 
@@ -314,8 +317,7 @@
 
 - ✅ WebSocket server exists (`apps/ws/index.ts`)
 - ✅ Server can handle connections
-- ⚠️ **Missing:** Redis Pub/Sub integration for clustering, subscription to notification channel
-- **Effort:** 1-2 hours to complete
+- ✅ Redis Pub/Sub integration for clustered real-time delivery (`apps/ws/redis-sub.ts`, shared client `apps/be/lib/redisClient.ts`)
 
 ### Notification Preferences UI
 

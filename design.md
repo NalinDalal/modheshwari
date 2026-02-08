@@ -102,7 +102,7 @@ graph TB
 
 ### 3.1 Functional Requirements
 
-#### FR1: User Management - done
+#### FR1: User Management
 
 - User registration, login, and logout
 - Profile creation and updates
@@ -110,7 +110,7 @@ graph TB
 - Role-based access control
 - User preferences and settings
 
-#### FR2: Family Management - done
+#### FR2: Family Management
 
 - Family creation with unique family ID
 - Member invitation and onboarding

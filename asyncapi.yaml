@@ -1,32 +1,40 @@
 asyncapi: 3.0.0
 info:
-  title: Modheshwari WebSocket API
+  title: Modheshwari Real-time API
   version: 1.0.0
   description: |
-    Real-time WebSocket API for notifications, chat messaging, typing indicators, and read receipts.
+    Complete real-time API specification covering:
+    - **Kafka Topics**: Event-driven messaging for backend services
+    - **WebSocket API**: Real-time client connections for notifications, chat, typing indicators, and read receipts
     
-    **Authentication**: Pass JWT token via query parameter: `?token=<your-jwt>`
-    
-    **Connection URL**: `ws://localhost:3002/?token=<jwt>` or `wss://ws.modheshwari.com/?token=<jwt>`
-    
+    **WebSocket Authentication**: Pass JWT token via query parameter: `?token=<your-jwt>`
+    **WebSocket URL**: `ws://localhost:3002/?token=<jwt>` or `wss://ws.modheshwari.com/?token=<jwt>`
     **Rate Limits**: 100 messages per minute per user
     **Message Size**: Max 1MB per message
     **Heartbeat**: Server sends ping every 30s, connection times out after 60s inactivity
 
 servers:
-  production:
+  kafka:
+    host: ${KAFKA_BROKERS}
+    protocol: kafka
+    description: Kafka brokers (comma-separated). Provide via env `KAFKA_BROKERS`.
+  websocket-production:
     host: ws.modheshwari.com
     protocol: wss
     description: Production WebSocket server
-  development:
+  websocket-development:
     host: localhost:3002
     protocol: ws
-    description: Local development server
+    description: Local development WebSocket server
 
 channels:
-  root:
+  # WebSocket Channel
+  websocket-root:
     address: /
-    description: Main WebSocket connection endpoint
+    description: Main WebSocket connection endpoint for real-time client communication
+    servers:
+      - $ref: '#/servers/websocket-production'
+      - $ref: '#/servers/websocket-development'
     messages:
       connected:
         $ref: '#/components/messages/Connected'
@@ -51,11 +59,22 @@ channels:
       error:
         $ref: '#/components/messages/Error'
 
+  # Kafka Channels - Auto-generated section (will be populated by script)
+  # Add your Kafka topic channels here following this pattern:
+  # kafka-notifications:
+  #   address: notifications.events
+  #   servers:
+  #     - $ref: '#/servers/kafka'
+  #   messages:
+  #     notificationEvent:
+  #       $ref: '#/components/messages/NotificationEvent'
+
 operations:
+  # WebSocket Operations (Client-Server Communication)
   onConnect:
     action: receive
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Client connects to WebSocket
     description: Client establishes WebSocket connection with JWT authentication
     messages:
@@ -64,7 +83,7 @@ operations:
   receiveNotification:
     action: receive
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Receive push notification
     description: Server pushes real-time notifications from Kafka to connected clients
     messages:
@@ -73,7 +92,7 @@ operations:
   sendChatMessage:
     action: send
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Send chat message
     description: Client sends a chat message to a conversation
     messages:
@@ -82,7 +101,7 @@ operations:
   receiveChatMessage:
     action: receive
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Receive chat message
     description: Server broadcasts chat message to conversation participants
     messages:
@@ -91,7 +110,7 @@ operations:
   receiveChatAck:
     action: receive
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Receive chat acknowledgment
     description: Server acknowledges sent message with server-generated ID
     messages:
@@ -100,7 +119,7 @@ operations:
   sendTyping:
     action: send
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Send typing indicator
     description: Client indicates typing status in a conversation
     messages:
@@ -109,7 +128,7 @@ operations:
   receiveTyping:
     action: receive
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Receive typing indicator
     description: Server broadcasts typing status to conversation participants
     messages:
@@ -118,7 +137,7 @@ operations:
   sendReadReceipt:
     action: send
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Mark messages as read
     description: Client marks one or more messages as read
     messages:
@@ -127,7 +146,7 @@ operations:
   receiveReadReceipt:
     action: receive
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Receive read receipt
     description: Server broadcasts read receipt to conversation participants
     messages:
@@ -136,7 +155,7 @@ operations:
   receivePing:
     action: receive
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Receive heartbeat ping
     description: Server sends periodic ping to keep connection alive
     messages:
@@ -145,7 +164,7 @@ operations:
   receiveError:
     action: receive
     channel:
-      $ref: '#/channels/root'
+      $ref: '#/channels/websocket-root'
     summary: Receive error message
     description: Server sends error message for invalid requests or rate limit violations
     messages:
@@ -153,6 +172,7 @@ operations:
 
 components:
   messages:
+    # WebSocket Messages
     Connected:
       name: Connected
       title: Connection Established
@@ -164,7 +184,7 @@ components:
     Notification:
       name: Notification
       title: Push Notification
-      summary: Real-time notification pushed from Kafka
+      summary: Real-time notification pushed from Kafka to WebSocket clients
       contentType: application/json
       payload:
         $ref: '#/components/schemas/NotificationPayload'
@@ -241,7 +261,11 @@ components:
       payload:
         $ref: '#/components/schemas/ErrorPayload'
 
+    # Kafka Messages - Auto-generated section
+    # Your script will add Kafka message definitions here
+
   schemas:
+    # WebSocket Payload Schemas
     ConnectedPayload:
       type: object
       properties:
@@ -467,3 +491,9 @@ components:
       required:
         - type
         - message
+
+    # Generic schema for Kafka messages
+    GenericMessage:
+      type: object
+      additionalProperties: true
+      description: Generic payload schema for auto-generated Kafka topics

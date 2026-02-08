@@ -11,6 +11,7 @@
     "check-types": "bunx turbo run check-types",
     "docs:gen": "bun run packages/scripts/generate-docs.ts",
     "openapi:gen": "bun run packages/scripts/generate-openapi.ts",
+    "asyncapi:gen": "bun run packages/scripts/generate-asyncapi.ts",
     "db:seed": "tsx packages/db/seed.ts",
     "stress-test": "bash ./scripts/run-stress-test.sh"
   },

@@ -1,19 +1,33 @@
-# Modheshwari — Remaining Implementation Tasks
+# Modheshwari — Remaining Tasks
+### 1. Prod Hardening
 
-## Table of Contents
+Implement a drain/persistence worker to flush Redis-cached notifications to the DB reliably.
 
-1. [Not Implemented (0% Complete)](#not-implemented-0-complete)
-2. [Partially Implemented / Scaffolding (25-50% Complete)](#partially-implemented--scaffolding-25-50-complete)
-3. [High Effort / v2 Features](#high-effort--v2-features)
+Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verification.
 
----
+### 2. Event Management Features
 
-## Not Implemented (0% Complete)
+**API Endpoints:**
 
-### 2. Event Pass Generation with QR Codes
+- `POST /api/events` - Create event
+- `GET /api/events` - List events (with status filter)
+- `GET /api/events/:id` - Get event details
+- `POST /api/events/:id/register` - Register for event
+- `DELETE /api/events/:id/register` - Unregister from event
+- `GET /api/events/:id/registrations` - List registrations (admin only)
+- `POST /api/events/:id/approve` - Approve/reject event (admin only)
 
-**Requirement:** FR4 in design doc  
-**Expected:** Generate unique QR codes for event registrations, send as PDF on mail upon confirmation
+
+### 3. Event Pass Generation with QR Codes
+
+**Requirement:** 
+- QR code generation library
+- PDF generation
+- S3 storage
+- Pass delivery system
+- QR scanning at events
+
+**Expected:** Generate unique QR codes for event registrations, send as PDF on mail upon confirmation, when events are for community or subcommunity
 
 **What's Missing:**
 
@@ -34,29 +48,9 @@
 - PDF generation library (e.g., `pdfkit`)
 - S3 client configuration
 
-**Estimated Effort:** 3-4 days
+**Estimated Effort:** 4-5 days
 
-Implement a drain/persistence worker to flush Redis-cached notifications to the DB reliably.
-
-Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verification.
-
----
-
-## Partially Implemented / Scaffolding (25-50% Complete)
-
-### 1. Event Management Features
-
-**API Endpoints:**
-
-- `POST /api/events` - Create event
-- `GET /api/events` - List events (with status filter)
-- `GET /api/events/:id` - Get event details
-- `POST /api/events/:id/register` - Register for event
-- `DELETE /api/events/:id/register` - Unregister from event
-- `GET /api/events/:id/registrations` - List registrations (admin only)
-- `POST /api/events/:id/approve` - Approve/reject event (admin only)
-
-### 2. Payment Gateway Integration
+### 4. Payment Gateway Integration
 
 **Status:** Model scaffolded, no actual processing
 
@@ -65,12 +59,11 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 - ✅ Payment model in database
 - ✅ Payment status tracking
 
-- Razorpay (good for India)
-- BHIM UPI
+- [Razorpay](https://razorpay.com/docs/#home-payments)
 
 **What's Missing:**
 
-- ❌ Payment gateway integration (Stripe/Razorpay/etc.)
+- ❌ Payment gateway integration (Razorpay)
 - ❌ Payment processing API
 - ❌ Webhook handlers for payment notifications
 - ❌ Payment UI/checkout form
@@ -95,26 +88,7 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 **Estimated Time:** 3-4 days  
 **Impact:** Enables paid events
 
----
-
-## High Effort / v2 Features
-
-### 3. QR Code Pass Generation
-
-**Requirements:**
-
-- QR code generation library
-- PDF generation
-- S3 storage
-- Pass delivery system
-- QR scanning at events
-
-**Estimated Time:** 4-5 days  
-**Impact:** Professional event management
-
----
-
-### 4. Full-Text Search with Elasticsearch
+### 5. Full-Text Search with Elasticsearch
 
 **Requirements:**
 
@@ -126,6 +100,15 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 
 **Estimated Time:** 1 week  
 **Impact:** Production-grade search
+
+
+
+
+
+
+### 6. UI Refactor
+
+- Refactor ui to [this](https://patterncraft.fun/)
 
 ---
 
@@ -139,25 +122,18 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 | Event Management    | ✅    | ⚠️  | ❌       | Partial               |
 | Payments            | ⚠️    | ❌  | ❌       | Scaffolding           |
 | Events QR Codes     | ❌    | ❌  | ❌       | Not Started           |
-| Forums              | ❌    | ❌  | ❌       | Not Started           |
-| Polls               | ❌    | ❌  | ❌       | Not Started           |
 | Calendar            | ✅    | ✅  | ✅       | Complete              |
-| Location Services   | ✅    | ✅  | ❌       | Complete              |
-| Family Tree         | ✅    | ✅  | ⚠️       | Mostly Done           |
-| User Relations      | ✅    | ❌  | ❌       | Schema Only           |
+| Location Services   | ✅    | ✅  | ✅       | Complete              |
+| Family Tree         | ✅    | ✅  | ✅       | Complete           |
+| User Relations      | ✅    | ✅  | ✅       | Complete           |
 | Profiles            | ✅    | ✅  | ✅       | Complete (via search) |
-| Medical Info        | ✅    | ✅  | ❌       | Partial               |
-| Notifications       | ✅    | ⚠️  | ⚠️       | 70% - Needs Workers   |
+| Medical Info        | ✅    | ✅  | ✅       | Complete               |
+| Notifications       | ✅    | ✅  | ✅       | Complete   |
 | Advanced Search     | ✅    | ✅  | ❌       | Partial               |
-| WebSocket/Real-Time | ✅    | ⚠️  | ❌       | Needs Redis           |
-
----
+| WebSocket/Real-Time | ✅    | ✅  | ✅       | Complete           |
 
 **Legend:**
 
 - ✅ = Complete & Working
 - ⚠️ = Partial / Scaffolding
 - ❌ = Not Started
-
----
-blend [this](https://patterncraft.fun/) into ui
