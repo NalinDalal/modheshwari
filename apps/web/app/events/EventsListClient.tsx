@@ -29,12 +29,22 @@ type Event = {
   createdAt: string;
 };
 
-const fetcher = async (url: string) => {
+const fetcher = /**
+ * Executes fetcher operation.
+ * @param {string} url - Description of url
+ * @returns {Promise<any>} Description of return value
+ */
+async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch");
   return res.json();
 };
 
+/**
+ * Performs  events list client operation.
+ * @param {{ initialData: Event[]; }} { initialData } - Description of { initialData }
+ * @returns {any} Description of return value
+ */
 export default function EventsListClient({ initialData }: { initialData: Event[] }) {
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
