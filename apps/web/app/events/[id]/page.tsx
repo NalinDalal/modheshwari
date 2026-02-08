@@ -31,38 +31,6 @@ interface EventDetails {
     name: string;
     email: string;
   };
-
-  const handleModeration = async (status: "APPROVED" | "REJECTED") => {
-    if (!token) return alert("You must be signed in as an admin to moderate.");
-
-    setModerating(true);
-    try {
-      const res = await fetch(`${API_BASE}/events/${eventId}/approve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status, remarks: moderationRemarks }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to record moderation");
-      }
-
-      // Refresh event to reflect new status/approvals
-      setModerationRemarks("");
-      await fetchEvent();
-      alert(`Moderation recorded: ${status}`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      alert(msg || "Moderation failed");
-    } finally {
-      setModerating(false);
-    }
-  };
   approvals: Array<{
     id: string;
     status: string;
@@ -270,6 +238,38 @@ export default function EventDetailsPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleModeration = async (status: "APPROVED" | "REJECTED") => {
+    if (!token) return alert("You must be signed in as an admin to moderate.");
+
+    setModerating(true);
+    try {
+      const res = await fetch(`${API_BASE}/events/${eventId}/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status, remarks: moderationRemarks }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to record moderation");
+      }
+
+      // Refresh event to reflect new status/approvals
+      setModerationRemarks("");
+      await fetchEvent();
+      alert(`Moderation recorded: ${status}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(msg || "Moderation failed");
+    } finally {
+      setModerating(false);
+    }
   };
 
   const isAdmin = !!(
