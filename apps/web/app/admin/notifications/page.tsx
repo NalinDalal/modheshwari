@@ -7,6 +7,10 @@ const CHANNELS = ["IN_APP", "EMAIL", "SMS", "PUSH"] as const;
 const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
 const ROLES = ["COMMUNITY_HEAD","COMMUNITY_SUBHEAD","GOTRA_HEAD","FAMILY_HEAD","MEMBER"] as const;
 
+/**
+ * Performs  admin notifications operation.
+ * @returns {any} Description of return value
+ */
 export default function AdminNotifications() {
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
