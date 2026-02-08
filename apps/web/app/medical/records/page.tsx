@@ -13,6 +13,10 @@ type MedicalRecord = {
   createdAt: string;
 };
 
+/**
+ * Performs  medical records page operation.
+ * @returns {any} Description of return value
+ */
 export default function MedicalRecordsPage() {
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(false);
