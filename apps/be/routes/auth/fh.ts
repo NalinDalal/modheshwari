@@ -57,6 +57,16 @@ export async function handleFHLogin(
         401,
       );
 
+    // --- Block login if user is marked deceased/inactive ---
+    // `status` is a boolean in the Prisma `User` model (true = alive, false = deceased)
+    if (user.status === false) {
+      return failure(
+        "Account is inactive or marked deceased",
+        "Unauthorized",
+        403,
+      );
+    }
+
     // --- Compare password with stored hash ---
     const valid = await comparePassword(password, user.password);
     if (!valid) {

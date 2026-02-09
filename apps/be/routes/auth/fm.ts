@@ -58,6 +58,16 @@ export async function handleMemberLogin(req: Request) {
         403,
       );
 
+      // --- Block login if user is marked deceased/inactive ---
+    // `status` is a boolean in the Prisma `User` model (true = alive, false = deceased)
+    if (user.status === false) {
+      return failure(
+        "Account is inactive or marked deceased",
+        "Unauthorized",
+        403,
+      );
+    }
+    
     // --- Step 3: Verify password ---
     const isValid = await comparePassword(password, user.password);
     if (!isValid)

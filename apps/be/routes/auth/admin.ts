@@ -148,6 +148,9 @@ export async function handleAdminLogin(
     const user = await prisma.user.findFirst({
       where: { email, role: prismaRole },
     });
+
+    
+
     if (!user)
       return failure("User not found or role mismatch", "Unauthorized", 401);
 
