@@ -1,4 +1,5 @@
 # Modheshwari — Remaining Tasks
+
 ### 1. Prod Hardening
 
 Implement a drain/persistence worker to flush Redis-cached notifications to the DB reliably.
@@ -16,7 +17,6 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 - `DELETE /api/events/:id/register` - Unregister from event
 - `GET /api/events/:id/registrations` - List registrations (admin only)
 - `POST /api/events/:id/approve` - Approve/reject event (admin only)
-
 
 ### 3. Event Pass Generation with QR Codes
 
@@ -101,11 +101,6 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 **Estimated Time:** 1 week  
 **Impact:** Production-grade search
 
-
-
-
-
-
 ### 6. UI Refactor
 
 - Refactor ui to [this](https://patterncraft.fun/)
@@ -124,16 +119,17 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 | Events QR Codes     | ❌    | ❌  | ❌       | Not Started           |
 | Calendar            | ✅    | ✅  | ✅       | Complete              |
 | Location Services   | ✅    | ✅  | ✅       | Complete              |
-| Family Tree         | ✅    | ✅  | ✅       | Complete           |
-| User Relations      | ✅    | ✅  | ✅       | Complete           |
+| Family Tree         | ✅    | ✅  | ✅       | Complete              |
+| User Relations      | ✅    | ✅  | ✅       | Complete              |
 | Profiles            | ✅    | ✅  | ✅       | Complete (via search) |
-| Medical Info        | ✅    | ✅  | ✅       | Complete               |
-| Notifications       | ✅    | ✅  | ✅       | Complete   |
+| Medical Info        | ✅    | ✅  | ✅       | Complete              |
+| Notifications       | ✅    | ✅  | ✅       | Complete              |
 | Advanced Search     | ✅    | ✅  | ❌       | Partial               |
-| WebSocket/Real-Time | ✅    | ✅  | ✅       | Complete           |
+| WebSocket/Real-Time | ✅    | ✅  | ✅       | Complete              |
 
 **Legend:**
 
 - ✅ = Complete & Working
 - ⚠️ = Partial / Scaffolding
 - ❌ = Not Started
+

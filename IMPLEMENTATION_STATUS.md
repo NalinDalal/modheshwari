@@ -57,6 +57,11 @@
   - Location data stored with PostGIS support
   - Medical info: bloodGroup, allergies, medicalNotes
 
+- **Check User Status:**
+  - `GET /api/signin` call the db with the required email, fetches the users, checks the status
+  - if(user.status==='ALIVE'){allow to authenticate}
+    else{don't allow}
+
 ### Family Management
 
 - ✅ **Family Creation** - `POST /api/families` with unique family ID generation (Jan 4, 2026)
@@ -107,6 +112,8 @@
   - `GET /api/events/:id` - Get event details
   - `PATCH /api/events/:id` - Update event
   - `DELETE /api/events/:id` - Delete event
+
+  
 - ✅ **Event Approval Workflow:** (Jan 29, 2026)
   - Auto-generates approval records for all admins on event creation
   - `POST /api/events/:id/approve` - Admin approve/reject
@@ -198,6 +205,16 @@
   - Add server-side token revocation checks / blacklist during WS auth and rotate short-lived handshake tokens.
 
 **Notes:** the phone verify API currently performs local validation (libphonenumber-js). For production ownership verification, implement SMS OTP or integrate a provider (Twilio Verify / MessageBird). The WebSocket `?token=` behavior has been removed; clients should perform the auth handshake or use HttpOnly cookies for upgrade authentication in production.
+
+## Update: Feb 9, 2026
+
+- ✅ **Block login for deceased/inactive users:** Auth handlers now prevent login when a user's `status` is `false` (deceased/inactive). Implemented in family-head, member, and admin auth routes (`apps/be/routes/auth/fh.ts`, `apps/be/routes/auth/fm.ts`, `apps/be/routes/auth/admin.ts`) and return `403` with a clear message.
+- ✅ **Resource request approval emails:** When a `ResourceRequest` reaches `APPROVED`, the backend now creates the in-app notification (existing behavior) and also broadcasts an EMAIL notification event via Kafka so the email worker sends an approval email to the requester (`apps/be/routes/resourceReq.ts`, Kafka router -> `apps/be/kafka/workers/email.ts`).
+- ✅ **Documentation:** Added a pre-implementation checklist for admin-controlled event visibility to the Event Management section (`IMPLEMENTATION_STATUS.md`).
+
+Notes:
+- Email delivery uses the existing Kafka notification pipeline; ensure SMTP env vars (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SENDER_EMAIL`) are set in staging/production for real delivery.
+- Recommend adding unit/integration tests for auth blocking and notification enqueueing as a follow-up.
 
 ### Messaging System (WebSocket)
 
@@ -371,7 +388,7 @@
 | Payments              | Partial        | ✅       | ❌      | ❌       | 20%                   |
 | Hindu Calendar        | Not Started    | ❌       | ❌      | ❌       | 0%                    |
 | Forums                | Not Started    | ❌       | ❌      | ❌       | 0%                    |
-| **Overall**           | **88%**        | **96%**  | **94%** | **88%**  | **88%**               |
+| **Overall**           | **88%**        | **96%** | **94%** | **88%**  | **88%**               |
 
 ---
 

@@ -8,6 +8,7 @@ import {
 } from "@modheshwari/utils/pagination";
 
 import { requireAuth } from "./authMiddleware";
+import { broadcastNotification } from "../kafka/notification-producer";
 
 /* =========================================================
    CREATE RESOURCE REQUEST (RATE LIMITED)
@@ -295,7 +296,7 @@ export async function handleReviewResourceRequest(
       return failure("Invalid action", "Bad Request", 400);
     }
 
-    await prisma.$transaction(async (tx) => {
+    const reqRow = await prisma.$transaction(async (tx) => {
       const approval = await tx.resourceRequestApproval.findFirst({
         where: { requestId: id, approverId: reviewerId },
       });
@@ -351,7 +352,27 @@ export async function handleReviewResourceRequest(
           message: `Your resource request status changed to ${overall}`,
         },
       });
+      return reqRow;
     });
+
+    // If request is fully approved, also broadcast an email notification via Kafka
+    try {
+      if (reqRow && reqRow.status === "APPROVED") {
+        await broadcastNotification({
+          message: `Your resource request has been approved.`,
+          type: "RESOURCE_REQUEST",
+          channels: ["EMAIL", "IN_APP"],
+          subject: "Resource Request Approved",
+          recipientIds: [reqRow.userId],
+          senderId: reviewerId,
+          priority: "normal",
+          deliveryStrategy: "BROADCAST",
+          notificationPriority: "MEDIUM",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to broadcast approval notification:", err);
+    }
 
     return success("Review recorded", null, 200);
   } catch (err: any) {
