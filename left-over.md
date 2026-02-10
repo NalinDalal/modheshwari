@@ -8,8 +8,6 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 
 Regular Backups of data
 
-implement monitoring tools like grafana, prometheus, loki 
-
 ### 2. Event Management Features
 
 **API Endpoints:**

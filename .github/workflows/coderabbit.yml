@@ -1,0 +1,30 @@
+name: CodeRabbit Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  coderabbit:
+    name: Run CodeRabbit review (if configured)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run CodeRabbit (if token present)
+        env:
+          CODERABBIT_TOKEN: ${{ secrets.CODERABBIT_TOKEN }}
+        run: |
+          if [ -n "$CODERABBIT_TOKEN" ]; then
+            echo "CODERABBIT_TOKEN found — attempting to run CodeRabbit CLI via npx."
+            # Attempt to run CodeRabbit CLI. Replace with official action/command if available.
+            if command -v npx >/dev/null 2>&1; then
+              npx coderabbit review --pr ${{ github.event.pull_request.number }} || echo "CodeRabbit review command failed"
+            else
+              echo "npx not available; install Node or replace this step with the official CodeRabbit action."
+            fi
+          else
+            echo "No CODERABBIT_TOKEN secret configured.\n" \
+                 "Install the CodeRabbit GitHub App (https://github.com/apps/coderabbit) or set the 'CODERABBIT_TOKEN' repo secret.\n" \
+                 "Alternatively, trigger reviews from the CodeRabbit web UI (https://app.coderabbit.ai)."

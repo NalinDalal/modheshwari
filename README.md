@@ -79,3 +79,12 @@ This project is licensed under the [MIT License](LICENSE).
 
 users/head count 10-15k
 
+## Automated Reviews (CodeRabbit)
+
+- Install the CodeRabbit GitHub App for this repository: https://github.com/apps/coderabbit and authorize access.
+- Create a Pull Request on GitHub — CodeRabbit will automatically run a review and post comments/status to the PR when the app is installed.
+- Alternatively, trigger a review from the CodeRabbit web UI (https://app.coderabbit.ai) by selecting the `modheshwari` repo and choosing a branch or commit.
+- Review results appear as comments on the PR and in the CodeRabbit dashboard. To run reviews locally or from CI, use the CodeRabbit CLI or add their recommended GitHub Action to `.github/workflows/`.
+
+If you want, I can add a sample GitHub Action workflow to run CodeRabbit on PR events.
+

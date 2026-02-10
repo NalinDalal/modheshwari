@@ -212,6 +212,36 @@
 - ✅ **Resource request approval emails:** When a `ResourceRequest` reaches `APPROVED`, the backend now creates the in-app notification (existing behavior) and also broadcasts an EMAIL notification event via Kafka so the email worker sends an approval email to the requester (`apps/be/routes/resourceReq.ts`, Kafka router -> `apps/be/kafka/workers/email.ts`).
 - ✅ **Documentation:** Added a pre-implementation checklist for admin-controlled event visibility to the Event Management section (`IMPLEMENTATION_STATUS.md`).
 
+## Update: Feb 10, 2026
+
+- ✅ **Observability & Local Monitoring Stack:** Added a local monitoring stack and application instrumentation to improve visibility and debugging during development.
+  - `docker-compose.monitoring.yml` — Prometheus, Grafana, Alertmanager, Loki, Promtail provisioning and provisioning files added under `monitoring/`.
+  - Prometheus config (`monitoring/prometheus.yml`) with `alert.rules.yml` to detect backend down, high error rate, and high p95 latency.
+  - Alertmanager config (`monitoring/alertmanager.yml`) added with a placeholder PagerDuty receiver (`REPLACE_WITH_PAGERDUTY_INTEGRATION_KEY`) for easy integration.
+  - Grafana provisioning: datasources for Prometheus and Loki plus multiple pre-provisioned dashboards:
+    - `request-duration` (p95 histogram)
+    - `errors-and-rps` (error rate + request rate)
+    - `logs-overview` (Loki-based recent error logs)
+    - `backend-overview`, `latency-percentiles`, `top-endpoints` (richer metrics views)
+  - Promtail config (`monitoring/promtail-config.yml`) added to push container logs to Loki (note: path may need adjustment on macOS).
+
+- ✅ **Backend instrumentation & logging:** Improved app observability without changing runtime behavior.
+  - Added `prom-client` and `winston` to `apps/be/package.json`.
+  - `apps/be/lib/metrics.ts` — collects default metrics, exposes `http_request_duration_seconds` histogram, `http_requests_total` counter, and `errors_total` counter; `metricsHandler()` returns Prometheus text format.
+  - `apps/be/lib/logger.ts` — simple `winston` logger used by the backend.
+  - `/metrics` endpoint exposed in `apps/be/server/staticRoutes.ts` and metrics initialization wired in `apps/be/index.ts`.
+
+- ✅ **Developer ergonomics & compose fixes:**
+  - Adjusted `docker-compose.monitoring.yml` to map Grafana to host port `3005` (avoids conflict with frontend on `3000`).
+  - Fixed `docker-compose.kafka.yml`: removed host binding for `9093` (conflicted with Alertmanager), removed obsolete `version` key, and corrected a duplicate `services:` line introduced during edits.
+  - Verified local start: zookeeper, kafka, redis started; redis logs validated.
+
+- ⚠️ **Notes & Next Steps:**
+  - Router-level instrumentation (middleware to label `route`, `status`, and `method` for each request) is recommended to capture meaningful per-endpoint metrics; I can implement this next in `apps/be/server/router.ts`.
+  - If you want New Relic integration, the recommended immediate step is to enable Prometheus `remote_write` to New Relic (no app changes). Full APM (traces) requires the New Relic Node agent and running the backend on Node (Bun compatibility is not guaranteed).
+  - Replace the PagerDuty placeholder in `monitoring/alertmanager.yml` with your integration key and restart Alertmanager to enable notifications.
+
+
 Notes:
 - Email delivery uses the existing Kafka notification pipeline; ensure SMTP env vars (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SENDER_EMAIL`) are set in staging/production for real delivery.
 - Recommend adding unit/integration tests for auth blocking and notification enqueueing as a follow-up.
