@@ -1,0 +1,29 @@
+groups:
+  - name: modheshwari-alerts
+    rules:
+      - alert: BackendDown
+        expr: up{job="modheshwari-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend down"
+          description: "Instance {{ $labels.instance }} for job {{ $labels.job }} is down"
+
+      - alert: HighErrorRate
+        expr: increase(errors_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate"
+          description: "errors_total increased by more than 5 in the last 5m"
+
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 request latency"
+          description: "p95 request latency exceeds 1s"

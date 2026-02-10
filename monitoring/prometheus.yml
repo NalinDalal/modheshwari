@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'modheshwari-backend'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['be:3001']
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+rule_files:
+  - "/etc/prometheus/alert.rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']

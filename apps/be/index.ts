@@ -15,6 +15,8 @@ import { serve } from "bun";
 import { config } from "dotenv";
 import { join } from "path";
 import { router } from "./server/router";
+import metrics from "./lib/metrics";
+import { logger } from "./lib/logger";
 
 // Load environment variables
 config({ path: join(process.cwd(), "../../.env") });
@@ -28,17 +30,26 @@ serve({
 });
 
 console.log(` Server running on http://localhost:${PORT}`);
+logger.info(`Server running on http://localhost:${PORT}`);
 
 // Graceful shutdown
 process.on("SIGINT", () => {
-  console.log("\n Shutting down gracefully...");
+  logger.info("Shutting down gracefully (SIGINT)");
   process.exit(0);
 });
 
 process.on("SIGTERM", () => {
-  console.log("\n Shutting down gracefully...");
+  logger.info("Shutting down gracefully (SIGTERM)");
   process.exit(0);
 });
+
+// Expose default metrics and ensure metrics collection started
+try {
+  // metrics import already calls collectDefaultMetrics
+  logger.info('Prometheus metrics initialized');
+} catch (err) {
+  logger.warn('Failed to initialize Prometheus metrics', err);
+}
 
 // Keep process alive
 await new Promise(() => {});

@@ -1,0 +1,45 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "modheshwari-backend-overview",
+    "title": "Backend Overview",
+    "panels": [
+      {
+        "type": "stat",
+        "title": "Request Rate (rps)",
+        "targets": [
+          { "expr": "sum(rate(http_requests_total[1m]))", "refId": "A" }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "Error Rate (5m)",
+        "targets": [
+          { "expr": "sum(rate(errors_total[5m]))", "refId": "A" }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "Process Memory (MB)",
+        "targets": [
+          { "expr": "process_resident_memory_bytes / 1024 / 1024", "refId": "A" }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "Process CPU (user seconds/sec)",
+        "targets": [
+          { "expr": "rate(process_cpu_user_seconds_total[1m])", "refId": "A" }
+        ]
+      },
+      {
+        "type": "stat",
+        "title": "Firing Alerts",
+        "targets": [
+          { "expr": "sum(ALERTS{alertstate=\"firing\"})", "refId": "A" }
+        ]
+      }
+    ]
+  },
+  "overwrite": false
+}

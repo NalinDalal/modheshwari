@@ -1,0 +1,16 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'dev-null'
+
+receivers:
+  - name: 'dev-null'
+
+  - name: 'pagerduty'
+    pagerduty_configs:
+      - routing_key: 'REPLACE_WITH_PAGERDUTY_INTEGRATION_KEY'
+        severity: '{{ .CommonLabels.severity }}'
+        details:
+          summary: '{{ .CommonAnnotations.summary }}'
+          description: '{{ .CommonAnnotations.description }}'

@@ -17,6 +17,8 @@
   "dependencies": {
     "elysia": "^1.4.13",
     "kafkajs": "^2.2.4",
+    "prom-client": "^15.1.3",
+    "winston": "^3.19.0",
     "zod": "^4.3.6"
   }
 }

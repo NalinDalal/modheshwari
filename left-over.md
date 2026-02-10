@@ -6,6 +6,10 @@ Implement a drain/persistence worker to flush Redis-cached notifications to the 
 
 Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verification.
 
+Regular Backups of data
+
+implement monitoring tools like grafana, prometheus, loki 
+
 ### 2. Event Management Features
 
 **API Endpoints:**
@@ -132,4 +136,3 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 - ✅ = Complete & Working
 - ⚠️ = Partial / Scaffolding
 - ❌ = Not Started
-

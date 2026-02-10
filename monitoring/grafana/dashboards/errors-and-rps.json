@@ -1,0 +1,30 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "modheshwari-errors-rps",
+    "title": "Errors and Requests",
+    "panels": [
+      {
+        "type": "graph",
+        "title": "Error rate (5m)",
+        "targets": [
+          {
+            "expr": "sum(rate(errors_total[5m]))",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "Request rate (rps)",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[1m]))",
+            "refId": "B"
+          }
+        ]
+      }
+    ]
+  },
+  "overwrite": false
+}

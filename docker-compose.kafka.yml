@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # Zookeeper for Kafka
   zookeeper:
@@ -22,7 +20,7 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
-      - "9093:9093"
+      # removed host mapping for 9093 to avoid port conflicts (e.g. Alertmanager)
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -46,7 +44,7 @@ services:
       - "8080:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9093
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
 
   # Redis (for rate limiting and caching)

@@ -44,7 +44,11 @@ This project is a full-stack platform for managing local community operations, i
 
    ```bash
    docker compose -f docker-compose.kafka.yml up -d zookeeper kafka  #start kafka & zookeeper
+
+   docker compose -f docker-compose-monitoring.yml up -d #start monitoring, new relic
    docker exec -it kafka kafka-topics --create --topic notification.events --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 # verify topics exists
+
+   docker compose -f docker-compose.kafka.yml -f docker-compose.monitoring.yml up -d --remove-orphans # run all of them
    ```
 
 7. **Run the app:**

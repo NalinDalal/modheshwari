@@ -1,0 +1,38 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "modheshwari-latency-percentiles",
+    "title": "Latency Percentiles",
+    "panels": [
+      {
+        "type": "graph",
+        "title": "p50 (5m)",
+        "targets": [
+          { "expr": "histogram_quantile(0.5, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "refId": "A" }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "p95 (5m)",
+        "targets": [
+          { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "refId": "A" }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "p99 (5m)",
+        "targets": [
+          { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "refId": "A" }
+        ]
+      },
+      {
+        "type": "table",
+        "title": "Latency by Route (p95)",
+        "targets": [
+          { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))", "refId": "A" }
+        ]
+      }
+    ]
+  },
+  "overwrite": false
+}

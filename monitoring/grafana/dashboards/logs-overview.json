@@ -1,0 +1,30 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "modheshwari-logs-overview",
+    "title": "Logs Overview",
+    "panels": [
+      {
+        "type": "logs",
+        "title": "Recent Error Logs",
+        "targets": [
+          {
+            "expr": "{job=\"varlogs\"} |= \"error\"",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "Log rate (errors/min)",
+        "targets": [
+          {
+            "expr": "sum(rate({job=\"varlogs\"} |= \"error\" [5m]))",
+            "refId": "B"
+          }
+        ]
+      }
+    ]
+  },
+  "overwrite": false
+}

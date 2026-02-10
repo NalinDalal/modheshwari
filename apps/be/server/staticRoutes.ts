@@ -1,5 +1,6 @@
 import type { Route } from "./types";
 import * as handlers from "./handlers";
+import { metricsHandler } from "../lib/metrics";
 
 export const staticRoutes: Route[] = [
   // Health check
@@ -7,6 +8,13 @@ export const staticRoutes: Route[] = [
     path: "/api/health",
     method: "GET",
     handler: () => Response.json({ status: "ok" }, { status: 200 }),
+  },
+
+  // Metrics endpoint for Prometheus
+  {
+    path: "/metrics",
+    method: "GET",
+    handler: () => metricsHandler(),
   },
 
   // Families
