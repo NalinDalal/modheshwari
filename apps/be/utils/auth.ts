@@ -17,7 +17,8 @@ export function extractAndVerifyToken(req: Request): string | null {
 
   try {
     const decoded = verifyJWT(token) as AuthPayload;
-    return decoded?.id ?? null;
+    // Support tokens that contain either `userId` or `id` for historical compatibility
+    return (decoded?.userId as string) ?? (decoded?.id as string) ?? null;
   } catch {
     throw failure("Invalid or expired token", "Auth Error", 401);
   }

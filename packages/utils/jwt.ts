@@ -26,7 +26,11 @@ export interface AuthPayload {
  * @returns A signed JWT valid for 7 days.
  */
 export function signJWT(payload: AuthPayload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  // Ensure compatibility: include both `userId` and `id` fields when possible.
+  const p: Record<string, unknown> = { ...(payload as Record<string, unknown>) };
+  if (payload.userId && !p.id) p.id = payload.userId;
+  if (payload.id && !p.userId) p.userId = payload.id;
+  return jwt.sign(p, JWT_SECRET, { expiresIn: "7d" });
 }
 
 /**
