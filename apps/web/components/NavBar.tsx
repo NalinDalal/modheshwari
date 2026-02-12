@@ -39,20 +39,32 @@ export default function NavBar() {
   /* ================= Auth ================= */
 
   useEffect(() => {
+    // Re-check auth whenever the pathname changes so NavBar reflects recent signin/signout.
     const token = localStorage.getItem("token");
-    if (!token) return setLoading(false);
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
 
+    setLoading(true);
     fetch(`${API_BASE}/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) => {
         if (data?.status === "success") setUser(data.data);
-        else localStorage.removeItem("token");
+        else {
+          localStorage.removeItem("token");
+          setUser(null);
+        }
       })
-      .catch(() => localStorage.removeItem("token"))
+      .catch(() => {
+        localStorage.removeItem("token");
+        setUser(null);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [pathname]);
 
   /* ================= Helpers ================= */
 
@@ -78,7 +90,7 @@ export default function NavBar() {
       `}
     >
       {Icon && <Icon className="h-4 w-4" />}
-      {label}
+      
     </Link>
   );
 
@@ -165,7 +177,7 @@ export default function NavBar() {
               <div className="h-px bg-pink-200 my-2" />
               <NavItem href="/family" label="Family" Icon={Users} />
               <NavItem href="/resources" label="Resources" Icon={Package} />
-              <NavItem href="/notifications" label="Alerts" Icon={Bell} />
+              <NavItem href="/notifications" label='' Icon={Bell} />
               <NavItem href='/chat' label='Chat' Icon={MessageSquare} />
               <NavItem href="/me" label={user.name} />
             </>

@@ -1,5 +1,8 @@
 # Modheshwari — Remaining Tasks
 
+to do: keep ui consistent everywhere
+
+
 ### 1. Prod Hardening
 
 Implement a drain/persistence worker to flush Redis-cached notifications to the DB reliably.

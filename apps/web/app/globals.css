@@ -1,3 +1,54 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root{
+	--bg-gradient-start: #fff1f6;
+	--bg-gradient-end: #ffffff;
+	--card-bg: rgba(255,255,255,0.9);
+	--card-border: rgba(226,232,240,0.6);
+	--text: #0b1220;
+	--muted: #6b7280;
+	--brand-500: #F43F5E;
+}
+
+.dark{
+	--bg-gradient-start: #0b1220;
+	--bg-gradient-end: #071023;
+	--card-bg: rgba(11,18,32,0.6);
+	--card-border: rgba(255,255,255,0.04);
+	--text: #e6eef8;
+	--muted: #9ca3af;
+	--brand-500: #F43F5E;
+}
+
+html,body,#__next{
+	height:100%;
+}
+
+body{
+	background: linear-gradient(180deg,var(--bg-gradient-start),var(--bg-gradient-end));
+	color: var(--text);
+	-webkit-font-smoothing:antialiased;
+	-moz-osx-font-smoothing:grayscale;
+	font-family: theme('fontFamily.sans');
+}
+
+/* Reusable card style for consistent surfaces */
+.card{
+	background: var(--card-bg);
+	border: 1px solid var(--card-border);
+	border-radius: 1rem;
+	box-shadow: 0 8px 24px rgba(2,6,23,0.06);
+}
+
+.btn-primary{
+	background: linear-gradient(90deg,var(--brand-500),#fb7185);
+	color: white;
+	border-radius: 0.625rem;
+	padding: 0.5rem 1rem;
+}
+
+/* Small utilities */
+.muted{ color: var(--muted); }
+

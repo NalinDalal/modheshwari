@@ -152,7 +152,7 @@ export default function MePage() {
   return (
     <main className="max-w-3xl mx-auto px-4 pb-12">
       {/* Profile Card */}
-      <section className="bg-white dark:bg-neutral-900 border rounded-2xl p-8 flex gap-6 items-center">
+      <section className="card border-transparent p-8 flex gap-6 items-center">
         <div className="h-24 w-24 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-semibold">
           {initials}
         </div>
@@ -170,7 +170,7 @@ export default function MePage() {
           <div className="mt-6 flex gap-3">
             <button
               onClick={() => router.push("/me/edit")}
-              className="px-5 py-2 bg-blue-600 text-white rounded-lg"
+              className="btn-primary"
             >
               Edit profile
             </button>
@@ -180,7 +180,7 @@ export default function MePage() {
                 localStorage.removeItem("token");
                 router.push("/signin");
               }}
-              className="px-5 py-2 border rounded-lg"
+              className="px-5 py-2 border rounded-lg text-sm"
             >
               Sign out
             </button>
@@ -190,7 +190,7 @@ export default function MePage() {
 
       {/* Profile Details */}
       {user.profile && (
-        <section className="mt-6 bg-white dark:bg-neutral-900 border rounded-2xl p-6">
+        <section className="mt-6 card border-transparent p-6">
           <h2 className="text-base font-semibold mb-4">Personal Details</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
