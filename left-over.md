@@ -8,19 +8,7 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 
 Regular Backups of data
 
-### 2. Event Management Features
-
-**API Endpoints:**
-
-- `POST /api/events` - Create event
-- `GET /api/events` - List events (with status filter)
-- `GET /api/events/:id` - Get event details
-- `POST /api/events/:id/register` - Register for event
-- `DELETE /api/events/:id/register` - Unregister from event
-- `GET /api/events/:id/registrations` - List registrations (admin only)
-- `POST /api/events/:id/approve` - Approve/reject event (admin only)
-
-### 3. Event Pass Generation with QR Codes
+### 2. Event Pass Generation with QR Codes
 
 **Requirement:** 
 - QR code generation library
@@ -52,7 +40,7 @@ Regular Backups of data
 
 **Estimated Effort:** 4-5 days
 
-### 4. Payment Gateway Integration
+### 3. Payment Gateway Integration
 
 **Status:** Model scaffolded, no actual processing
 
@@ -90,7 +78,7 @@ Regular Backups of data
 **Estimated Time:** 3-4 days  
 **Impact:** Enables paid events
 
-### 5. Full-Text Search with Elasticsearch
+### 4. Full-Text Search with Elasticsearch
 
 **Requirements:**
 
@@ -102,10 +90,6 @@ Regular Backups of data
 
 **Estimated Time:** 1 week  
 **Impact:** Production-grade search
-
-### 6. UI Refactor
-
-- Refactor ui to [this](https://patterncraft.fun/)
 
 ---
 

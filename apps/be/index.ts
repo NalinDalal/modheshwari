@@ -15,7 +15,6 @@ import { serve } from "bun";
 import { config } from "dotenv";
 import { join } from "path";
 import { router } from "./server/router";
-import metrics from "./lib/metrics";
 import { logger } from "./lib/logger";
 
 // Load environment variables

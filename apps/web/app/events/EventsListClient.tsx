@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR, { mutate } from "swr";
 import {
@@ -8,7 +8,6 @@ import {
   MapPin,
   Users,
   Plus,
-  Clock,
   CheckCircle,
   XCircle,
 } from "lucide-react";

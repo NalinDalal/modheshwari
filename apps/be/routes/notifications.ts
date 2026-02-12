@@ -1,10 +1,9 @@
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import { Role, NotificationType, NotificationChannel } from "@prisma/client";
-
+import { randomUUID } from "crypto";
 import { requireAuth } from "./authMiddleware";
 import { broadcastNotification } from "../kafka/notification-producer";
-import { randomUUID } from "crypto";
 import getRedisClient from "../lib/redisClient";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";

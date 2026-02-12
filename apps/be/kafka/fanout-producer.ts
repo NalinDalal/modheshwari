@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import { producer as defaultProducer, TOPICS } from './config';
 import prisma from '@modheshwari/db';
+import { producer as defaultProducer, TOPICS } from './config';
 
 export interface FanoutParams {
   initiatedBy: string;

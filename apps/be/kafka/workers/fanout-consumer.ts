@@ -1,7 +1,7 @@
-import { createConsumer, TOPICS, producer } from '../config';
 import prisma from '@modheshwari/db';
-import { processFanoutMessage } from './fanout-worker';
 import { createClient } from 'redis';
+import { createConsumer, TOPICS, producer } from '../config';
+import { processFanoutMessage } from './fanout-worker';
 
 /**
  * Fanout consumer: subscribes to notification events and processes

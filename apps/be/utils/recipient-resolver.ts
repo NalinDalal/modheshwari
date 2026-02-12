@@ -40,7 +40,7 @@ export async function resolveRecipients(opts: ResolveOptions): Promise<{
 
   if (!prisma) throw new Error('prisma client is required');
 
-  let where: any = {};
+  const where: any = {};
   if (onlyActive) where.status = true;
 
   switch (scope) {

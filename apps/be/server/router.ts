@@ -1,9 +1,8 @@
-import type { Route } from "./types";
+import { isRateLimited } from "@modheshwari/utils/rate-limit";
 import { authRoutes } from "./authRoutes";
 import { staticRoutes } from "./staticRoutes";
 import { matchParameterizedRoute } from "./parameterizedRoutes";
 import { withCorsHeaders, handleCors } from "../utils/cors";
-import { isRateLimited } from "@modheshwari/utils/rate-limit";
 
 /**
  * Main request router
