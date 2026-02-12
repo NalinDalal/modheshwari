@@ -1,31 +1,3 @@
-// -------------------- OVERVIEW --------------------
-// Models a community structure of families, gotras, and administrative hierarchy.
-// Supports users, family lineage, event workflows, approvals, notifications,
-// and resource tracking.
-//
-// -------------------- FAMILY LOGIC --------------------
-// - Each User belongs to exactly ONE active Family via FamilyMember.
-// - When a member marries or moves, only FamilyMember.familyId changes.
-// - Historical family links are retained (no hard deletions).
-//
-// -------------------- EVENT WORKFLOW --------------------
-// 1. A User (usually FAMILY_HEAD) creates an Event → status = PENDING.
-// 2. System auto-generates EventApproval records for:
-//      - COMMUNITY_HEAD
-//      - COMMUNITY_SUBHEAD
-//      - GOTRA_HEAD
-// 3. Approvers may Approve / Reject / Request Changes.
-// 4. Once all required roles approve → Event.status = APPROVED.
-// 5. Creator and heads receive Notifications at each step.
-//
-// -------------------- ROLE HIERARCHY --------------------
-// COMMUNITY_HEAD     → Full control, top-level approvals
-// COMMUNITY_SUBHEAD  → Co-reviewer / secondary approval
-// GOTRA_HEAD         → Gotra-level oversight
-// FAMILY_HEAD        → Leads a single family
-// MEMBER             → Regular member
-//
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -35,101 +7,60 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//
-// -------------------- USER --------------------
-// Represents a community member. May head a family or perform admin actions.
-//
-
 model User {
-  id        String         @id @default(uuid())
-  email     String
-  password  String
-  name      String
-  role      Role
-  profile   Profile?
-  families  FamilyMember[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  status    Boolean
+  id                         String                    @id @default(uuid())
+  email                      String
+  password                   String
+  name                       String
+  role                       Role
+  createdAt                  DateTime                  @default(now())
+  updatedAt                  DateTime                  @updatedAt
+  status                     Boolean
+  createdEvents              Event[]                   @relation("EventCreatedBy")
+  eventApprovalsReviewed     EventApproval[]           @relation("UserEventApprovals")
+  eventRegistrations         EventRegistration[]
+  headedFamilies             Family[]                  @relation("FamilyHead")
+  families                   FamilyMember[]
+  MedicalRecord              MedicalRecord[]
+  memberInvitesReceived      MemberInvite[]            @relation("InvitedUser")
+  memberInvitesReviewed      MemberInvite[]            @relation("InviteReviewedBy")
+  notifications              Notification[]
+  payments                   Payment[]
+  profile                    Profile?
+  approvedResourceRequests   ResourceRequest[]         @relation("ApprovedBy")
+  requestedResourceRequests  ResourceRequest[]         @relation("RequestedBy")
+  resourceRequestApprovals   ResourceRequestApproval[] @relation("UserResourceRequestApprovals")
+  statusUpdateApprovals      StatusUpdateApproval[]    @relation("UserStatusUpdateApprovals")
+  statusUpdateRequestsMade   StatusUpdateRequest[]     @relation("StatusUpdateRequestedBy")
+  statusUpdateRequestsTarget StatusUpdateRequest[]     @relation("TargetUser")
+  relationsFrom              UserRelation[]            @relation("FromUser")
+  relationsTo                UserRelation[]            @relation("ToUser")
 
-  // Relations
-  headedFamilies            Family[]            @relation("FamilyHead")
-  createdEvents             Event[]             @relation("EventCreatedBy")
-  eventRegistrations        EventRegistration[]
-  payments                  Payment[]
-  requestedResourceRequests ResourceRequest[]   @relation("RequestedBy")
-  approvedResourceRequests  ResourceRequest[]   @relation("ApprovedBy")
-  notifications             Notification[]
-
-  // New reverse relation for EventApproval
-  eventApprovalsReviewed EventApproval[] @relation("UserEventApprovals")
-
-  // Reverse relation for resource request approval steps
-  resourceRequestApprovals ResourceRequestApproval[] @relation("UserResourceRequestApprovals")
-
-  // Member invites relations
-  memberInvitesReceived MemberInvite[] @relation("InvitedUser")
-  memberInvitesReviewed MemberInvite[] @relation("InviteReviewedBy")
-
-  // User relations
-  relationsFrom UserRelation[] @relation("FromUser")
-  relationsTo   UserRelation[] @relation("ToUser")
-
-  // Reverse relations for StatusUpdateRequest
-  statusUpdateRequestsMade   StatusUpdateRequest[] @relation("StatusUpdateRequestedBy")
-  statusUpdateRequestsTarget StatusUpdateRequest[] @relation("TargetUser")
-
-  // Reverse relation for StatusUpdateApproval
-  statusUpdateApprovals StatusUpdateApproval[] @relation("UserStatusUpdateApprovals")
-  MedicalRecord         MedicalRecord[]
-
-  // Search indexes
   @@index([role])
   @@index([email])
   @@index([name])
 }
 
-//
-// -------------------- ROLE ENUM --------------------
-// Defines user hierarchy and permissions.
-//
-
-enum Role {
-  COMMUNITY_HEAD
-  COMMUNITY_SUBHEAD
-  GOTRA_HEAD
-  FAMILY_HEAD
-  MEMBER
-}
-
-//
-// -------------------- PROFILE --------------------
-// Stores personal non-relational data.
-//
-
 model Profile {
-  id                String                    @id @default(uuid())
-  user              User                      @relation(fields: [userId], references: [id])
-  userId            String                    @unique
-  phone             String?
-  address           String?
-  profession        String?
-  gotra             String?
-  location          String?
-  locationLat       Float?
-  locationLng       Float?
-  locationGeo       Unsupported("geography")?
-  locationUpdatedAt DateTime?
-  status            Boolean // e.g. 1-"alive", 0-"deceased"
-  bloodGroup        bloodGroup
-  allergies         String? // Add this for medical info
-  medicalNotes      String? // Add this for medical info
+  id                      String                    @id @default(uuid())
+  userId                  String                    @unique
+  phone                   String?
+  address                 String?
+  profession              String?
+  gotra                   String?
+  location                String?
+  allergies               String?
+  medicalNotes            String?
+  fcmToken                String?
+  notificationPreferences Json?
+  locationLat             Float?
+  locationLng             Float?
+  locationGeo             Unsupported("geography")?
+  locationUpdatedAt       DateTime?
+  status                  Boolean
+  bloodGroup              bloodGroup
+  user                    User                      @relation(fields: [userId], references: [id])
 
-  // Notification preferences
-  fcmToken                String? // Firebase Cloud Messaging token for push notifications
-  notificationPreferences Json? // JSON object with email/push/sms preferences
-
-  // Search indexes
   @@index([profession])
   @@index([gotra])
   @@index([bloodGroup])
@@ -137,12 +68,8 @@ model Profile {
   @@index([status])
 }
 
-// -------------------- MEDICAL RECORD --------------------
-// Detailed medical records for a user. These are optional and can be
-// extended with attachments in future iterations.
 model MedicalRecord {
   id          String   @id @default(uuid())
-  user        User     @relation(fields: [userId], references: [id])
   userId      String
   bloodType   String?
   allergies   String?
@@ -151,95 +78,45 @@ model MedicalRecord {
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
-
-//Store bloodGroup
-enum bloodGroup {
-  A_POS
-  A_NEG
-  B_POS
-  B_NEG
-  AB_POS
-  AB_NEG
-  O_POS
-  O_NEG
-}
-
-//
-// -------------------- FAMILY --------------------
-// Represents a nuclear family unit led by one head.
-//
 
 model Family {
   id           String         @id @default(uuid())
   name         String
   uniqueId     String         @unique
-  members      FamilyMember[]
   headId       String?
-  head         User?          @relation("FamilyHead", fields: [headId], references: [id])
   createdAt    DateTime       @default(now())
+  head         User?          @relation("FamilyHead", fields: [headId], references: [id])
+  members      FamilyMember[]
   MemberInvite MemberInvite[]
 }
 
-//
-// -------------------- FAMILY MEMBER --------------------
-// Junction model linking User <-> Family.
-// Moving a user to another family updates familyId.
-//
-
 model FamilyMember {
   id       String   @id @default(uuid())
-  family   Family   @relation(fields: [familyId], references: [id])
   familyId String
-  user     User     @relation(fields: [userId], references: [id])
   userId   String
   role     Role
   joinedAt DateTime @default(now())
-  // This allows:
-  //  ✅ Same user can exist in multiple families.
-  //  ✅ Same user can hold different roles in same or different families.
-  //  ❌ Same user cannot hold the same role twice in the same family.
+  family   Family   @relation(fields: [familyId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 
-  @@unique([familyId, userId, role]) // ensures one unique role per user within a family
+  @@unique([familyId, userId, role])
 }
-
-//
-// -------------------- USER RELATION --------------------
-// Tracks relationship between two users (e.g., spouse, parent, sibling, etc.)
-// This allows modeling complex family trees.
-//
 
 model UserRelation {
   id         String       @id @default(uuid())
-  fromUser   User         @relation("FromUser", fields: [fromUserId], references: [id])
   fromUserId String
-  toUser     User         @relation("ToUser", fields: [toUserId], references: [id])
   toUserId   String
   type       RelationType
   createdAt  DateTime     @default(now())
+  fromUser   User         @relation("FromUser", fields: [fromUserId], references: [id])
+  toUser     User         @relation("ToUser", fields: [toUserId], references: [id])
 
   @@unique([fromUserId, toUserId, type])
 }
-
-//
-// -------------------- RELATION TYPE ENUM --------------------
-// Defines recognized user relationship kinds.
-//
-
-enum RelationType {
-  SPOUSE
-  PARENT
-  CHILD
-  SIBLING
-}
-
-//
-// -------------------- EVENT --------------------
-// Represents a community event created by a user.
-// Goes through multi-role approval pipeline.
-//
 
 model Event {
   id            String              @id @default(uuid())
@@ -247,144 +124,89 @@ model Event {
   description   String?
   date          DateTime
   venue         String?
-  createdBy     User                @relation("EventCreatedBy", fields: [createdById], references: [id])
   createdById   String
   status        EventStatus         @default(PENDING)
-  approvals     EventApproval[] // handled cascade from EventApproval side
-  registrations EventRegistration[]
-  payments      Payment[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
+  createdBy     User                @relation("EventCreatedBy", fields: [createdById], references: [id])
+  approvals     EventApproval[]
+  registrations EventRegistration[]
   Notification  Notification[]
+  payments      Payment[]
 }
-
-//
-// -------------------- EVENT STATUS ENUM --------------------
-// Tracks the lifecycle of an event.
-//
-
-enum EventStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  CANCELLED
-}
-
-//
-// -------------------- EVENT APPROVAL --------------------
-// Tracks the review/approval workflow for events.
-//
 
 model EventApproval {
   id           String         @id @default(uuid())
-  event        Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId      String
-  approver     User           @relation("UserEventApprovals", fields: [approverId], references: [id])
   approverId   String
   approverName String
   role         Role
-  status       ApprovalStatus
   remarks      String?
   reviewedAt   DateTime?
   createdAt    DateTime       @default(now())
+  status       ApprovalStatus
+  approver     User           @relation("UserEventApprovals", fields: [approverId], references: [id])
+  event        Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, approverId])
 }
 
-//
-// -------------------- EVENT REGISTRATION --------------------
-// Tracks event participation.
-//
-
 model EventRegistration {
   id           String   @id @default(uuid())
-  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId      String
-  user         User     @relation(fields: [userId], references: [id])
   userId       String
   registeredAt DateTime @default(now())
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id])
 }
-
-//
-// -------------------- PAYMENT --------------------
-// Tracks event-related payments.
-//
 
 model Payment {
   id           String         @id @default(uuid())
-  event        Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId      String
-  user         User           @relation(fields: [userId], references: [id])
   userId       String
   amount       Float
   status       String
   createdAt    DateTime       @default(now())
   Notification Notification[]
+  event        Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id])
 }
-
-//
-// -------------------- RESOURCE --------------------
-// Represents a specific resource (e.g., Hall 1, Hall 2, Hall 3).
-// Used for tracking availability and preventing double-booking.
-//
 
 model Resource {
   id               String            @id @default(uuid())
-  name             String // "Hall 1", "Hall 2", "Hall 3"
-  type             String // "marriage_hall", "community_center", etc.
+  name             String
+  type             String
   description      String?
-  capacity         Int? // Seating capacity if applicable
+  capacity         Int?
   status           ResourceStatus    @default(AVAILABLE)
-  resourceRequests ResourceRequest[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  resourceRequests ResourceRequest[]
 
   @@unique([name, type])
 }
 
-//
-// -------------------- RESOURCE STATUS ENUM --------------------
-// Defines resource availability states.
-//
-
-enum ResourceStatus {
-  AVAILABLE
-  BOOKED
-  MAINTENANCE
-  UNAVAILABLE
-}
-
-//
-// -------------------- RESOURCE REQUEST --------------------
-// Tracks user requests and admin approvals for community resources.
-// Now links to specific Resource instances with date ranges.
-//
-
 model ResourceRequest {
   id           String                    @id @default(uuid())
-  user         User                      @relation("RequestedBy", fields: [userId], references: [id])
   userId       String
-  resource     Resource                  @relation(fields: [resourceId], references: [id])
-  resourceId   String
-  startDate    DateTime? // Booking start date
-  endDate      DateTime? // Booking end date
-  status       ApprovalStatus // request's overall status
-  // keep optional last-approver snapshot for quick access
-  approver     User?                     @relation("ApprovedBy", fields: [approverId], references: [id])
   approverId   String?
-  approverName String? // cached name of approver for quick access
-  // Detailed approval steps (hierarchical)
-  approvals    ResourceRequestApproval[]
+  approverName String?
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
+  status       ApprovalStatus
+  endDate      DateTime?
+  resourceId   String
+  startDate    DateTime?
   Notification Notification[]
+  approver     User?                     @relation("ApprovedBy", fields: [approverId], references: [id])
+  resource     Resource                  @relation(fields: [resourceId], references: [id])
+  user         User                      @relation("RequestedBy", fields: [userId], references: [id])
+  approvals    ResourceRequestApproval[]
 }
 
 model ResourceRequestApproval {
   id           String          @id @default(uuid())
-  request      ResourceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   requestId    String
-  approver     User            @relation("UserResourceRequestApprovals", fields: [approverId], references: [id])
   approverId   String
   approverName String
   role         Role
@@ -392,18 +214,15 @@ model ResourceRequestApproval {
   remarks      String?
   reviewedAt   DateTime?
   createdAt    DateTime        @default(now())
+  approver     User            @relation("UserResourceRequestApprovals", fields: [approverId], references: [id])
+  request      ResourceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   @@unique([requestId, approverId])
 }
 
-//
-// -------------------- MESSAGING --------------------
-// Direct messaging between users
-//
-
 model Conversation {
   id            String    @id @default(uuid())
-  participants  String[] // Array of user IDs
+  participants  String[]
   lastMessage   String?
   lastMessageAt DateTime?
   createdAt     DateTime  @default(now())
@@ -416,83 +235,187 @@ model Conversation {
 
 model Message {
   id             String       @id @default(uuid())
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId String
   senderId       String
   senderName     String
-  content        String       @db.Text
-  readBy         String[]     @default([]) // Array of user IDs who have read the message
+  content        String
+  readBy         String[]     @default([])
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
   @@index([senderId])
 }
 
-//
-// -------------------- NOTIFICATION --------------------
-// System-generated user alerts.
-//
-
 model Notification {
-  id               String               @id @default(uuid())
-  user             User                 @relation(fields: [userId], references: [id])
-  userId           String
-  fanoutId         String?
-  type             NotificationType // e.g. EVENT_APPROVAL, RESOURCE_REQUEST
-  channel          NotificationChannel  @default(IN_APP)
-  message          String
-  read             Boolean              @default(false)
-  readAt           DateTime? // When the notification was read
-  deliveryStrategy DeliveryStrategy     @default(BROADCAST) // BROADCAST or ESCALATION
-  priority         NotificationPriority @default(MEDIUM) // Priority level
-  createdAt        DateTime             @default(now())
-
-  // Optional links to related entities
-  event             Event?           @relation(fields: [eventId], references: [id])
-  eventId           String?
-  resourceRequest   ResourceRequest? @relation(fields: [resourceRequestId], references: [id])
-  resourceRequestId String?
-  payment           Payment?         @relation(fields: [paymentId], references: [id])
-  paymentId         String?
-
-  statusUpdateRequest   StatusUpdateRequest? @relation("StatusUpdateRequestNotifications", fields: [statusUpdateRequestId], references: [id])
+  id                    String                 @id @default(uuid())
+  userId                String
+  message               String
+  read                  Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  channel               NotificationChannel    @default(IN_APP)
+  eventId               String?
+  paymentId             String?
+  resourceRequestId     String?
+  type                  NotificationType
   statusUpdateRequestId String?
-
-  // Additional metadata for rich notifications
-  metadata Json? // Store event-specific data, action URLs, etc.
-
-  // Delivery tracking
-  deliveries NotificationDelivery[]
+  metadata              Json?
+  deliveryStrategy      DeliveryStrategy       @default(BROADCAST)
+  priority              NotificationPriority   @default(MEDIUM)
+  readAt                DateTime?
+  fanoutId              String?
+  event                 Event?                 @relation(fields: [eventId], references: [id])
+  payment               Payment?               @relation(fields: [paymentId], references: [id])
+  resourceRequest       ResourceRequest?       @relation(fields: [resourceRequestId], references: [id])
+  statusUpdateRequest   StatusUpdateRequest?   @relation("StatusUpdateRequestNotifications", fields: [statusUpdateRequestId], references: [id])
+  user                  User                   @relation(fields: [userId], references: [id])
+  deliveries            NotificationDelivery[]
 
   @@index([userId, read])
   @@index([createdAt])
   @@index([deliveryStrategy, read])
 }
 
-// -------------------- NOTIFICATION DELIVERY --------------------
-// Tracks individual delivery attempts across channels for escalation pattern
 model NotificationDelivery {
   id             String              @id @default(uuid())
-  notification   Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
   notificationId String
   channel        NotificationChannel
   status         DeliveryStatus      @default(PENDING)
   attemptCount   Int                 @default(0)
   lastAttemptAt  DateTime?
   deliveredAt    DateTime?
-  scheduledFor   DateTime? // When to attempt delivery (for escalation delays)
-  error          String? // Error message if delivery failed
-  metadata       Json? // Channel-specific delivery metadata
+  scheduledFor   DateTime?
+  error          String?
+  metadata       Json?
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
+  notification   Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   @@index([notificationId])
   @@index([status, scheduledFor])
   @@index([channel, status])
 }
 
-// Centralized enums for approval lifecycle and notifications
+model FanoutAudit {
+  id             String       @id @default(uuid())
+  fanoutId       String       @unique
+  initiatedBy    String
+  recipientCount Int
+  channels       String[]
+  message        Json?
+  priority       String?
+  status         FanoutStatus @default(PENDING)
+  error          String?
+  createdAt      DateTime     @default(now())
+  processedAt    DateTime?
+  processedCount Int?
+
+  @@index([fanoutId])
+  @@index([status])
+}
+
+model MemberInvite {
+  id            String       @id @default(uuid())
+  familyId      String
+  invitedUserId String?
+  inviteEmail   String?
+  status        InviteStatus @default(PENDING)
+  token         String?
+  createdAt     DateTime     @default(now())
+  expiresAt     DateTime?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  remarks       String?
+  family        Family       @relation(fields: [familyId], references: [id])
+  invitedUser   User?        @relation("InvitedUser", fields: [invitedUserId], references: [id])
+  reviewedBy    User?        @relation("InviteReviewedBy", fields: [reviewedById], references: [id])
+
+  @@unique([familyId, inviteEmail])
+  @@index([familyId])
+}
+
+model StatusUpdateRequest {
+  id            String                 @id @default(uuid())
+  targetUserId  String
+  requestedById String
+  reason        String?
+  finalStatus   String?
+  status        ApprovalStatus         @default(PENDING)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  reviewedAt    DateTime?
+  Notification  Notification[]         @relation("StatusUpdateRequestNotifications")
+  approvals     StatusUpdateApproval[]
+  requestedBy   User                   @relation("StatusUpdateRequestedBy", fields: [requestedById], references: [id])
+  targetUser    User                   @relation("TargetUser", fields: [targetUserId], references: [id])
+}
+
+model StatusUpdateApproval {
+  id           String              @id @default(uuid())
+  requestId    String
+  approverId   String
+  approverName String
+  role         Role
+  status       ApprovalStatus      @default(PENDING)
+  remarks      String?
+  reviewedAt   DateTime?
+  createdAt    DateTime            @default(now())
+  approver     User                @relation("UserStatusUpdateApprovals", fields: [approverId], references: [id])
+  request      StatusUpdateRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, approverId])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+enum Role {
+  COMMUNITY_HEAD
+  COMMUNITY_SUBHEAD
+  GOTRA_HEAD
+  FAMILY_HEAD
+  MEMBER
+}
+
+enum bloodGroup {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+}
+
+enum RelationType {
+  SPOUSE
+  PARENT
+  CHILD
+  SIBLING
+}
+
+enum EventStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ResourceStatus {
+  AVAILABLE
+  BOOKED
+  MAINTENANCE
+  UNAVAILABLE
+}
+
 enum ApprovalStatus {
   PENDING
   APPROVED
@@ -517,28 +440,27 @@ enum NotificationType {
 }
 
 enum DeliveryStrategy {
-  BROADCAST // Send to all channels immediately
-  ESCALATION // Start with in-app, escalate if not read
+  BROADCAST
+  ESCALATION
 }
 
 enum DeliveryStatus {
-  PENDING // Waiting to be sent
-  SCHEDULED // Scheduled for future delivery
-  PROCESSING // Claimed by a worker for delivery
-  SENT // Successfully sent
-  DELIVERED // Confirmed delivery (if available)
-  FAILED // Delivery failed
-  CANCELLED // Cancelled (e.g., user read notification)
+  PENDING
+  SCHEDULED
+  SENT
+  DELIVERED
+  FAILED
+  CANCELLED
+  PROCESSING
 }
 
 enum NotificationPriority {
-  LOW // Non-urgent, can use escalation
-  MEDIUM // Standard priority
-  HIGH // Important, prefer broadcast
-  CRITICAL // Critical, always broadcast to all channels
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
-// Fanout audit status and model for tracking large broadcast jobs
 enum FanoutStatus {
   PENDING
   PROCESSING
@@ -547,91 +469,8 @@ enum FanoutStatus {
   CANCELLED
 }
 
-model FanoutAudit {
-  id             String       @id @default(uuid())
-  fanoutId       String       @unique
-  initiatedBy    String
-  recipientCount Int
-  channels       String[]
-  message        Json?
-  priority       String?
-  status         FanoutStatus @default(PENDING)
-  error          String?
-  createdAt      DateTime     @default(now())
-  processedAt    DateTime?
-  processedCount Int?
-
-  @@index([fanoutId])
-  @@index([status])
-}
-
-// -------------------- MEMBER INVITE --------------------
-// Tracks pending requests or invites to join a Family. Created when a user
-// requests to join a family or when a Family Head invites an external email.
-model MemberInvite {
-  id            String       @id @default(uuid())
-  family        Family       @relation(fields: [familyId], references: [id])
-  familyId      String
-  invitedUser   User?        @relation("InvitedUser", fields: [invitedUserId], references: [id])
-  invitedUserId String?
-  inviteEmail   String?
-  status        InviteStatus @default(PENDING)
-  token         String?
-  createdAt     DateTime     @default(now())
-  expiresAt     DateTime?
-  reviewedBy    User?        @relation("InviteReviewedBy", fields: [reviewedById], references: [id])
-  reviewedById  String?
-  reviewedAt    DateTime?
-  remarks       String?
-
-  @@unique([familyId, inviteEmail])
-  @@index([familyId])
-}
-
 enum InviteStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-//
-// -------------------- STATUS UPDATE REQUEST --------------------
-// Handles marking a user as "deceased" (or similar lifecycle updates).
-//
-
-model StatusUpdateRequest {
-  id            String                 @id @default(uuid())
-  targetUser    User                   @relation("TargetUser", fields: [targetUserId], references: [id])
-  targetUserId  String // The user whose profile status is being changed
-  requestedBy   User                   @relation("StatusUpdateRequestedBy", fields: [requestedById], references: [id])
-  requestedById String // Who initiated the request (family member or family head)
-  reason        String? // Optional reason/note
-  finalStatus   String? // e.g. "deceased"
-  status        ApprovalStatus         @default(PENDING)
-  approvals     StatusUpdateApproval[]
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-  reviewedAt    DateTime?
-  Notification  Notification[]         @relation("StatusUpdateRequestNotifications")
-}
-
-//
-// -------------------- STATUS UPDATE APPROVAL --------------------
-// Each approval row represents a role-based reviewer (e.g. GOTRA_HEAD, COMMUNITY_SUBHEAD).
-//
-
-model StatusUpdateApproval {
-  id           String              @id @default(uuid())
-  request      StatusUpdateRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  requestId    String
-  approver     User                @relation("UserStatusUpdateApprovals", fields: [approverId], references: [id])
-  approverId   String
-  approverName String
-  role         Role // Only COMMUNITY_SUBHEAD or GOTRA_HEAD expected
-  status       ApprovalStatus      @default(PENDING)
-  remarks      String?
-  reviewedAt   DateTime?
-  createdAt    DateTime            @default(now())
-
-  @@unique([requestId, approverId])
 }
