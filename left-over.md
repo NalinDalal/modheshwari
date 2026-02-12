@@ -8,77 +8,7 @@ Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verif
 
 Regular Backups of data
 
-### 2. Event Pass Generation with QR Codes
-
-**Requirement:** 
-- QR code generation library
-- PDF generation
-- S3 storage
-- Pass delivery system
-- QR scanning at events
-
-**Expected:** Generate unique QR codes for event registrations, send as PDF on mail upon confirmation, when events are for community or subcommunity
-
-**What's Missing:**
-
-- No QR code generation library
-- No S3 integration for storing passes
-- No pass template system
-- No PDF generation for passes
-
-**Code References:**
-
-- Design doc mentions: "Unique QR code for each registration with encrypted data"
-- Database: `EventRegistration` model has `passId` and `passQRCode` fields but never populated
-
-**Files Needed:**
-
-- `apps/be/routes/event-pass-generation.ts`
-- QR code library (e.g., `qrcode.js`)
-- PDF generation library (e.g., `pdfkit`)
-- S3 client configuration
-
-**Estimated Effort:** 4-5 days
-
-### 3. Payment Gateway Integration
-
-**Status:** Model scaffolded, no actual processing
-
-**What's Working:**
-
-- ✅ Payment model in database
-- ✅ Payment status tracking
-
-- [Razorpay](https://razorpay.com/docs/#home-payments)
-
-**What's Missing:**
-
-- ❌ Payment gateway integration (Razorpay)
-- ❌ Payment processing API
-- ❌ Webhook handlers for payment notifications
-- ❌ Payment UI/checkout form
-
-**Implementation:**
-
-1. Add SDK to backend
-2. Create payment intent endpoint
-3. Handle webhooks
-4. Add payment form UI
-   **Code References:**
-
-- `Payment` model in schema
-- No integration code exists
-
-**Files Needed:**
-
-- `apps/be/routes/payments.ts`
-- Payment gateway SDK configuration
-- `apps/web/components/PaymentForm.tsx`
-
-**Estimated Time:** 3-4 days  
-**Impact:** Enables paid events
-
-### 4. Full-Text Search with Elasticsearch
+### 2. Full-Text Search with Elasticsearch
 
 **Requirements:**
 
@@ -102,7 +32,6 @@ Regular Backups of data
 | Resource Requests   | ✅    | ✅  | ✅       | Complete              |
 | Event Management    | ✅    | ✅  | ✅       | Partial               |
 | Payments            | ⚠️    | ❌  | ❌       | Scaffolding           |
-| Events QR Codes     | ❌    | ❌  | ❌       | Not Started           |
 | Calendar            | ✅    | ✅  | ✅       | Complete              |
 | Location Services   | ✅    | ✅  | ✅       | Complete              |
 | Family Tree         | ✅    | ✅  | ✅       | Complete              |
