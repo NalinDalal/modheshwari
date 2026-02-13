@@ -1,4 +1,5 @@
 import type { RedisClientType } from 'redis';
+
 import { createConsumer, TOPICS } from '../config';
 import getRedisClient from '../../lib/redisClient';
 

@@ -4,6 +4,7 @@
  */
 
 import prisma from "@modheshwari/db";
+
 import type { TreeNode } from "./types";
 
 /**

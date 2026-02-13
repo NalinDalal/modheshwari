@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
+
 import useNotifications from "../../hooks/useNotifications";
 
 /**
@@ -46,10 +47,6 @@ function getToken(): string | null {
   return localStorage.getItem("token");
 }
 
-function toWsBaseUrl(): string {
-  const proto = window.location.protocol === "https:" ? "wss" : "ws";
-  return `${proto}://${window.location.hostname}:3002`;
-}
 
 function isAdminRole(role?: Role): boolean {
   return (
@@ -84,7 +81,7 @@ export default function NotificationsPage(): React.ReactElement {
   const [broadcasting, setBroadcasting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const wsRef = useRef<WebSocket | null>(null);
+  
 
   const isAdmin = isAdminRole(me?.role);
 

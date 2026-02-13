@@ -27,8 +27,9 @@ export default async function EventsPage() {
     const initialData = json?.data?.data || json?.data || [];
 
     return <EventsListClient initialData={initialData} />;
-  } catch (err) {
+  } catch (_err) {
     // On server error, render client with empty initial data — client will retry via SWR.
+    void _err;
     return <EventsListClient initialData={[]} />;
   }
 }

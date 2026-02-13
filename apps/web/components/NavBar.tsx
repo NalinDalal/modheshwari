@@ -77,7 +77,7 @@ export default function NavBar() {
 
   const NavItem = ({
     href,
-    label,
+    label: _label,
     Icon,
   }: {
     href: string;

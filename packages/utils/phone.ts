@@ -56,7 +56,7 @@ export function formatAsYouType(input: string, country?: string): string {
 	try {
 		const a = new AsYouType(country as any);
 		return a.input(input || '') || input;
-	} catch (_) {
+	} catch {
 		return input;
 	}
 }

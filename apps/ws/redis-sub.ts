@@ -1,4 +1,5 @@
 import type { RedisClientType } from 'redis';
+
 import { REDIS_URL } from './config';
 import { pushToUser } from './utils';
 import { logger } from './logger';

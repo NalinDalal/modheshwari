@@ -1,4 +1,5 @@
 import { isRateLimited } from "@modheshwari/utils/rate-limit";
+
 import { authRoutes } from "./authRoutes";
 import { staticRoutes } from "./staticRoutes";
 import { matchParameterizedRoute } from "./parameterizedRoutes";

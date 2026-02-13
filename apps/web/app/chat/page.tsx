@@ -64,7 +64,6 @@ export default function ChatPage() {
 
   const meId = getUserId();
   const [hydrated, setHydrated] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     setHydrated(true);

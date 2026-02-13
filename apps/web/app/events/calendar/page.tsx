@@ -113,7 +113,9 @@ export default function EventsCalendar() {
       const arr = eventsByDay.get(d) || [];
       arr.push(ev);
       eventsByDay.set(d, arr);
-    } catch (_) {}
+    } catch (_err) {
+      void _err;
+    }
   });
 
   return (

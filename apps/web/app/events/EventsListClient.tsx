@@ -65,8 +65,8 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
           const payload = JSON.parse(atob(parts[1]!));
           setUserRole(payload.role || payload.userRole || null);
         }
-      } catch (err) {
-        // ignore
+      } catch (_err) {
+        void _err;
       }
     }
   }, []);

@@ -1,5 +1,6 @@
 import prisma from '@modheshwari/db';
 import { createClient } from 'redis';
+
 import { createConsumer, TOPICS, producer } from '../config';
 import { processFanoutMessage } from './fanout-worker';
 

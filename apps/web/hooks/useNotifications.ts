@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+
 import { API_BASE } from "../lib/config";
 
 type Notification = {
@@ -75,7 +76,7 @@ export default function useNotifications(): UseNotificationsHook {
     ws.addEventListener("open", () => {
       try {
         ws.send(JSON.stringify({ type: "auth", token }));
-      } catch (e) {
+      } catch {
         // ignore
       }
     });
@@ -94,7 +95,7 @@ export default function useNotifications(): UseNotificationsHook {
           // server may broadcast read events; refresh full list
           void fetchNotifications();
         }
-      } catch (err) {
+      } catch {
         // ignore parse errors
       }
     });
