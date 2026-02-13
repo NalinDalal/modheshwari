@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
+import useNotifications from "../../hooks/useNotifications";
 
 /**
  * Single notification item returned from backend.
@@ -64,34 +65,8 @@ function dedupeKey(n: Notification): string {
   return `fallback:${n.message}:${n.createdAt}`;
 }
 
-/**
- * Merge strategy:
- * - Keep fetched persisted notifications as baseline
- * - Keep any local previews (no id) that are not present in fetched list
- * - If fetched contains same previewId, fetched wins
- */
-function mergePersisted(prev: Notification[], fetched: Notification[]) {
-  const next = [...fetched];
-
-  const fetchedKeys = new Set(next.map(dedupeKey));
-  const fetchedPreviewIds = new Set(next.map((n) => n.previewId).filter(Boolean));
-
-  for (const p of prev) {
-    // if preview is now persisted in fetched (same previewId), ignore preview
-    if (p.previewId && fetchedPreviewIds.has(p.previewId)) continue;
-
-    // if exact key exists, ignore
-    if (fetchedKeys.has(dedupeKey(p))) continue;
-
-    // keep local preview
-    next.unshift(p);
-  }
-
-  return next;
-}
-
 export default function NotificationsPage(): React.ReactElement {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { notifications: hookNotifications, unreadCount, refresh, markRead, markAllRead, pulse } = useNotifications();
   const [me, setMe] = useState<Me | null>(null);
 
   const [subject, setSubject] = useState("");
@@ -113,47 +88,6 @@ export default function NotificationsPage(): React.ReactElement {
 
   const isAdmin = isAdminRole(me?.role);
 
-  /**
-   * Insert/replace incoming notifications safely.
-   */
-  const upsertNotification = useCallback((incoming: Notification) => {
-    setNotifications((prev) => {
-      const next = [...prev];
-
-      // 1) persisted incoming -> replace matching preview
-      if (incoming.id && incoming.previewId) {
-        const idx = next.findIndex((p) => p.previewId === incoming.previewId);
-        if (idx >= 0) {
-          next[idx] = incoming;
-          return next;
-        }
-      }
-
-      // 2) dedupe by id
-      if (incoming.id && next.some((p) => p.id === incoming.id)) return prev;
-
-      // 3) dedupe by previewId
-      if (
-        incoming.previewId &&
-        next.some((p) => p.previewId === incoming.previewId)
-      ) {
-        return prev;
-      }
-
-      // 4) fallback dedupe
-      if (
-        next.some(
-          (p) => p.message === incoming.message && p.createdAt === incoming.createdAt,
-        )
-      ) {
-        return prev;
-      }
-
-      // prepend newest
-      return [incoming, ...next];
-    });
-  }, []);
-
   const loadCurrentUser = useCallback(async () => {
     const token = getToken();
     if (!token) return;
@@ -173,30 +107,18 @@ export default function NotificationsPage(): React.ReactElement {
   }, []);
 
   const fetchNotifications = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
-
+    // delegate to hook
     setError(null);
     setLoading(true);
-
     try {
-      const res = await fetch(`${API_BASE}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch notifications");
-
-      const js = await res.json();
-      const fetched: Notification[] = js.data?.notifications ?? [];
-
-      setNotifications((prev) => mergePersisted(prev, fetched));
+      await refresh();
     } catch (err) {
       console.error(err);
       setError("Failed to load notifications.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refresh]);
 
   /**
    * Initial load
@@ -213,44 +135,7 @@ export default function NotificationsPage(): React.ReactElement {
     setTargetRole("ALL");
   }, [me?.role]);
 
-  /**
-   * WebSocket live updates
-   */
-  useEffect(() => {
-    const token = getToken();
-    const ws = new WebSocket(`${toWsBaseUrl()}/?token=${encodeURIComponent(token || "")}`);
-    wsRef.current = ws;
-
-    ws.addEventListener("open", () => {
-      if (!token) return;
-      try {
-        ws.send(JSON.stringify({ type: "auth", token }));
-      } catch (e) {
-        console.error("WS auth send failed", e);
-      }
-    });
-
-    ws.addEventListener("message", (ev) => {
-      try {
-        const data = JSON.parse(ev.data);
-
-        if (data.type === "notification") {
-          upsertNotification(data.notification as Notification);
-        }
-      } catch (err) {
-        console.error("WS parse error", err);
-      }
-    });
-
-    ws.addEventListener("error", (err) => {
-      console.error("WS error", err);
-    });
-
-    return () => {
-      ws.close();
-      wsRef.current = null;
-    };
-  }, [upsertNotification]);
+  // Hook now manages WS and incoming notifications.
 
   function toggleChannel(channel: string) {
     setSelectedChannels((prev) =>
@@ -321,37 +206,34 @@ export default function NotificationsPage(): React.ReactElement {
   }
 
   async function handleToggleRead(notificationId: string, currentRead: boolean) {
-    const token = getToken();
-    if (!token) return;
-
     try {
-      const res = await fetch(`${API_BASE}/notifications/${notificationId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ read: !currentRead }),
-      });
-
-      if (!res.ok) return;
-
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notificationId ? { ...n, read: !currentRead } : n,
-        ),
-      );
+      const ok = await markRead(notificationId, currentRead);
+      if (!ok) return;
+      // hook updates notifications state
+      await refresh();
     } catch (err) {
       console.error("Failed to update notification", err);
     }
   }
 
+  async function handleMarkAllRead() {
+    try {
+      setLoading(true);
+      await markAllRead();
+      await refresh();
+    } catch (err) {
+      console.error("Failed to mark all read", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const notificationTypes = useMemo(() => {
-    return Array.from(new Set(notifications.map((n) => n.type).filter(Boolean))).sort();
-  }, [notifications]);
+    return Array.from(new Set(hookNotifications.map((n) => n.type).filter(Boolean))).sort();
+  }, [hookNotifications]);
 
   const filteredNotifications = useMemo(() => {
-    return notifications
+    return hookNotifications
       .filter((n) => {
         if (filterRead === "read" && !n.read) return false;
         if (filterRead === "unread" && n.read) return false;
@@ -372,7 +254,8 @@ export default function NotificationsPage(): React.ReactElement {
         }
         return a.read ? 1 : -1;
       });
-  }, [notifications, filterRead, selectedType, sortBy]);
+  }, [hookNotifications, filterRead, selectedType, sortBy]);
+  
 
   return (
     <DreamySunsetBackground className="px-4 sm:px-6 py-10">
@@ -545,12 +428,30 @@ export default function NotificationsPage(): React.ReactElement {
               ))}
             </select>
 
-            <button
-              onClick={() => void fetchNotifications()}
-              className="ml-auto text-sm px-3 py-2 rounded-lg border"
-            >
-              Refresh
-            </button>
+            <div className="ml-auto flex items-center gap-3">
+              <button
+                onClick={() => void fetchNotifications()}
+                className="text-sm px-3 py-2 rounded-lg border"
+              >
+                Refresh
+              </button>
+
+              <button
+                onClick={() => void handleMarkAllRead()}
+                className="text-sm px-3 py-2 rounded-lg border"
+                title="Mark all read"
+              >
+                Mark all read
+              </button>
+
+              <div className="text-sm text-pink-600">
+                {unreadCount > 0 && (
+                  <span className={`${pulse ? "animate-pulse font-semibold" : "font-medium"}`}>
+                    Unread: {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Content */}

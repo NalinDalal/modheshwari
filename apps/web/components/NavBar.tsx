@@ -10,13 +10,14 @@ import {
   Home,
   Users,
   Package,
-  Bell,
+  BellPlus,
   Phone,
   MessageSquare,
   Calendar
 } from "lucide-react";
 
 import { API_BASE } from "../lib/config";
+import useNotifications from "../hooks/useNotifications";
 
 interface User {
   id: string;
@@ -36,6 +37,7 @@ export default function NavBar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { unreadCount } = useNotifications();
 
   /* ================= Auth ================= */
 
@@ -66,6 +68,8 @@ export default function NavBar() {
       })
       .finally(() => setLoading(false));
   }, [pathname]);
+
+  
 
   /* ================= Helpers ================= */
 
@@ -135,7 +139,20 @@ export default function NavBar() {
                 <NavItem href="/family" label="Family" Icon={Users} />
                 <NavItem href="/resources" label="Resources" Icon={Package} />
                 <NavItem href="/events/calendar" label="Calendar" Icon={Calendar} />
-                <NavItem href="/notifications" label="Alerts" Icon={Bell} />
+                <Link
+                  href="/notifications"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition
+                    ${isActive('/notifications') ? 'bg-pink-100 text-pink-700' : 'text-gray-700 hover:text-pink-700 hover:bg-pink-50'}`}
+                >
+                  <div className="relative">
+                    <BellPlus className="h-4 w-4" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white bg-pink-600 rounded-full">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </Link>
                 <button
                   onClick={() => router.push("/me")}
                   className="ml-2 h-9 w-9 rounded-lg bg-gradient-to-br from-pink-600 to-rose-600 text-white text-xs font-bold"
@@ -179,7 +196,19 @@ export default function NavBar() {
               <div className="h-px bg-pink-200 my-2" />
               <NavItem href="/family" label="Family" Icon={Users} />
               <NavItem href="/resources" label="Resources" Icon={Package} />
-              <NavItem href="/notifications" label='' Icon={Bell} />
+              <Link
+                href="/notifications"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"
+              >
+                <div className="relative">
+                  <BellPlus className="h-4 w-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white bg-pink-600 rounded-full">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </div>
+              </Link>
               <NavItem href='/chat' label='Chat' Icon={MessageSquare} />
               <NavItem href="/me" label={user.name} />
               <NavItem href='/events' label='Events' Icon={Calendar} />
