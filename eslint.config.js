@@ -17,6 +17,7 @@ export default [
     },
     ignores: [
       "**/.next/**",
+      "**/apps/web/.next/**",
       "**/node_modules/**",
       "**/dist/**",
       "**/build/**",
@@ -24,8 +25,7 @@ export default [
       "**/jest.config.*",
       "**/next-env.d.ts",
       "**/packages/scripts/**",
-      "**/packages/db/seed.ts",
-      "**/packages/tests/**",
+      "**/packages/db/seed.ts"
     ],
     rules: {
       "no-console": "off", // logs are fine in backend/scripts
@@ -43,6 +43,17 @@ export default [
           "newlines-between": "always",
         },
       ],
+    },
+    
+  },
+  {
+    files: ["**/.next/**", "**/apps/web/.next/**", "**/tests/k6/**"],
+    rules: {
+      // generated files and k6 scripts are excluded from strict TS rules
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-undef": "off",
+      "no-empty": "off",
     },
   },
 ];

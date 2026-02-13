@@ -27,3 +27,21 @@ groups:
         annotations:
           summary: "High p95 request latency"
           description: "p95 request latency exceeds 1s"
+
+      - alert: NotificationDLQGrowing
+        expr: notification_dlq_size > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Notifications DLQ growing"
+          description: "The notifications DLQ size is greater than 100 for more than 5 minutes. Check DLQ retry worker and DB connectivity."
+
+      - alert: NotificationDrainErrors
+        expr: increase(errors_total{type=~"notification_drain_.*|notification_dlq_retry"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Notification drain or DLQ retry failures detected"
+          description: "Errors in notification drain or DLQ retry were reported in the last 5 minutes. Check logs and DB connectivity."

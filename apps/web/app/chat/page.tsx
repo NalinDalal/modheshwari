@@ -83,7 +83,7 @@ export default function ChatPage() {
   useEffect(() => {
       setHydrated(true);
       const savedToken = localStorage.getItem("token");
-      setToken(savedToken);
+      getToken();
     }, []);
     
   useEffect(() => {

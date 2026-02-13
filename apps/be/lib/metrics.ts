@@ -23,6 +23,11 @@ export const errorCounter = new client.Counter({
   labelNames: ['type'],
 });
 
+export const notificationDlqSize = new client.Gauge({
+  name: 'notification_dlq_size',
+  help: 'Number of items currently in notifications DLQ (Redis list)',
+});
+
 export async function metricsHandler(): Promise<Response> {
   const body = await client.register.metrics();
   return new Response(body, {

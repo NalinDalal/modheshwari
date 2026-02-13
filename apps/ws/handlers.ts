@@ -15,10 +15,14 @@ export function handleOpen(ws: ServerWebSocket<WSData>) {
     const authTimeout = setTimeout(() => {
       try {
         ws.send(JSON.stringify({ type: 'error', message: 'Authentication required' }));
-      } catch {}
+      } catch (err) {
+        logger.warn("Failed to send auth-required message", { error: err instanceof Error ? err.message : String(err) });
+      }
       try {
         ws.close();
-      } catch {}
+      } catch (err) {
+        logger.warn("Failed to close websocket after auth timeout", { error: err instanceof Error ? err.message : String(err) });
+      }
     }, 5000) as unknown as number;
     ws.data.authTimeoutId = authTimeout;
     ws.data.lastSeen = Date.now();
@@ -37,7 +41,9 @@ export function handleOpen(ws: ServerWebSocket<WSData>) {
     if (now - ws.data.lastSeen > CONNECTION_TIMEOUT) {
       try {
         ws.close();
-      } catch {}
+      } catch (err) {
+        logger.warn("Failed to close websocket due to connection timeout", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+      }
       return;
     }
 
@@ -45,8 +51,9 @@ export function handleOpen(ws: ServerWebSocket<WSData>) {
       ws.send(
         JSON.stringify({ type: "ping", timestamp: new Date().toISOString() }),
       );
-    } catch {
-      // ignore send failures; close handler will clean up
+    } catch (err) {
+      // Log heartbeat send failures for observability; close handler will clean up
+      logger.debug("Heartbeat send failed", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
     }
   }, HEARTBEAT_INTERVAL) as unknown as number;
   ws.data.heartbeatId = heartbeatId;
@@ -85,23 +92,39 @@ export async function handleMessage(ws: ServerWebSocket<WSData>, message: string
           const heartbeatId = setInterval(() => {
             const now = Date.now();
             if (now - ws.data.lastSeen > CONNECTION_TIMEOUT) {
-              try { ws.close(); } catch {}
+              try { ws.close(); } catch (err) {
+                logger.warn("Failed to close websocket during auth heartbeat", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+              }
               return;
             }
-            try { ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() })); } catch {}
+            try { ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() })); } catch (err) {
+              logger.debug("Heartbeat send failed (post-auth)", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+            }
           }, HEARTBEAT_INTERVAL) as unknown as number;
           ws.data.heartbeatId = heartbeatId;
         } catch (e) {
-          try { ws.send(JSON.stringify({ type: 'error', message: 'Authentication failed' })); } catch {}
-          try { ws.close(); } catch {}
+          try { ws.send(JSON.stringify({ type: 'error', message: 'Authentication failed' })); } catch (err) {
+            logger.warn("Failed to send authentication-failed message", { error: err instanceof Error ? err.message : String(err), authError: e instanceof Error ? e.message : String(e), userId: ws.data.userId });
+          }
+          try { ws.close(); } catch (err) {
+            logger.warn("Failed to close websocket after authentication failure", { error: err instanceof Error ? err.message : String(err), authError: e instanceof Error ? e.message : String(e), userId: ws.data.userId });
+          }
         }
       } else {
-        try { ws.send(JSON.stringify({ type: 'error', message: 'Authentication required' })); } catch {}
-        try { ws.close(); } catch {}
+        try { ws.send(JSON.stringify({ type: 'error', message: 'Authentication required' })); } catch (err) {
+          logger.warn("Failed to send auth-required message (non-auth payload)", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+        }
+        try { ws.close(); } catch (err) {
+          logger.warn("Failed to close websocket after non-auth payload", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+        }
       }
     } catch (err) {
-      try { ws.send(JSON.stringify({ type: 'error', message: 'Invalid auth message' })); } catch {}
-      try { ws.close(); } catch {}
+      try { ws.send(JSON.stringify({ type: 'error', message: 'Invalid auth message' })); } catch (sendErr) {
+        logger.warn("Failed to send invalid-auth-message to websocket", { error: sendErr instanceof Error ? sendErr.message : String(sendErr), parseError: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+      }
+      try { ws.close(); } catch (closeErr) {
+        logger.warn("Failed to close websocket after invalid auth message", { error: closeErr instanceof Error ? closeErr.message : String(closeErr), parseError: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+      }
     }
     return;
   }
@@ -109,14 +132,18 @@ export async function handleMessage(ws: ServerWebSocket<WSData>, message: string
   if (!checkRateLimit(userId)) {
     try {
       ws.send(JSON.stringify({ type: "error", message: "Rate limit exceeded" }));
-    } catch {}
+    } catch (err) {
+      logger.warn("Failed to send rate-limit message", { error: err instanceof Error ? err.message : String(err), userId });
+    }
     return;
   }
 
   if (size > MAX_MESSAGE_SIZE) {
     try {
       ws.send(JSON.stringify({ type: "error", message: "Message too large" }));
-    } catch {}
+    } catch (err) {
+      logger.warn("Failed to send message-too-large response", { error: err instanceof Error ? err.message : String(err), userId });
+    }
     return;
   }
 
@@ -143,7 +170,9 @@ export async function handleMessage(ws: ServerWebSocket<WSData>, message: string
     });
     try {
       ws.send(JSON.stringify({ type: "error", message: "Failed to process message" }));
-    } catch {}
+    } catch (sendErr) {
+      logger.warn("Failed to send failure notification to websocket", { error: sendErr instanceof Error ? sendErr.message : String(sendErr), userId });
+    }
   }
 }
 
