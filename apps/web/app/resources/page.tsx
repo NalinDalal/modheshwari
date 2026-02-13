@@ -230,7 +230,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
               Resource Requests
             </h1>
           </div>
-          <p className="text-gray-400 ml-15">
+          <p className="muted">
             Request, track, and review shared resources
           </p>
         </motion.div>
@@ -240,7 +240,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl mb-8"
+          className="card p-6 mb-8"
         >
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Plus className="w-5 h-5 text-blue-400" />
@@ -260,13 +260,13 @@ export default function ResourceRequestsPage(): React.JSX.Element {
                     void handleCreate();
                   }
                 }}
-                className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                className="w-full pl-12 pr-4 py-3 bg-white/6 border border-white/8 rounded-xl text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-400/40 focus:border-transparent transition-all"
               />
             </div>
             <button
               onClick={handleCreate}
               disabled={!resource.trim()}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl font-semibold text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="btn-primary px-6 py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create
             </button>
@@ -278,7 +278,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
+          className="card overflow-hidden"
         >
           <div className="px-6 py-4 border-b border-white/10">
             <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -310,20 +310,16 @@ export default function ResourceRequestsPage(): React.JSX.Element {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-black/40">
-                  <tr className="text-gray-400 text-xs uppercase tracking-wider">
-                    <th className="px-6 py-4 text-left font-medium">
-                      Resource
-                    </th>
+                <thead>
+                  <tr className="text-sm text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left font-medium">Resource</th>
                     <th className="px-6 py-4 text-left font-medium">Status</th>
-                    <th className="px-6 py-4 text-left font-medium">
-                      Approvals
-                    </th>
+                    <th className="px-6 py-4 text-left font-medium">Approvals</th>
                     <th className="px-6 py-4 text-left font-medium">Actions</th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-white/6">
                   {requests.map((r, index) => (
                     <motion.tr
                       key={r.id}
@@ -345,10 +341,11 @@ export default function ResourceRequestsPage(): React.JSX.Element {
 
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(r.status)}`}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(
+                            r.status,
+                          )}`}
                         >
-                          {getStatusColor(r.status)}
-                          {r.status}
+                          {r.status.replaceAll("_", " ")}
                         </span>
                       </td>
 
@@ -370,7 +367,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
                                   }`}
                                 />
                                 <span className="text-gray-300">
-                                  <span className="font-medium text-white">
+                                  <span className="font-medium text-grey">
                                     {a.approverName}
                                   </span>
                                   {" · "}

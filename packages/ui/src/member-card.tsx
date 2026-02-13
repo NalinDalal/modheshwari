@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-
 import { Button } from "./button";
 
 /**
@@ -15,56 +14,72 @@ export function MemberCard({ member, onToggle }: any) {
   return (
     <div
       className={`
-        relative p-5 rounded-2xl border
-        backdrop-blur-xl
+        rounded-2xl p-5 border backdrop-blur-xl
         transition-all duration-300
-        shadow-[0_0_25px_rgba(0,0,0,0.35)]
-        hover:shadow-[0_0_40px_rgba(0,0,0,0.55)]
+        hover:-translate-y-[2px]
+        hover:shadow-[0_15px_45px_rgba(0,0,0,0.25)]
         ${
           alive
-            ? "bg-white/10 border-white/20"
-            : "bg-red-500/10 border-red-500/30"
+            ? "bg-white/6 border-white/10"
+            : "bg-red-500/8 border-red-500/20"
         }
       `}
     >
-      <div className="flex items-center gap-4">
-        {/* Avatar Circle */}
-        <div
+      {/* Top Row */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Avatar */}
+          <div
+            className={`
+              w-12 h-12 rounded-2xl flex items-center justify-center
+              text-lg font-bold shrink-0
+              ${
+                alive
+                  ? "bg-blue-500/20 text-blue-200"
+                  : "bg-red-500/20 text-red-200"
+              }
+            `}
+          >
+            {member.user.name?.charAt(0)?.toUpperCase()}
+          </div>
+
+          {/* Name + Email */}
+          <div className="min-w-0">
+            <p className="font-semibold text-white truncate">
+              {member.user.name}
+            </p>
+            <p className="text-sm text-white/60 truncate">
+              {member.user.email}
+            </p>
+          </div>
+        </div>
+
+        {/* Status badge */}
+        <span
           className={`
-            w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold
-            shadow-inner
-            backdrop-blur-xl
+            text-[11px] px-2 py-1 rounded-full border shrink-0
             ${
               alive
-                ? "bg-blue-500/20 text-blue-300"
-                : "bg-red-500/20 text-red-300"
+                ? "bg-emerald-500/10 text-emerald-200 border-emerald-500/20"
+                : "bg-red-500/10 text-red-200 border-red-500/20"
             }
           `}
         >
-          {member.user.name.charAt(0).toUpperCase()}
-        </div>
-
-        {/* Info */}
-        <div className="flex-1">
-          <div
-            className={`text-xl font-semibold ${
-              alive ? "text-white" : "text-red-200"
-            }`}
-          >
-            {member.user.name}
-          </div>
-          <div className="text-sm text-gray-300">{member.user.email}</div>
-        </div>
-
-        {/* Button */}
-        <Button
-          variant={alive ? "danger" : "primary"}
-          className="!px-4 !py-1.5 text-sm rounded-xl"
-          onClick={() => onToggle(member.user.id, alive)}
-        >
-          Mark {alive ? "Dead" : "Alive"}
-        </Button>
+          {alive ? "Alive" : "Dead"}
+        </span>
       </div>
+
+      {/* Divider */}
+      <div className="h-px bg-white/10 my-4" />
+
+      {/* Action */}
+      <Button
+        variant={alive ? "danger" : "primary"}
+        className="w-full rounded-xl"
+        onClick={() => onToggle(member.user.id, alive)}
+      >
+        Mark {alive ? "Dead" : "Alive"}
+      </Button>
     </div>
   );
 }

@@ -192,8 +192,8 @@ export default function CreateEventPage() {
           )}
 
           {/* Info Box */}
-          <div className="p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-            <p className="text-sm text-blue-200">
+          <div className="p-4 muted rounded-lg">
+            <p className="text-sm muted-text">
               <strong>Note:</strong> Your event will be sent for approval to
               community admins. You&apos;ll be notified once it&apos;s reviewed.
             </p>
@@ -204,14 +204,14 @@ export default function CreateEventPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="flex-1 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium"
+              className="flex-1 px-6 py-3 muted rounded-lg font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(59,130,246,0.5)]"
+              className="flex-1 px-6 py-3 btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

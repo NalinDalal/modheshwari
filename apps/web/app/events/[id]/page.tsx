@@ -300,11 +300,21 @@ export default function EventDetailsPage() {
 
   return (
     <DreamySunsetBackground className="px-6 py-10">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
+        <div className="rounded-[28px] bg-black/30 backdrop-blur-2xl border border-white/10 shadow-[0_50px_140px_rgba(0,0,0,0.35)] p-5 md:p-8">
         {/* Header */}
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
+className="
+  inline-flex items-center gap-2
+  text-white/70 hover:text-white
+  transition
+  mb-6
+  px-3 py-2 rounded-xl
+  bg-white/5 border border-white/10
+  hover:bg-white/10
+"
+
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Events
@@ -314,10 +324,19 @@ export default function EventDetailsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-8"
+          className="
+  rounded-[24px]
+  bg-white/6
+  backdrop-blur-2xl
+  border border-white/10
+  shadow-[0_30px_90px_rgba(0,0,0,0.25)]
+  p-6 md:p-8
+"
+
         >
           {/* Status & Registration Count */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+
             {getStatusBadge(event.status)}
             <span className="flex items-center gap-2 text-gray-400">
               <Users className="w-5 h-5" />
@@ -329,11 +348,14 @@ export default function EventDetailsPage() {
           </div>
 
           {/* Event Name */}
-          <h1 className="text-3xl font-bold mb-4">{event.name}</h1>
+         <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-3 text-white">
+  {event.name}
+</h1>
 
           {/* Description */}
           {event.description && (
-            <p className="text-gray-300 mb-6 leading-relaxed">
+            <p className="text-white/70 mb-7 leading-relaxed text-[15px]">
+
               {event.description}
             </p>
           )}
@@ -349,7 +371,13 @@ export default function EventDetailsPage() {
             </div>
 
             {event.venue && (
-              <div className="flex items-start gap-3 p-4 bg-white/5 rounded-lg border border-white/10">
+              <div className="
+  flex items-start gap-3
+  p-4 rounded-2xl
+  bg-white/5 border border-white/10
+  hover:bg-white/7 transition
+"
+              >
                 <MapPin className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Venue</p>
@@ -360,10 +388,17 @@ export default function EventDetailsPage() {
           </div>
 
           {/* Organizer */}
-          <div className="p-4 bg-white/5 rounded-lg border border-white/10 mb-8">
+          <div className="p-5 bg-white/5 rounded-2xl border border-white/10 mb-8">
             <p className="text-xs text-gray-500 mb-2">Organized by</p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+              <div 
+              className="
+  w-11 h-11 rounded-2xl
+  bg-white/10 border border-white/15
+  flex items-center justify-center
+  text-white font-bold
+"
+>
                 {event.createdBy.name.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -380,7 +415,15 @@ export default function EventDetailsPage() {
                 <button
                   onClick={handleUnregister}
                   disabled={registering}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="
+  flex-1 flex items-center justify-center gap-2
+  px-6 py-3 rounded-2xl
+  bg-red-500/15 border border-red-500/25
+  text-red-100 font-semibold
+  hover:bg-red-500/20 transition
+  disabled:opacity-50 disabled:cursor-not-allowed
+"
+
                 >
                   {registering ? (
                     <>
@@ -398,8 +441,16 @@ export default function EventDetailsPage() {
                 <button
                   onClick={handleRegister}
                   disabled={registering}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_12px_rgba(59,130,246,0.5)]"
-                >
+                  className="
+  flex-1 flex items-center justify-center gap-2
+  px-6 py-3 rounded-2xl
+  bg-white/10 border border-white/15
+  text-white font-semibold
+  hover:bg-white/15 transition
+  disabled:opacity-50 disabled:cursor-not-allowed
+  shadow-[0_20px_60px_rgba(0,0,0,0.25)]
+"
+   >
                   {registering ? (
                     <>
                       <Loader className="w-5 h-5 animate-spin" />
@@ -417,7 +468,13 @@ export default function EventDetailsPage() {
           )}
 
           {event.status === "PENDING" && (
-            <div className="p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg text-yellow-200 text-sm">
+            <div 
+            
+            className="
+  p-4 rounded-2xl
+  bg-white/5 border border-white/10
+  text-white/70 text-sm
+">
               <strong>Pending Approval:</strong> This event is awaiting approval
               from community admins.
             </div>
@@ -443,14 +500,27 @@ export default function EventDetailsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mt-6 bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-6"
+            className="
+            mt-6 rounded-[24px]
+  bg-white/6 backdrop-blur-2xl
+  border border-white/10
+  p-6
+"
+            
           >
             <h2 className="text-xl font-semibold mb-4">Approval Status</h2>
             <div className="space-y-3">
               {event.approvals.map((approval) => (
                 <div
                   key={approval.id}
-                  className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10"
+
+                  className="
+  flex items-center justify-between gap-4
+  p-4 rounded-2xl
+  bg-white/5 border border-white/10
+"
+
+                  
                 >
                   <div>
                     <p className="font-medium">{approval.approver.name}</p>
@@ -492,7 +562,16 @@ export default function EventDetailsPage() {
               value={moderationRemarks}
               onChange={(e) => setModerationRemarks(e.target.value)}
               placeholder="Optional remarks / suggested changes"
-              className="w-full min-h-[80px] p-3 rounded-md bg-white/5 border border-white/10 text-sm text-gray-200 mb-4"
+              className="
+  w-full min-h-[90px]
+  p-4 rounded-2xl
+  bg-white/5 border border-white/10
+  text-[14px] text-white/80
+  placeholder:text-white/35
+  focus:outline-none focus:ring-2 focus:ring-white/20
+  mb-4
+"
+
             />
 
             <div className="flex gap-3">
@@ -540,6 +619,7 @@ export default function EventDetailsPage() {
             </div>
           </motion.div>
         )}
+      </div>
       </div>
     </DreamySunsetBackground>
   );

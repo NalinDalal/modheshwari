@@ -4,7 +4,6 @@ import { Suspense, useState } from "react";
 import { LoaderOne } from "@repo/ui/loading";
 import { List, Network } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
-
 import FamilyPageContent from "./FamilyPageContent";
 import FamilyTreeView from "./FamilyTreeView";
 
@@ -26,21 +25,19 @@ export default function FamilyPage(): React.ReactElement {
     <DreamySunsetBackground className="px-6 py-10">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Family Management</h1>
-        <p className="text-sm text-gray-400 mt-1">
-          View your family members and relationships
-        </p>
+        <h1 className="text-4xl font-extrabold tracking-tight">Family Management</h1>
+        <p className="muted mt-2">View your family members and relationships</p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="mb-6 border-b border-white/10">
-        <div className="flex gap-2">
+      <div className="mb-6">
+        <div className="flex gap-3">
           <button
             onClick={() => setActiveTab("list")}
-            className={`flex items-center gap-2 px-6 py-3 font-medium transition-all relative ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === "list"
-                ? "text-blue-400 border-b-2 border-blue-400"
-                : "text-gray-400 hover:text-gray-300"
+                ? "bg-rose-50 text-rose-600 shadow-soft"
+                : "muted hover:text-rose-600"
             }`}
           >
             <List className="w-4 h-4" />
@@ -48,10 +45,10 @@ export default function FamilyPage(): React.ReactElement {
           </button>
           <button
             onClick={() => setActiveTab("tree")}
-            className={`flex items-center gap-2 px-6 py-3 font-medium transition-all relative ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === "tree"
-                ? "text-blue-400 border-b-2 border-blue-400"
-                : "text-gray-400 hover:text-gray-300"
+                ? "bg-rose-50 text-rose-600 shadow-soft"
+                : "muted hover:text-rose-600"
             }`}
           >
             <Network className="w-4 h-4" />
@@ -61,17 +58,18 @@ export default function FamilyPage(): React.ReactElement {
       </div>
 
       {/* Tab Content */}
-      <div>
-        {activeTab === "list" ? (
-          <Suspense fallback={<LoaderOne />}>
-            <FamilyPageContent />
-          </Suspense>
-        ) : (
-          <Suspense fallback={<LoaderOne />}>
-            <FamilyTreeView />
-          </Suspense>
-        )}
-      </div>
+      <div className="rounded-[28px] bg-black/40 backdrop-blur-2xl border border-white/10 p-8 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
+  {activeTab === "list" ? (
+    <Suspense fallback={<LoaderOne />}>
+      <FamilyPageContent />
+    </Suspense>
+  ) : (
+    <Suspense fallback={<LoaderOne />}>
+      <FamilyTreeView />
+    </Suspense>
+  )}
+</div>
+
     </DreamySunsetBackground>
   );
 }

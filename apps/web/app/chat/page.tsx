@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { NotAuthenticated } from "@repo/ui/not-authenticated";
 
 type Conversation = {
   id: string;
@@ -46,6 +47,29 @@ export default function ChatPage() {
     return localStorage.getItem("token");
   }
 
+  function getUserId() {
+    if (typeof window === "undefined") return null;
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+    try {
+      const parts = token.split(".");
+      if (parts.length < 2) return null;
+      const payload = JSON.parse(atob(parts[1]!));
+      return payload.userId || payload.id || null;
+    } catch (err) {
+      console.error("Failed to decode token:", err);
+      return null;
+    }
+  }
+
+  const meId = getUserId();
+  const [hydrated, setHydrated] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
   const fetchChats = useCallback(async () => {
     const token = getToken();
     const res = await fetch(`${API_BASE}/chat`, {
@@ -57,6 +81,12 @@ export default function ChatPage() {
     setFamilyChat(js.data.familyChat || null);
   }, [API_BASE]);
 
+  useEffect(() => {
+      setHydrated(true);
+      const savedToken = localStorage.getItem("token");
+      setToken(savedToken);
+    }, []);
+    
   useEffect(() => {
     void fetchChats();
     // connect WS
@@ -140,7 +170,7 @@ export default function ChatPage() {
     setMessages(js.data || []);
 
     // mark unread messages as read via WS
-    const unread = js.data.filter((m: Message) => !(m.readBy || []).includes(getToken() || ""));
+    const unread = js.data.filter((m: Message) => !(m.readBy || []).includes(meId || ""));
     for (const m of unread) {
       try {
         wsRef.current?.send(
@@ -165,7 +195,7 @@ export default function ChatPage() {
       id: clientId,
       clientId,
       conversationId: selected.id,
-      senderId: getToken() || "me",
+      senderId: meId || "me",
       senderName: "You",
       content: input.trim(),
       createdAt: now,
@@ -253,81 +283,262 @@ export default function ChatPage() {
       setMessages((ms) => ms.map((m) => (m.clientId === newClientId ? { ...m, status: "failed" } : m)));
     }
   }
-
+  if (!hydrated) return null;
+  if (hydrated && !getToken()) return <NotAuthenticated />;
   return (
-    <div className="min-h-screen p-6 bg-black text-white">
-      <div className="max-w-6xl mx-auto grid grid-cols-4 gap-6">
-        <div className="col-span-1 bg-[#0e1320]/70 rounded-lg p-4">
-          <h3 className="font-semibold mb-3">Conversations</h3>
-          <div>
-            {personal.map((c) => (
-              <div
-                key={c.id}
-                className={`p-2 rounded hover:bg-white/5 cursor-pointer ${selected?.id === c.id ? "bg-white/5" : ""}`}
-                onClick={() => loadConversation(c)}
-              >
-                <div className="flex justify-between">
-                  <div>{c.participants.map((p) => p.name || p.id).join(", ")}</div>
-                  <div className="text-xs text-gray-400">{c.unreadCount || 0}</div>
-                </div>
-              </div>
-            ))}
+  
+  <div className="min-h-screen px-4 py-8 md:px-8">
+    <div className="max-w-7xl mx-auto">
+      <div className="rounded-[28px] bg-black/30 backdrop-blur-2xl border border-white/10 shadow-[0_50px_140px_rgba(0,0,0,0.35)] overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-5 min-h-[85vh]">
 
-            {familyChat && (
-              <div
-                key={familyChat.id}
-                className={`mt-4 p-2 rounded hover:bg-white/5 cursor-pointer ${selected?.id === familyChat.id ? "bg-white/5" : ""}`}
-                onClick={() => loadConversation(familyChat)}
-              >
-                <div className="flex justify-between">
-                  <div>Family Chat</div>
-                  <div className="text-xs text-gray-400">{familyChat.unreadCount || 0}</div>
+          {/* Sidebar */}
+          <div className="md:col-span-1 border-b md:border-b-0 md:border-r border-white/10 bg-white/5">
+            <div className="p-5">
+              <h3 className="text-lg font-semibold tracking-tight">Chats</h3>
+              <p className="text-xs text-white/50 mt-1">
+                Personal + Family conversations
+              </p>
+            </div>
+
+            <div className="px-3 pb-4 space-y-2 overflow-auto max-h-[70vh]">
+              {personal.map((c) => {
+                const title =
+                  c.participants?.map((p) => p.name || p.id).join(", ") ||
+                  "Conversation";
+
+                const isActive = selected?.id === c.id;
+
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => loadConversation(c)}
+                    className={`
+                      w-full text-left
+                      px-4 py-3 rounded-2xl
+                      border transition
+                      ${
+                        isActive
+                          ? "bg-white/10 border-white/20"
+                          : "bg-white/0 border-white/0 hover:bg-white/5 hover:border-white/10"
+                      }
+                    `}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-medium text-white truncate">
+                          {title}
+                        </div>
+                        <div className="text-xs text-white/50 truncate mt-1">
+                          {c.lastMessage || "No messages yet"}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {!!c.unreadCount && c.unreadCount > 0 && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-white/10 border border-white/15 text-white/80">
+                            {c.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+
+              {familyChat && (
+                <button
+                  key={familyChat.id}
+                  onClick={() => loadConversation(familyChat)}
+                  className={`
+                    w-full text-left
+                    px-4 py-3 rounded-2xl
+                    border transition
+                    ${
+                      selected?.id === familyChat.id
+                        ? "bg-white/10 border-white/20"
+                        : "bg-white/0 border-white/0 hover:bg-white/5 hover:border-white/10"
+                    }
+                  `}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-medium text-white truncate">
+                        Family Chat
+                      </div>
+                      <div className="text-xs text-white/50 truncate mt-1">
+                        {familyChat.lastMessage || "No messages yet"}
+                      </div>
+                    </div>
+
+                    {!!familyChat.unreadCount && familyChat.unreadCount > 0 && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-white/10 border border-white/15 text-white/80">
+                        {familyChat.unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Chat Area */}
+          <div className="md:col-span-4 flex flex-col bg-white/3">
+
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-white/10 bg-white/5">
+              {selected ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-base font-semibold text-white">
+                      {selected === familyChat
+                        ? "Family Chat"
+                        : selected.participants?.map((p) => p.name || p.id).join(", ")}
+                    </div>
+                    <div className="text-xs text-white/50 mt-1">
+                      {Object.entries(typingUsers).some(([, v]) => v)
+                        ? "Someone is typing..."
+                        : "Online"}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-white/50">
+                    {messages.length} messages
+                  </div>
+                </div>
+              ) : (
+                <div className="text-white/70 font-medium">
+                  Select a conversation
+                </div>
+              )}
+            </div>
+
+            {/* Messages */}
+            <div
+              ref={containerRef}
+              className="flex-1 overflow-auto px-4 md:px-6 py-6 space-y-3"
+            >
+              {!selected ? (
+                <div className="h-full flex items-center justify-center text-white/40">
+                  Pick a chat from the left
+                </div>
+              ) : (
+                messages.map((m) => {
+                  const isMe =
+                    m.senderId === (meId || "") ||
+                    (m.clientId && m.senderName === "You");
+
+                  return (
+                    <div
+                      key={m.id}
+                      className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`
+                          max-w-[78%] md:max-w-[60%]
+                          rounded-3xl px-4 py-3
+                          border backdrop-blur-xl
+                          shadow-[0_10px_40px_rgba(0,0,0,0.15)]
+                          ${
+                            isMe
+                              ? "bg-white/12 border-white/20 text-white"
+                              : "bg-black/20 border-white/10 text-white/90"
+                          }
+                        `}
+                      >
+                        <div className="flex items-center gap-2">
+                          {!isMe && (
+                            <div className="text-xs text-white/60 font-medium">
+                              {m.senderName}
+                            </div>
+                          )}
+
+                          {m.clientId && (
+                            <div className="text-[11px] text-white/40">
+                              {m.status === "sending"
+                                ? "sending…"
+                                : m.status === "failed"
+                                  ? "failed"
+                                  : "sent"}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mt-1 text-[15px] leading-relaxed">
+                          {m.content}
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-white/40">
+                          <div>
+                            {new Date(m.createdAt).toLocaleString()}
+                          </div>
+
+                          {m.clientId && m.status === "failed" && (
+                            <button
+                              onClick={() => retryMessage(m)}
+                              className="text-red-300 hover:text-red-200 underline"
+                            >
+                              Retry
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Typing indicator */}
+            {selected && (
+              <div className="px-6 pb-2 text-xs text-white/40">
+                {Object.entries(typingUsers)
+                  .filter(([, v]) => v)
+                  .map(([k]) => `${k} typing...`)
+                  .join(" ")}
+              </div>
+            )}
+
+            {/* Input */}
+            {selected && (
+              <div className="p-4 md:p-6 border-t border-white/10 bg-white/5">
+                <div className="flex gap-3">
+                  <input
+                    value={input}
+                    onChange={(e) => onInputChange(e.target.value)}
+                    placeholder="Type a message..."
+                    className="
+                      flex-1 px-4 py-3 rounded-2xl
+                      bg-black/20 border border-white/10
+                      text-white/80 placeholder:text-white/35
+                      focus:outline-none focus:ring-2 focus:ring-white/15
+                    "
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") sendMessage();
+                    }}
+                  />
+
+                  <button
+                    onClick={sendMessage}
+                    className="
+                      px-5 py-3 rounded-2xl
+                      bg-white/12 border border-white/20
+                      text-white font-semibold
+                      hover:bg-white/18 transition
+                      shadow-[0_15px_40px_rgba(0,0,0,0.25)]
+                    "
+                  >
+                    Send
+                  </button>
                 </div>
               </div>
             )}
           </div>
-        </div>
 
-        <div className="col-span-3 bg-[#0e1320]/70 rounded-lg p-4 flex flex-col">
-          {selected ? (
-            <>
-              <div ref={containerRef} className="flex-1 overflow-auto mb-4 space-y-3">
-                {messages.map((m) => (
-                  <div key={m.id} className={`p-2 rounded max-w-[70%] ${m.senderId === (getToken() || "") || m.clientId ? "bg-blue-600/20 self-end" : "bg-white/5 self-start"}`}>
-                    <div className="flex items-center gap-2">
-                      <div className="text-xs text-gray-300 font-medium">{m.senderName}</div>
-                      {m.clientId && (
-                        <div className="text-xs text-gray-400">{m.status === "sending" ? "• sending" : m.status === "failed" ? "• failed" : "• sent"}</div>
-                      )}
-                    </div>
-                    <div className="mt-1">{m.content}</div>
-                    <div className="flex items-center justify-between text-xs text-gray-500 mt-1">
-                      <div>{new Date(m.createdAt).toLocaleString()}</div>
-                      {m.clientId && m.status === "failed" && (
-                        <button onClick={() => retryMessage(m)} className="text-xs text-red-400">Retry</button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mb-2 text-xs text-gray-400">
-                {Object.entries(typingUsers)
-                  .filter(([, v]) => v)
-                  .map(([k]) => `${k} is typing...`)
-                  .join(" ")}
-              </div>
-
-              <div className="flex gap-2">
-                <input value={input} onChange={(e) => onInputChange(e.target.value)} className="flex-1 px-3 py-2 rounded bg-black/50" />
-                <button onClick={sendMessage} className="px-4 py-2 bg-blue-600 rounded">Send</button>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-400">Select a conversation</div>
-          )}
         </div>
       </div>
     </div>
-  );
+  </div>
+);
+
 }

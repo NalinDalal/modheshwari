@@ -1,7 +1,5 @@
 # Modheshwari — Remaining Tasks
 
-to do: keep ui consistent everywhere
-
 
 ### 1. Prod Hardening
 

@@ -1,130 +1,167 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 /**
  * Single notification item returned from backend.
  */
-interface Notification {
+type Notification = {
   id?: string;
   previewId?: string;
   type?: string;
   message: string;
   createdAt: string;
   read?: boolean;
-}
+};
 
 /**
  * Minimal authenticated user shape used on this page.
- * Keep this lean to avoid schema drift.
  */
-interface Me {
+type Role =
+  | "COMMUNITY_HEAD"
+  | "COMMUNITY_SUBHEAD"
+  | "GOTRA_HEAD"
+  | "FAMILY_HEAD"
+  | "MEMBER";
+
+type Me = {
   id: string;
   name: string;
   email: string;
-  role:
-    | "COMMUNITY_HEAD"
-    | "COMMUNITY_SUBHEAD"
-    | "GOTRA_HEAD"
-    | "FAMILY_HEAD"
-    | "MEMBER";
-}
+  role: Role;
+};
 
-/**
- * Retrieves stored JWT token from localStorage (client-only).
- * @returns JWT token string or null if unavailable
- */
+type Priority = "low" | "normal" | "high" | "urgent";
+type ReadFilter = "all" | "read" | "unread";
+type SortBy = "newest" | "oldest" | "unread-first";
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
+
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("token");
 }
 
+function toWsBaseUrl(): string {
+  const proto = window.location.protocol === "https:" ? "wss" : "ws";
+  return `${proto}://${window.location.hostname}:3002`;
+}
+
+function isAdminRole(role?: Role): boolean {
+  return (
+    role === "COMMUNITY_HEAD" ||
+    role === "COMMUNITY_SUBHEAD" ||
+    role === "GOTRA_HEAD"
+  );
+}
+
+function dedupeKey(n: Notification): string {
+  if (n.id) return `id:${n.id}`;
+  if (n.previewId) return `preview:${n.previewId}`;
+  return `fallback:${n.message}:${n.createdAt}`;
+}
+
 /**
- * Notifications Page
- *
- * Responsibilities:
- * - Fetch current user (`/me`)
- * - Fetch user's notifications (`/notifications`)
- * - Allow privileged roles to broadcast notifications
- *
- * Permission rules are ENFORCED by backend,
- * but UI mirrors them for correct UX.
+ * Merge strategy:
+ * - Keep fetched persisted notifications as baseline
+ * - Keep any local previews (no id) that are not present in fetched list
+ * - If fetched contains same previewId, fetched wins
  */
+function mergePersisted(prev: Notification[], fetched: Notification[]) {
+  const next = [...fetched];
+
+  const fetchedKeys = new Set(next.map(dedupeKey));
+  const fetchedPreviewIds = new Set(next.map((n) => n.previewId).filter(Boolean));
+
+  for (const p of prev) {
+    // if preview is now persisted in fetched (same previewId), ignore preview
+    if (p.previewId && fetchedPreviewIds.has(p.previewId)) continue;
+
+    // if exact key exists, ignore
+    if (fetchedKeys.has(dedupeKey(p))) continue;
+
+    // keep local preview
+    next.unshift(p);
+  }
+
+  return next;
+}
+
 export default function NotificationsPage(): React.ReactElement {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [message, setMessage] = useState("");
-  const [subject, setSubject] = useState("");
-  const [targetRole, setTargetRole] = useState("ALL");
   const [me, setMe] = useState<Me | null>(null);
-  const [filterRead, setFilterRead] = useState<"all" | "read" | "unread">(
-    "all",
-  );
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "unread-first">(
-    "newest",
-  );
-  const [selectedType, setSelectedType] = useState<string>("all");
-  const [priority, setPriority] = useState<
-    "low" | "normal" | "high" | "urgent"
-  >("normal");
-  const [selectedChannels, setSelectedChannels] = useState<string[]>([
-    "IN_APP",
-  ]);
 
-  useEffect(() => {
-    void loadCurrentUser();
-    void fetchNotifications();
-  }, []);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+
+  const [targetRole, setTargetRole] = useState("ALL");
+  const [priority, setPriority] = useState<Priority>("normal");
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(["IN_APP"]);
+
+  const [filterRead, setFilterRead] = useState<ReadFilter>("all");
+  const [sortBy, setSortBy] = useState<SortBy>("newest");
+  const [selectedType, setSelectedType] = useState<string>("all");
+
+  const [loading, setLoading] = useState(true);
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
-    const token = getToken();
-    const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${proto}://${window.location.hostname}:3002/?token=${encodeURIComponent(token || "")}`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-    ws.addEventListener('open', () => {
-      if (token) {
-        try {
-          ws.send(JSON.stringify({ type: 'auth', token }));
-        } catch (e) {
-          console.error('Failed to send auth message', e);
-        }
-      }
-    });
-    ws.addEventListener("message", (ev) => {
-      try {
-        const data = JSON.parse(ev.data);
-        if (data.type === "notification") {
-          const incoming = data.notification as Notification;
-          upsertNotification(incoming);
-        }
-      } catch (err) {
-        console.error("WS parse error", err);
-      }
-    });
-
-    return () => {
-      ws.close();
-      wsRef.current = null;
-    };
-  }, []);
+  const isAdmin = isAdminRole(me?.role);
 
   /**
-   * Fetch currently authenticated user.
+   * Insert/replace incoming notifications safely.
    */
-  async function loadCurrentUser(): Promise<void> {
+  const upsertNotification = useCallback((incoming: Notification) => {
+    setNotifications((prev) => {
+      const next = [...prev];
+
+      // 1) persisted incoming -> replace matching preview
+      if (incoming.id && incoming.previewId) {
+        const idx = next.findIndex((p) => p.previewId === incoming.previewId);
+        if (idx >= 0) {
+          next[idx] = incoming;
+          return next;
+        }
+      }
+
+      // 2) dedupe by id
+      if (incoming.id && next.some((p) => p.id === incoming.id)) return prev;
+
+      // 3) dedupe by previewId
+      if (
+        incoming.previewId &&
+        next.some((p) => p.previewId === incoming.previewId)
+      ) {
+        return prev;
+      }
+
+      // 4) fallback dedupe
+      if (
+        next.some(
+          (p) => p.message === incoming.message && p.createdAt === incoming.createdAt,
+        )
+      ) {
+        return prev;
+      }
+
+      // prepend newest
+      return [incoming, ...next];
+    });
+  }, []);
+
+  const loadCurrentUser = useCallback(async () => {
     const token = getToken();
     if (!token) return;
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/me`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await fetch(`${API_BASE}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (!res.ok) return;
 
@@ -133,84 +170,97 @@ export default function NotificationsPage(): React.ReactElement {
     } catch (err) {
       console.error("Failed to fetch user info", err);
     }
-  }
+  }, []);
 
-  /**
-   * Fetch notifications for the current user.
-   */
-  async function fetchNotifications(): Promise<void> {
+  const fetchNotifications = useCallback(async () => {
     const token = getToken();
     if (!token) return;
 
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/notifications`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+    setError(null);
+    setLoading(true);
 
-      if (!res.ok) return;
+    try {
+      const res = await fetch(`${API_BASE}/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch notifications");
 
       const js = await res.json();
       const fetched: Notification[] = js.data?.notifications ?? [];
-      // Merge fetched persisted notifications with any in-memory previews
+
       setNotifications((prev) => mergePersisted(prev, fetched));
     } catch (err) {
-      console.error("Failed to fetch notifications", err);
+      console.error(err);
+      setError("Failed to load notifications.");
+    } finally {
+      setLoading(false);
     }
-  }
-
-  function upsertNotification(incoming: Notification) {
-    setNotifications((prev) => {
-      // if incoming has id (persisted)
-      if (incoming.id) {
-        // replace any preview with same previewId
-        const byPreview = incoming.previewId
-          ? prev.findIndex((p) => p.previewId === incoming.previewId)
-          : -1;
-        if (byPreview >= 0) {
-          const next = [...prev];
-          next[byPreview] = { ...incoming };
-          return next;
-        }
-        // if already exists by id, ignore
-        if (prev.some((p) => p.id === incoming.id)) return prev;
-        // prepend persisted
-        return [{ ...incoming }, ...prev];
-      }
-
-      // incoming is a preview (no id)
-      if (incoming.previewId) {
-        if (prev.some((p) => p.previewId === incoming.previewId)) return prev;
-        return [{ ...incoming }, ...prev];
-      }
-
-      // fallback: dedupe by message+createdAt
-      if (prev.some((p) => p.message === incoming.message && p.createdAt === incoming.createdAt)) return prev;
-      return [{ ...incoming }, ...prev];
-    });
-  }
-
-  function mergePersisted(prev: Notification[], fetched: Notification[]) {
-    // Start with persisted list, but ensure any existing previews that match by previewId are replaced
-    const next = [...fetched];
-    const previewMap = new Map<string, Notification>();
-    for (const p of prev) {
-      if (p.previewId) previewMap.set(p.previewId, p);
-    }
-    // prepend any previews that don't match fetched items
-    for (const [previewId, p] of previewMap.entries()) {
-      const exists = next.some((n) => n.previewId === previewId || n.message === p.message && n.createdAt === p.createdAt);
-      if (!exists) next.unshift(p);
-    }
-    return next;
-  }
+  }, []);
 
   /**
-   * Broadcast notification (admins only).
+   * Initial load
    */
-  async function handleBroadcast(e: React.FormEvent): Promise<void> {
+  useEffect(() => {
+    void loadCurrentUser();
+    void fetchNotifications();
+  }, [loadCurrentUser, fetchNotifications]);
+
+  /**
+   * Reset target role when role changes (avoid invalid selection)
+   */
+  useEffect(() => {
+    setTargetRole("ALL");
+  }, [me?.role]);
+
+  /**
+   * WebSocket live updates
+   */
+  useEffect(() => {
+    const token = getToken();
+    const ws = new WebSocket(`${toWsBaseUrl()}/?token=${encodeURIComponent(token || "")}`);
+    wsRef.current = ws;
+
+    ws.addEventListener("open", () => {
+      if (!token) return;
+      try {
+        ws.send(JSON.stringify({ type: "auth", token }));
+      } catch (e) {
+        console.error("WS auth send failed", e);
+      }
+    });
+
+    ws.addEventListener("message", (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+
+        if (data.type === "notification") {
+          upsertNotification(data.notification as Notification);
+        }
+      } catch (err) {
+        console.error("WS parse error", err);
+      }
+    });
+
+    ws.addEventListener("error", (err) => {
+      console.error("WS error", err);
+    });
+
+    return () => {
+      ws.close();
+      wsRef.current = null;
+    };
+  }, [upsertNotification]);
+
+  function toggleChannel(channel: string) {
+    setSelectedChannels((prev) =>
+      prev.includes(channel)
+        ? prev.filter((c) => c !== channel)
+        : [...prev, channel],
+    );
+  }
+
+  async function handleBroadcast(e: React.FormEvent) {
     e.preventDefault();
 
     const token = getToken();
@@ -221,144 +271,108 @@ export default function NotificationsPage(): React.ReactElement {
 
     if (!message.trim()) return;
 
+    setBroadcasting(true);
+
     try {
-      interface BroadcastBody {
+      const body: {
         message: string;
         subject?: string;
-        priority: "low" | "normal" | "high" | "urgent";
+        priority: Priority;
         channels: string[];
         targetRole?: string;
-      }
-
-      const body: BroadcastBody = {
-        message,
+      } = {
+        message: message.trim(),
         subject: subject.trim() || undefined,
         priority,
         channels: selectedChannels,
       };
+
       if (targetRole !== "ALL") body.targetRole = targetRole;
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/notifications`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
+      const res = await fetch(`${API_BASE}/notifications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify(body),
+      });
 
-      if (res.ok) {
-        setMessage("");
-        setSubject("");
-        setTargetRole("ALL");
-        setPriority("normal");
-        setSelectedChannels(["IN_APP"]);
-        await fetchNotifications();
-        alert("Broadcast sent");
-      } else {
-        const js = await res.json();
-        alert(js.message || "Failed to broadcast");
+      if (!res.ok) {
+        const js = await res.json().catch(() => null);
+        alert(js?.message || "Failed to broadcast");
+        return;
       }
+
+      setMessage("");
+      setSubject("");
+      setTargetRole("ALL");
+      setPriority("normal");
+      setSelectedChannels(["IN_APP"]);
+
+      await fetchNotifications();
+      alert("Broadcast sent");
     } catch (err) {
-      console.error("Network error", err);
+      console.error("Broadcast error", err);
       alert("Network error");
+    } finally {
+      setBroadcasting(false);
     }
   }
 
-  /**
-   * Determines whether user can see broadcast UI.
-   */
-  const isAdmin =
-    me?.role === "COMMUNITY_HEAD" ||
-    me?.role === "COMMUNITY_SUBHEAD" ||
-    me?.role === "GOTRA_HEAD";
-
-  /**
-   * Reset target role when user role changes
-   * to prevent invalid selections.
-   */
-  useEffect(() => {
-    setTargetRole("ALL");
-  }, [me?.role]);
-
-  /**
-   * Toggle channel selection
-   */
-  function toggleChannel(channel: string) {
-    setSelectedChannels((prev) =>
-      prev.includes(channel)
-        ? prev.filter((c) => c !== channel)
-        : [...prev, channel],
-    );
-  }
-
-  /**
-   * Mark notification as read/unread
-   */
-  async function handleToggleRead(
-    notificationId: string,
-    currentReadStatus: boolean,
-  ): Promise<void> {
+  async function handleToggleRead(notificationId: string, currentRead: boolean) {
     const token = getToken();
     if (!token) return;
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/notifications/${notificationId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ read: !currentReadStatus }),
+      const res = await fetch(`${API_BASE}/notifications/${notificationId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({ read: !currentRead }),
+      });
 
-      if (res.ok) {
-        setNotifications((prevs) =>
-          prevs.map((n) =>
-            n.id === notificationId ? { ...n, read: !n.read } : n,
-          ),
-        );
-      }
+      if (!res.ok) return;
+
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notificationId ? { ...n, read: !currentRead } : n,
+        ),
+      );
     } catch (err) {
       console.error("Failed to update notification", err);
     }
   }
 
-  /**
-   * Get unique notification types for filter dropdown
-   */
-  const notificationTypes = Array.from(
-    new Set(notifications.map((n) => n.type)),
-  ).sort();
+  const notificationTypes = useMemo(() => {
+    return Array.from(new Set(notifications.map((n) => n.type).filter(Boolean))).sort();
+  }, [notifications]);
 
-  /**
-   * Apply filters and sorting
-   */
-  const filteredNotifications = notifications
-    .filter((n) => {
-      if (filterRead === "read" && !n.read) return false;
-      if (filterRead === "unread" && n.read) return false;
-      if (selectedType !== "all" && n.type !== selectedType) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === "newest") {
-        return +new Date(b.createdAt) - +new Date(a.createdAt);
-      }
-      if (sortBy === "oldest") {
-        return +new Date(a.createdAt) - +new Date(b.createdAt);
-      }
-      if (a.read === b.read) {
-        return +new Date(b.createdAt) - +new Date(a.createdAt);
-      }
-      return a.read ? 1 : -1;
-    });
+  const filteredNotifications = useMemo(() => {
+    return notifications
+      .filter((n) => {
+        if (filterRead === "read" && !n.read) return false;
+        if (filterRead === "unread" && n.read) return false;
+        if (selectedType !== "all" && n.type !== selectedType) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "newest") {
+          return +new Date(b.createdAt) - +new Date(a.createdAt);
+        }
+        if (sortBy === "oldest") {
+          return +new Date(a.createdAt) - +new Date(b.createdAt);
+        }
+
+        // unread-first
+        if (a.read === b.read) {
+          return +new Date(b.createdAt) - +new Date(a.createdAt);
+        }
+        return a.read ? 1 : -1;
+      });
+  }, [notifications, filterRead, selectedType, sortBy]);
 
   return (
     <DreamySunsetBackground className="px-4 sm:px-6 py-10">
@@ -372,6 +386,13 @@ export default function NotificationsPage(): React.ReactElement {
             Stay updated with system and community alerts
           </p>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
+            {error}
+          </div>
+        )}
 
         {/* Admin Broadcast */}
         {isAdmin && (
@@ -439,11 +460,7 @@ export default function NotificationsPage(): React.ReactElement {
 
                 <select
                   value={priority}
-                  onChange={(e) =>
-                    setPriority(
-                      e.target.value as "low" | "normal" | "high" | "urgent",
-                    )
-                  }
+                  onChange={(e) => setPriority(e.target.value as Priority)}
                   className="bg-pink-50 border border-pink-200 rounded-lg px-4 py-3"
                 >
                   <option value="low">Low Priority</option>
@@ -454,10 +471,10 @@ export default function NotificationsPage(): React.ReactElement {
 
                 <button
                   type="submit"
-                  disabled={!message.trim()}
-                  className="px-6 py-3 rounded-lg bg-pink-600 text-white"
+                  disabled={broadcasting || !message.trim()}
+                  className="px-6 py-3 rounded-lg bg-pink-600 text-white disabled:opacity-50"
                 >
-                  Send Notification
+                  {broadcasting ? "Sending..." : "Send Notification"}
                 </button>
               </div>
 
@@ -483,8 +500,8 @@ export default function NotificationsPage(): React.ReactElement {
               {/* Preview */}
               {(subject.trim() || message.trim()) && (
                 <div className="border rounded-lg p-4">
-                  <p className="font-semibold">{subject}</p>
-                  <p>{message}</p>
+                  <p className="font-semibold">{subject.trim() || "—"}</p>
+                  <p>{message.trim()}</p>
                 </div>
               )}
             </form>
@@ -492,18 +509,93 @@ export default function NotificationsPage(): React.ReactElement {
         )}
 
         {/* Notifications List */}
-        <section className="bg-white rounded-2xl">
-          {filteredNotifications.length === 0 ? (
-            <p className="text-center py-12 text-gray-500">
-              📭 No notifications
-            </p>
+        <section className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+          {/* Controls */}
+          <div className="p-4 border-b flex flex-wrap gap-3 items-center">
+            <select
+              value={filterRead}
+              onChange={(e) => setFilterRead(e.target.value as ReadFilter)}
+              className="border rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="all">All</option>
+              <option value="unread">Unread</option>
+              <option value="read">Read</option>
+            </select>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              className="border rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="unread-first">Unread first</option>
+            </select>
+
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="border rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="all">All types</option>
+              {notificationTypes.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={() => void fetchNotifications()}
+              className="ml-auto text-sm px-3 py-2 rounded-lg border"
+            >
+              Refresh
+            </button>
+          </div>
+
+          {/* Content */}
+          {loading ? (
+            <p className="text-center py-12 text-gray-500">Loading...</p>
+          ) : filteredNotifications.length === 0 ? (
+            <p className="text-center py-12 text-gray-500">📭 No notifications</p>
           ) : (
             <ul>
-              {filteredNotifications.map((n) => (
-                <li key={n.id} className="p-6 border-b">
-                  <p>{n.message}</p>
-                </li>
-              ))}
+              {filteredNotifications.map((n) => {
+                const canToggleRead = Boolean(n.id);
+
+                return (
+                  <li
+                    key={dedupeKey(n)}
+                    className={`p-6 border-b last:border-b-0 ${
+                      n.read ? "bg-white" : "bg-pink-50/40"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="text-gray-900">{n.message}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(n.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+
+                      {canToggleRead && (
+                        <button
+                          onClick={() => void handleToggleRead(n.id!, !!n.read)}
+                          className="text-xs px-3 py-2 rounded-lg border flex items-center justify-center"
+                          title={n.read ? "Mark unread" : "Mark read"}
+                          aria-label={n.read ? "Mark unread" : "Mark read"}
+                        >
+                          {n.read ? (
+                            <Eye className="w-4 h-4 text-gray-700" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-gray-700" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

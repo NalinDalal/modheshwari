@@ -135,55 +135,82 @@ export default function FamilyPageContent() {
 
   // Loading state
   if (loading) return <LoaderOne />;
-
   return (
-    <div>
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h2 className="text-lg font-semibold text-gray-200">
-          Members
-          <span className="ml-2 text-xs text-gray-500">({members.length})</span>
-        </h2>
-
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-500">Filter:</span>
-          <button
-            onClick={() => setShowAll((prev) => !prev)}
-            className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all
-            ${
-              showAll
-                ? "bg-blue-600 text-white shadow-[0_0_12px_rgba(59,130,246,0.5)]"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-            }`}
-          >
-            {showAll ? "All members" : "Alive only"}
-          </button>
-        </div>
+  <div className="space-y-6">
+    {/* Bento Header Stats */}
+    {/*
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="rounded-2xl p-5 bg-white/6 border border-white/10 backdrop-blur-xl">
+        <p className="text-xs text-white/60">Total Members</p>
+        <p className="text-2xl font-bold mt-2">{members.length}</p>
       </div>
 
-      {/* Members Container */}
-      <div className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl">
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <LoaderOne />
-          </div>
-        ) : members.length > 0 ? (
-          <div className="divide-y divide-white/5">
-            {members.map((m) => (
-              <div key={m.id} className="p-4 hover:bg-white/5 transition">
-                <MemberCard member={m} onToggle={toggleStatus} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-sm text-gray-500">No family members to show</p>
-            <p className="text-xs text-gray-600 mt-1">
-              Try changing the filter or adding new members
-            </p>
-          </div>
-        )}
+      <div className="rounded-2xl p-5 bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-xl">
+        <p className="text-xs text-emerald-200/80">Alive</p>
+        <p className="text-2xl font-bold mt-2">
+          {members.filter((m) => m.user.status).length}
+        </p>
+      </div>
+
+      <div className="rounded-2xl p-5 bg-red-500/10 border border-red-500/20 backdrop-blur-xl">
+        <p className="text-xs text-red-200/80">Dead</p>
+        <p className="text-2xl font-bold mt-2">
+          {members.filter((m) => !m.user.status).length}
+        </p>
+      </div>*/}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <div className="col-span-2 rounded-3xl p-6 bg-gradient-to-br from-rose-500/20 to-pink-500/10 border border-white/10">
+    <p className="text-sm text-white/60">Total Members</p>
+    <p className="text-4xl font-black mt-2">{members.length}</p>
+  </div>
+
+  <div className="rounded-3xl p-6 bg-emerald-500/15 border border-emerald-500/30">
+    <p className="text-sm text-emerald-200">Alive</p>
+    <p className="text-3xl font-bold mt-2">
+      {members.filter((m) => m.user.status).length}
+    </p>
+  </div>
+
+  <div className="rounded-3xl p-6 bg-red-500/15 border border-red-500/30">
+    <p className="text-sm text-red-200">Dead</p>
+    <p className="text-3xl font-bold mt-2">
+      {members.filter((m) => !m.user.status).length}
+    </p>
+  </div>
+
+
+      {/* Filter tile */}
+      <div className="rounded-2xl p-5 bg-white/6 border border-white/10 backdrop-blur-xl flex flex-col justify-between">
+        <p className="text-xs text-white/60">Filter</p>
+
+        <button
+          onClick={() => setShowAll((prev) => !prev)}
+          className={`mt-3 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+            showAll
+              ? "bg-rose-500 text-white"
+              : "bg-white/10 text-white/80 hover:bg-white/15"
+          }`}
+        >
+          {showAll ? "Showing All" : "Alive Only"}
+        </button>
       </div>
     </div>
-  );
+
+    {/* Members Bento Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {members.length > 0 ? (
+        members.map((m) => (
+          <MemberCard key={m.id} member={m} onToggle={toggleStatus} />
+        ))
+      ) : (
+        <div className="md:col-span-2 xl:col-span-3 rounded-2xl p-10 text-center bg-white/6 border border-white/10">
+          <p className="text-sm text-white/70">No family members to show</p>
+          <p className="text-xs text-white/50 mt-1">
+            Try changing the filter or adding new members
+          </p>
+        </div>
+      )}
+    </div>
+  </div>
+);
 }

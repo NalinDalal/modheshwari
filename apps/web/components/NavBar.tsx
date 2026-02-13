@@ -12,7 +12,8 @@ import {
   Package,
   Bell,
   Phone,
-  MessageSquare
+  MessageSquare,
+  Calendar
 } from "lucide-react";
 
 import { API_BASE } from "../lib/config";
@@ -133,6 +134,7 @@ export default function NavBar() {
                 <div className="mx-2 h-6 w-px bg-pink-200" />
                 <NavItem href="/family" label="Family" Icon={Users} />
                 <NavItem href="/resources" label="Resources" Icon={Package} />
+                <NavItem href="/events/calendar" label="Calendar" Icon={Calendar} />
                 <NavItem href="/notifications" label="Alerts" Icon={Bell} />
                 <button
                   onClick={() => router.push("/me")}
@@ -180,6 +182,8 @@ export default function NavBar() {
               <NavItem href="/notifications" label='' Icon={Bell} />
               <NavItem href='/chat' label='Chat' Icon={MessageSquare} />
               <NavItem href="/me" label={user.name} />
+              <NavItem href='/events' label='Events' Icon={Calendar} />
+                
             </>
           ) : (
             <Link

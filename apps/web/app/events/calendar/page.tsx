@@ -38,6 +38,7 @@ function endOfMonth(d: Date) {
 export default function EventsCalendar() {
   const [current, setCurrent] = useState(() => startOfMonth(new Date()));
   const [events, setEvents] = useState<EventItem[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(false);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
@@ -117,59 +118,111 @@ export default function EventsCalendar() {
 
   return (
     <DreamySunsetBackground className="px-6 py-10">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="rounded-[28px] bg-black/35 backdrop-blur-2xl border border-white/10 p-8 shadow-[0_40px_120px_rgba(0,0,0,0.35)]">
+          <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <CalIcon className="w-6 h-6 text-blue-400" />
+            <CalIcon className="w-6 h-6 text-rose-400" />
             <div>
-              <h1 className="text-2xl font-bold">Events Calendar</h1>
-              <p className="text-sm text-gray-400">Browse upcoming community events by date</p>
+              <h1 className="text-3xl font-extrabold">Events Calendar</h1>
+              <p className="text-sm muted">Browse upcoming community events by date</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setCurrent(new Date(current.getFullYear(), current.getMonth() - 1, 1))} className="p-2 bg-white/5 rounded">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <div className="px-4 py-2 bg-white/5 rounded">{current.toLocaleString(undefined, { month: 'long', year: 'numeric' })}</div>
+            <div className="px-4 py-2 bg-white/5 rounded font-medium">{current.toLocaleString(undefined, { month: 'long', year: 'numeric' })}</div>
             <button onClick={() => setCurrent(new Date(current.getFullYear(), current.getMonth() + 1, 1))} className="p-2 bg-white/5 rounded">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-2 text-xs text-gray-400 mb-2">
-          {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=> <div key={d} className="text-center">{d}</div>)}
-        </div>
+          <div className="grid grid-cols-7 gap-2 text-[11px] font-semibold tracking-wide text-white/50 mb-3">
+            {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=> <div key={d} className="text-center">{d}</div>)}
+          </div>
 
-        <div className="grid grid-cols-7 gap-2">
-          {days.map((dayObj, idx) => {
-            const key = dayObj.date.toISOString().slice(0,10);
-            const dayEvents = eventsByDay.get(key) || [];
-            return (
-              <div key={idx} className={`min-h-[90px] p-2 rounded-lg border ${dayObj.inMonth ? 'bg-white/3 border-white/5' : 'bg-transparent border-transparent text-gray-500'}`}>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-sm font-medium">{dayObj.date.getDate()}</div>
-                </div>
-                <div className="space-y-1">
-                  {dayEvents.slice(0,3).map((ev: any) => (
-                    <div
-                      key={ev.id}
-                      onClick={() => router.push(`/events/${ev.id}`)}
-                      role="button"
-                      className="text-xs bg-blue-700/20 text-blue-200 px-2 py-1 rounded cursor-pointer hover:bg-blue-700/30"
-                    >
-                      {ev.name}
+        <div className="lg:flex lg:gap-6">
+          <div className="flex-1">
+            <div className="grid grid-cols-7 gap-2">
+              {days.map((dayObj, idx) => {
+                const key = dayObj.date.toISOString().slice(0,10);
+                const dayEvents = eventsByDay.get(key) || [];
+                const isSelected = selectedDate && selectedDate.toISOString().slice(0,10) === key;
+                const todayKey = new Date().toISOString().slice(0,10);
+                const isToday = key === todayKey;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedDate(new Date(dayObj.date))}
+                    role="button"
+                    className={
+                      `
+                      min-h-[92px] p-3 rounded-2xl border cursor-pointer transition
+                      ${dayObj.inMonth
+                        ? "bg-white/6 border-white/10 hover:bg-white/10"
+                        : "bg-white/0 border-white/0 text-white/25"}
+                      ${isSelected ? "ring-2 ring-rose-400/40 bg-white/10" : ""}
+                    `}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className={`text-sm font-semibold ${isToday ? "text-rose-200" : "text-white"}`}>
+                        {dayObj.date.getDate()}
+                      </div>
+                      {isToday && <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />}
                     </div>
-                  ))}
-                  {dayEvents.length > 3 && <div className="text-xs text-gray-400">+{dayEvents.length - 3} more</div>}
-                </div>
+                    <div className="space-y-1">
+                      {dayEvents.slice(0,3).map((ev: any) => (
+                        <div
+                          key={ev.id}
+                          onClick={(e) => { e.stopPropagation(); router.push(`/events/${ev.id}`); }}
+                          role="button"
+                          className={"text-[11px] px-2 py-1 rounded-lg bg-white/8 border border-white/10 text-white/80 hover:bg-white/12 truncate"}
+                        >
+                          {ev.name}
+                        </div>
+                      ))}
+                      {dayEvents.length > 3 && <div className="text-xs text-gray-400">+{dayEvents.length - 3} more</div>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sidebar / selected-day list */}
+          <aside className="mt-4 lg:mt-0 lg:w-80">
+            <div className="rounded-3xl bg-white/6 border border-white/10 backdrop-blur-xl p-5">
+              <h3 className="text-sm font-semibold mb-2">{selectedDate ? selectedDate.toLocaleDateString() : 'Upcoming events'}</h3>
+              <div className="space-y-3 max-h-[60vh] overflow-auto">
+                {(selectedDate
+                  ? (eventsByDay.get(selectedDate.toISOString().slice(0,10)) || [])
+                  : events.slice(0, 50)
+                ).map((ev) => (
+                  <div key={ev.id} className="p-3 rounded-lg bg-white/4 border border-white/6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium">{ev.name}</div>
+                        <div className="text-xs muted">{new Date(ev.date).toLocaleString()}</div>
+                        {ev.venue && <div className="text-xs muted">{ev.venue}</div>}
+                      </div>
+                      <div className="ml-3 flex-shrink-0">
+                        <button onClick={() => router.push(`/events/${ev.id}`)} className="px-3 py-1 rounded bg-rose-500 text-white text-sm">Open</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {selectedDate && (eventsByDay.get(selectedDate.toISOString().slice(0,10)) || []).length === 0 && (
+                  <div className="text-sm muted">No events on this day</div>
+                )}
               </div>
-            );
-          })}
+            </div>
+          </aside>
         </div>
 
         {loading && <div className="mt-4 text-sm text-gray-400">Loading events...</div>}
       </div>
-    </DreamySunsetBackground>
+</div>    </DreamySunsetBackground>
   );
 }
