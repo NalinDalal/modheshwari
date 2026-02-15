@@ -5,8 +5,6 @@
 
 Regular Backups of data
 
-the user even after getting authenticated still can't do shit, like he gets signed out immediatley, so really not able to access stuff
-
 ### 2. Full-Text Search with Elasticsearch
 
 **Requirements:**

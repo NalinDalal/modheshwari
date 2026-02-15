@@ -1,5 +1,5 @@
 // Centralized API fetch helper — attaches Authorization header from localStorage at call time
-export type ApiFetchOptions = RequestInit & { retryOn401?: boolean };
+export type ApiFetchOptions = RequestInit & { retryOn401?: boolean; throwOnError?: boolean };
 
 const getToken = () => {
   if (typeof window === "undefined") return null;
@@ -33,8 +33,14 @@ export async function apiFetch(input: RequestInfo, init?: ApiFetchOptions) {
   const res = await fetch(input, { ...init, headers });
   const data = await parseJsonSafe(res);
 
+  const throwOnError = init?.throwOnError ?? true;
+
   if (!res.ok) {
-    const err: any = new Error((data && data.message) || res.statusText || "Request failed");
+    if (!throwOnError) {
+      return { ok: false, status: res.status, data } as any;
+    }
+
+    const err: any = new Error((data && (data.message || data.error)) || res.statusText || "Request failed");
     err.status = res.status;
     err.data = data;
     throw err;

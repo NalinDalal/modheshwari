@@ -17,6 +17,11 @@ export function useAuth() {
 
     if (urlToken) {
       localStorage.setItem("token", urlToken);
+      try {
+        window.dispatchEvent(new Event("authChanged"));
+      } catch (e) {
+        /* ignore */
+      }
       setToken(urlToken);
       setLoading(false);
     } else {

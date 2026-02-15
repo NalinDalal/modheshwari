@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import apiFetch from "../../lib/api";
+import { API_BASE } from "../../lib/config";
 import { LoaderFour } from "@repo/ui/loading";
 
 interface User {
@@ -96,38 +98,48 @@ export default function MePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/signin");
-      return;
-    }
+    let mounted = true;
 
-    async function loadUserProfile() {
+    const checkAuth = async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/me`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-
-        const data = await res.json();
-        if (data.status === "success") {
-          setUser(data.data as User);
-        } else {
-          alert("Auth expired, please log in again");
-          localStorage.removeItem("token");
-          router.push("/signin");
+        const token = localStorage.getItem("token");
+        if (!token) {
+          if (mounted) router.push("/signin");
+          return;
         }
-      } catch (err) {
-        console.error("Failed to fetch /me", err);
-        alert("Failed to fetch user info");
-      } finally {
-        setLoading(false);
-      }
-    }
 
-    loadUserProfile();
+        if (mounted) setLoading(true);
+
+        const result: any = await apiFetch(`${API_BASE}/me`, { throwOnError: false });
+        if (result?.ok === false) {
+          localStorage.removeItem("token");
+          if (mounted) router.push("/signin");
+          return;
+        }
+
+        const u = result?.data?.data ?? result?.data ?? result;
+        if (u && mounted) setUser(u as User);
+      } catch (err: any) {
+        // treat as unauthenticated
+        console.error("Failed to fetch /me", err);
+        localStorage.removeItem("token");
+        if (mounted) router.push("/signin");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    const handler = () => setTimeout(checkAuth, 10);
+    window.addEventListener("storage", handler);
+    window.addEventListener("authChanged", handler as EventListener);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("authChanged", handler as EventListener);
+    };
   }, [router]);
 
   if (loading) {

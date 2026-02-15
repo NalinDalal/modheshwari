@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import apiFetch, { apiPost } from "../../lib/api";
+import { API_BASE } from "../../lib/config";
 
 const roles = [
   { label: "Family Head", value: "familyhead" },
@@ -30,24 +32,26 @@ export default function SigninPage() {
     if (e) e.preventDefault();
     setLoading(true);
     try {
-      const base =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
-      const res = await fetch(`${base}/login/${role}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      // use centralized API helper for consistent base URL and error handling
+      const resp = await apiPost(`${API_BASE}/login/${role}`, { email, password }, { throwOnError: false });
 
-      const data = await res.json();
-      if (data?.data?.token) {
-        localStorage.setItem("token", data.data.token);
+      // api helper may return shape { ok:false, status, data } when throwOnError=false
+      const data = resp && (resp.ok === false ? resp.data : resp);
+
+      const token = data?.data?.token || data?.token;
+      if (token) {
+        localStorage.setItem("token", token);
+        try {
+          window.dispatchEvent(new Event("authChanged"));
+        } catch (_e) {}
         router.push("/me");
       } else {
-        alert("Login failed: " + (data.message || "Invalid credentials"));
+        const msg = (data && (data.message || data.error)) || "Invalid credentials";
+        alert("Login failed: " + msg);
       }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      alert("Network error: " + (err?.message || String(err)));
     } finally {
       setLoading(false);
     }

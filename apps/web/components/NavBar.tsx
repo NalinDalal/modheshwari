@@ -13,10 +13,13 @@ import {
   BellPlus,
   Phone,
   MessageSquare,
-  Calendar
+    MapPin,
+  Calendar, MessageCircle, Stethoscope
 } from "lucide-react";
 
 import { API_BASE } from "../lib/config";
+import apiFetch from "../lib/api";
+import Tooltip from "./Tooltip";
 import useNotifications from "../hooks/useNotifications";
 
 interface User {
@@ -43,30 +46,55 @@ export default function NavBar() {
 
   useEffect(() => {
     // Re-check auth whenever the pathname changes so NavBar reflects recent signin/signout.
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
+    // Also listen for storage events and a custom `authChanged` event so pages can notify NavBar
+    // when the token is updated without a pathname change.
+    let mounted = true;
 
-    setLoading(true);
-    fetch(`${API_BASE}/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.status === "success") setUser(data.data);
-        else {
-          localStorage.removeItem("token");
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          if (!mounted) return;
           setUser(null);
+          setLoading(false);
+          return;
         }
-      })
-      .catch(() => {
+
+        if (mounted) setLoading(true);
+
+        const result: any = await apiFetch(`${API_BASE}/me`, { throwOnError: false });
+        if (result?.ok === false) {
+          // unauthenticated or missing resource
+          localStorage.removeItem("token");
+          if (mounted) setUser(null);
+          return;
+        }
+
+        const u = result?.data?.data ?? result?.data ?? result;
+        if (u && mounted) setUser(u);
+      } catch (e) {
         localStorage.removeItem("token");
-        setUser(null);
-      })
-      .finally(() => setLoading(false));
+        if (mounted) setUser(null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    const handler = () => {
+      // slight delay to let signin code finish writing token
+      setTimeout(checkAuth, 10);
+    };
+
+    window.addEventListener("storage", handler);
+    window.addEventListener("authChanged", handler as EventListener);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("authChanged", handler as EventListener);
+    };
   }, [pathname]);
 
   
@@ -77,27 +105,35 @@ export default function NavBar() {
 
   const NavItem = ({
     href,
-    label: _label,
+    label,
     Icon,
+    onClick,
+    hideLabel,
+    title,
   }: {
     href: string;
     label: string;
     Icon?: ComponentType<{ className?: string }>;
+    onClick?: () => void;
+    hideLabel?: boolean;
+    title?: string;
   }) => (
-    <Link
-      href={href}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition
-        ${
-          isActive(href)
-            ? "bg-pink-100 text-pink-700"
-            : "text-gray-700 hover:text-pink-700 hover:bg-pink-50"
-        }
-      `}
-    >
-      {Icon && <Icon className="h-4 w-4" />}
-      
+    <Link href={href} onClick={onClick} className={`rounded-lg ${isActive(href) ? "bg-pink-100" : ""}`}>
+      {hideLabel ? (
+        <Tooltip text={title ?? href}>
+          <div className={`p-2 rounded ${isActive(href) ? "text-pink-700" : "text-gray-700 hover:text-pink-700"}`}>
+            {Icon && <Icon className="h-5 w-5" />}
+          </div>
+        </Tooltip>
+      ) : (
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${isActive(href) ? "bg-pink-100 text-pink-700" : "text-gray-700 hover:text-pink-700 hover:bg-pink-50"}`}>
+          {Icon && <Icon className="h-4 w-4" />}
+          <span>{label}</span>
+        </div>
+      )}
     </Link>
   );
+
 
   const initials =
     user?.name
@@ -123,8 +159,8 @@ export default function NavBar() {
         {/* Desktop */}
         {!loading && (
           <div className="hidden md:flex items-center gap-1">
-            <NavItem href="/" label="Home" Icon={Home} />
-            <NavItem href="/contact" label="Contact" Icon={Phone} />
+            <NavItem href="/" label="Home" Icon={Home} hideLabel title="/home" />
+            <NavItem href="/contact" label="Contact" Icon={Phone} hideLabel title='/contact'/>
 
             <Link
               href="/search"
@@ -136,26 +172,17 @@ export default function NavBar() {
             {user ? (
               <>
                 <div className="mx-2 h-6 w-px bg-pink-200" />
-                <NavItem href="/family" label="Family" Icon={Users} />
-                <NavItem href="/resources" label="Resources" Icon={Package} />
-                <NavItem href="/events/calendar" label="Calendar" Icon={Calendar} />
-                <Link
-                  href="/notifications"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition
-                    ${isActive('/notifications') ? 'bg-pink-100 text-pink-700' : 'text-gray-700 hover:text-pink-700 hover:bg-pink-50'}`}
-                >
-                  <div className="relative">
-                    <BellPlus className="h-4 w-4" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white bg-pink-600 rounded-full">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
-                    )}
-                  </div>
-                </Link>
+                    <NavItem href="/family" label="Family" Icon={Users} hideLabel title="/family" />
+                    <NavItem href="/medical" label="Medical" Icon={Stethoscope} hideLabel title="/medical" />
+                    <NavItem href="/resources" label="Resources" Icon={Package} hideLabel title="/resources" />
+                    <NavItem href="/nearby" label="Nearby" Icon={MapPin} hideLabel title="/nearby" />
+                    <NavItem href="/events/calendar" label="Calendar" Icon={Calendar} hideLabel title="/events/calendar" />
+                    <NavItem href="/notifications" label="Notifications" Icon={BellPlus} hideLabel title="/notifications" />
+                <NavItem href="/chat" label="Chat" Icon={MessageCircle} hideLabel title="/chat" />
                 <button
                   onClick={() => router.push("/me")}
                   className="ml-2 h-9 w-9 rounded-lg bg-gradient-to-br from-pink-600 to-rose-600 text-white text-xs font-bold"
+                  title="/me"
                 >
                   {initials}
                 </button>
@@ -195,7 +222,9 @@ export default function NavBar() {
             <>
               <div className="h-px bg-pink-200 my-2" />
               <NavItem href="/family" label="Family" Icon={Users} />
+              <NavItem href="/medical" label="Medical" Icon={Stethoscope} />
               <NavItem href="/resources" label="Resources" Icon={Package} />
+                    <NavItem href="/nearby" label="Nearby" Icon={MapPin} />
               <Link
                 href="/notifications"
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"

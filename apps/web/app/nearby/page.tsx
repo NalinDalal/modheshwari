@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
+import apiFetch from "../../lib/api";
+import { API_BASE } from "../../lib/config";
 
 interface NearbyUser {
   id: string;
@@ -40,7 +42,7 @@ export default function NearbyPage() {
   const [radiusKm, setRadiusKm] = useState(5);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) {
       router.push("/signin");
       return;
@@ -54,21 +56,21 @@ export default function NearbyPage() {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"
-          }/users/nearby?radiusKm=${radiusKm}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        // use centralized api helper which attaches Authorization header
+        const resp = await apiFetch(`${API_BASE}/users/nearby?radiusKm=${radiusKm}`, { throwOnError: false });
+        const data = resp && (resp.ok === false ? resp.data : resp);
 
-        const data = await res.json();
-
-        if (data.status === "success") {
+        // Accept multiple shapes: direct array, { data: [...] }, or { status: 'success', data: [...] }
+        if (Array.isArray(data)) {
+          setUsers(data as NearbyUser[]);
+        } else if (data && Array.isArray(data.data)) {
+          setUsers(data.data as NearbyUser[]);
+        } else if (data && data.status === "success" && Array.isArray(data.data)) {
           setUsers(data.data as NearbyUser[]);
         } else {
-          throw new Error(data.error || "Failed to fetch nearby users");
+          // fall back to empty and surface message
+          const msg = (data && (data.error || data.message)) || "Failed to fetch nearby users";
+          throw new Error(msg);
         }
       } catch (err) {
         console.error(err);

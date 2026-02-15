@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 import SearchInput from "./SearchInput";
+import apiFetch from "../../lib/api";
+import { API_BASE } from "../../lib/config";
 /**
  * Search Members Page with:
  * - Better layout
@@ -18,6 +20,8 @@ import SearchInput from "./SearchInput";
 export default function SearchPage() {
   const [focusTrigger, setFocusTrigger] = useState(0);
   const [isMac, setIsMac] = useState(false);
+  const [user, setUser] = useState<{ name?: string } | null>(null);
+  const [notifications, setNotifications] = useState<any[] | null>(null);
 
   // Detect if user is on Mac for keyboard shortcut display
   useEffect(() => {
@@ -34,6 +38,49 @@ export default function SearchPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // Load current user and notifications for small header preview
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        const me = await apiFetch(`${API_BASE}/me`, { throwOnError: false });
+        if (me?.ok === false) {
+          setUser(null);
+        } else {
+          const u = me?.data?.data ?? me?.data ?? me;
+          if (mounted) setUser(u || null);
+        }
+      } catch (e) {
+        setUser(null);
+      }
+
+      try {
+        const not = await apiFetch(`${API_BASE}/notifications`, { throwOnError: false });
+        if (not?.ok === false) {
+          setNotifications(null);
+        } else {
+          const list = not?.data?.data ?? not?.data ?? not;
+          if (mounted) setNotifications(Array.isArray(list) ? list : []);
+        }
+      } catch (e) {
+        setNotifications(null);
+      }
+    };
+
+    load();
+
+    const handler = () => setTimeout(load, 10);
+    window.addEventListener("storage", handler);
+    window.addEventListener("authChanged", handler as EventListener);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("authChanged", handler as EventListener);
+    };
   }, []);
 
   return (
@@ -69,6 +116,37 @@ export default function SearchPage() {
           <p className="text-gray-400 text-lg">
             Find family members, check profiles, and connect instantly
           </p>
+
+          {/* Small auth / notifications preview */}
+          <div className="mt-4 flex items-center justify-center gap-4 text-sm text-gray-300">
+            {user ? (
+              <div className="flex items-center gap-2 bg-white/3 px-3 py-1 rounded-lg border border-white/10">
+                <div className="h-7 w-7 rounded-full bg-pink-600 text-white flex items-center justify-center text-xs font-semibold">
+                  {user.name?.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+                </div>
+                <div className="text-left">
+                  <div className="text-xs text-gray-200">Signed in as</div>
+                  <div className="font-medium text-white">{user.name}</div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-gray-500">Not signed in</div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <div className="text-xs text-gray-200">Notifications</div>
+              <div className="relative">
+                <div className="h-7 w-7 rounded-full bg-white/5 flex items-center justify-center">
+                  <Search className="h-4 w-4 text-gray-300" />
+                </div>
+                {notifications && notifications.length > 0 && (
+                  <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white bg-pink-600 rounded-full">
+                    {notifications.length > 99 ? "99+" : notifications.length}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Search Card */}
