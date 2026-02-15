@@ -211,7 +211,7 @@ export default function SearchInput({
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="absolute top-full mt-1 left-0 right-0 flex flex-wrap gap-2 p-3 bg-white/5 border border-white/10 rounded-lg backdrop-blur-xl z-40"
+            className="absolute top-full mt-1 left-0 right-0 flex flex-wrap gap-2 p-3 bg-white/8 border border-white/10 rounded-lg z-40"
           >
             {(
               [
@@ -251,7 +251,7 @@ export default function SearchInput({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full mt-2 w-full bg-gradient-to-br from-white/10 to-white/[0.05] backdrop-blur-xl rounded-xl border border-white/10 shadow-2xl overflow-hidden z-50"
+            className="absolute top-full mt-2 w-full bg-gradient-to-br from-white/20 to-white/8 rounded-xl border border-white/10 shadow-2xl overflow-hidden z-50"
           >
             {/* Loading State */}
             {loading && (
