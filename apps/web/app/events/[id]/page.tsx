@@ -18,6 +18,7 @@ import { motion } from "framer-motion";
 import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/not-authenticated";
 import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
+import apiFetch from "../../../lib/api";
 
 interface EventDetails {
   id: string;
@@ -104,14 +105,8 @@ export default function EventDetailsPage() {
   const fetchEvent = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/events/${eventId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!response.ok) throw new Error("Failed to fetch event");
-
-      const data = await response.json();
-      const fetchedEvent = data.data.event as EventDetails;
+      const data = await apiFetch(`${API_BASE}/events/${eventId}`);
+      const fetchedEvent = data?.data?.event as EventDetails;
       setEvent(fetchedEvent);
 
       // Check if user is registered
@@ -139,19 +134,7 @@ export default function EventDetailsPage() {
 
     setRegistering(true);
     try {
-      const response = await fetch(`${API_BASE}/events/${eventId}/register`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to register");
-      }
-
+      await apiFetch(`${API_BASE}/events/${eventId}/register`, { method: "POST" });
       setIsRegistered(true);
       fetchEvent(); // Refresh to get updated registration count
     } catch (error: unknown) {
@@ -167,17 +150,7 @@ export default function EventDetailsPage() {
 
     setRegistering(true);
     try {
-      const response = await fetch(`${API_BASE}/events/${eventId}/register`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to unregister");
-      }
-
+      await apiFetch(`${API_BASE}/events/${eventId}/register`, { method: "DELETE" });
       setIsRegistered(false);
       fetchEvent(); // Refresh to get updated registration count
     } catch (error: unknown) {
@@ -245,20 +218,10 @@ export default function EventDetailsPage() {
 
     setModerating(true);
     try {
-      const res = await fetch(`${API_BASE}/events/${eventId}/approve`, {
+      await apiFetch(`${API_BASE}/events/${eventId}/approve`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ status, remarks: moderationRemarks }),
       });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to record moderation");
-      }
 
       // Refresh event to reflect new status/approvals
       setModerationRemarks("");

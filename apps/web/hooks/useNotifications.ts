@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 import { API_BASE } from "../lib/config";
+import apiFetch from "../lib/api";
 
 type Notification = {
   id?: string;
@@ -49,11 +50,7 @@ export default function useNotifications(): UseNotificationsHook {
         setUnreadCount(0);
         return;
       }
-      const res = await fetch(`${API_BASE}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const js = await res.json();
+      const js = await apiFetch(`${API_BASE}/notifications`);
       const fetched: Notification[] = js?.data?.notifications ?? [];
       setNotifications((prev) => mergePersisted(prev, fetched));
       setUnreadCount(fetched.filter((n) => !n.read).length);
@@ -114,16 +111,7 @@ export default function useNotifications(): UseNotificationsHook {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return false;
     try {
-      const res = await fetch(`${API_BASE}/notifications/${notificationId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ read: !currentRead }),
-      });
-      if (!res.ok) return false;
-
+      await apiFetch(`${API_BASE}/notifications/${notificationId}`, { method: "PATCH", body: JSON.stringify({ read: !currentRead }) });
       setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, read: !currentRead } : n)));
       if (!currentRead) setUnreadCount((c) => Math.max(0, c - 1));
       else setUnreadCount((c) => c + 1);
@@ -140,27 +128,7 @@ export default function useNotifications(): UseNotificationsHook {
     if (!token) return false;
     try {
       // Try bulk endpoint first
-      const bulkRes = await fetch(`${API_BASE}/notifications/mark-all`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (bulkRes.ok) {
-        // refresh list
-        await fetchNotifications();
-        return true;
-      }
-
-      // Fallback: patch each unread notification
-      const unreadIds = notifications.filter((n) => !n.read && n.id).map((n) => n.id!) as string[];
-      await Promise.all(unreadIds.map((id) => fetch(`${API_BASE}/notifications/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ read: true }),
-      })));
-
+      await apiFetch(`${API_BASE}/notifications/mark-all`, { method: "POST" });
       await fetchNotifications();
       return true;
     } catch (err) {

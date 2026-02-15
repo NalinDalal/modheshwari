@@ -393,11 +393,6 @@ Notes:
 - ❌ No webhook handlers
 - **Effort:** 3-4 days
 
-### Community Forums
-
-- No model, no API, no UI
-- **Effort:** 4-5 days
-
 ---
 
 ## 📊 COMPLETION BY SECTION
@@ -416,7 +411,6 @@ Notes:
 | Admin Features        | Complete       | ✅       | ✅      | ✅       | 100%                  |
 | QR Code Passes        | Not Started    | ⚠️       | ❌      | ❌       | 10%                   |
 | Payments              | Partial        | ✅       | ❌      | ❌       | 20%                   |
-| Hindu Calendar        | Not Started    | ❌       | ❌      | ❌       | 0%                    |
 | Forums                | Not Started    | ❌       | ❌      | ❌       | 0%                    |
 | **Overall**           | **88%**        | **96%** | **94%** | **88%**  | **88%**               |
 

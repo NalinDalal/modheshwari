@@ -36,6 +36,7 @@ export async function handleFHLogin(
 ): Promise<Response> {
   try {
     const body: any = await req.json().catch(() => null);
+    if (!body) return failure("Invalid JSON body", "Bad Request", 400);
     const { email, password } = body;
 
     // --- Basic input validation ---

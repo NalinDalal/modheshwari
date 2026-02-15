@@ -16,11 +16,11 @@ export function useAuth() {
     const urlToken = params.get("token");
 
     if (urlToken) {
-      localStorage.setItem("fh_token", urlToken);
+      localStorage.setItem("token", urlToken);
       setToken(urlToken);
       setLoading(false);
     } else {
-      const stored = localStorage.getItem("fh_token");
+      const stored = localStorage.getItem("token");
       if (!stored) router.push("/signin");
       else {
         setToken(stored);

@@ -452,7 +452,7 @@ Recommended next steps: add integration tests for these endpoints to validate pa
 
 **Status (Feb 13,2026): UI Revamp**
 
----
 
-**Last Updated:** February 6, 2026  
-**Maintained By:** Modheshwari Core Team
+Implement a drain/persistence worker to flush Redis-cached notifications to the DB reliably.
+
+Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verification.

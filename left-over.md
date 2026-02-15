@@ -3,11 +3,9 @@
 
 ### 1. Prod Hardening
 
-Implement a drain/persistence worker to flush Redis-cached notifications to the DB reliably.
-
-Production hardening: Kafka/Redis monitoring, DLQ handling, and end-to-end verification.
-
 Regular Backups of data
+
+the user even after getting authenticated still can't do shit, like he gets signed out immediatley, so really not able to access stuff
 
 ### 2. Full-Text Search with Elasticsearch
 

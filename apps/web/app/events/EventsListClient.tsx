@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import apiFetch from "../../lib/api";
 import { useRouter } from "next/navigation";
 import useSWR, { mutate } from "swr";
 import {
@@ -105,17 +106,10 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
     const remarks = window.prompt("Optional remarks / suggested changes:", "") || undefined;
     setModeratingId(id);
     try {
-      const res = await fetch(`${API_BASE}/events/${id}/approve`, {
+      await apiFetch(`${API_BASE}/events/${id}/approve`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ status, remarks }),
       });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to record moderation");
 
       // Refresh list
       mutate(key);

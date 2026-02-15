@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import apiFetch from "../../../lib/api";
 import { useRouter } from "next/navigation";
 import { Calendar, MapPin, FileText, ArrowLeft, Loader } from "lucide-react";
 import { NotAuthenticated } from "@repo/ui/not-authenticated";
@@ -39,20 +40,10 @@ export default function CreateEventPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/events`, {
+      await apiFetch(`${API_BASE}/events`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(formData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to create event");
-      }
 
       // Success - redirect to events list
       router.push("/events");

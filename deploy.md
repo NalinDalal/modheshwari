@@ -1,6 +1,80 @@
-# AWS Deployment Guide
+# AWS Deployment (ECR + ECS Fargate)
 
-This repo is a Bun-based backend (`apps/be`) and a Next.js frontend (`apps/web`) with a PostgreSQL database (Prisma). Below is a pragmatic AWS setup using containers.
+This document explains the minimal steps to deploy this repository to AWS using Amazon ECR and Amazon ECS (Fargate).
+
+## What this repo provides
+- A GitHub Actions workflow (`.github/workflows/cd.yml`) that builds a Docker image, pushes it to ECR, registers an ECS task definition, and updates the ECS service.
+- A task definition template: `.github/ecs/taskdef-template.json` used by the workflow.
+
+## Required AWS resources
+1. ECR repository
+2. ECS cluster (Fargate)
+3. ECS service using Fargate with a task definition family matching `ECS_TASK_FAMILY`
+4. IAM roles:
+   - `ecsTaskExecutionRole` (managed policy `AmazonECSTaskExecutionRolePolicy`)
+   - Task role for your application (optional but recommended)
+5. (Optional) ALB + Target Group + Security Group for HTTP traffic
+6. CloudWatch Logs group (the task template writes to `/ecs/<family>`)
+
+## GitHub Secrets to create
+- `AWS_ACCESS_KEY_ID` — IAM user or role for GitHub Actions
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION` — e.g. `us-east-1`
+- `ECR_REGISTRY` — e.g. `123456789012.dkr.ecr.us-east-1.amazonaws.com`
+- `ECR_REPOSITORY` — e.g. `my-app`
+- `ECS_CLUSTER` — ECS cluster name
+- `ECS_SERVICE` — ECS service name
+- `ECS_TASK_EXECUTION_ROLE_ARN` — execution role ARN (for `executionRoleArn`)
+- `ECS_TASK_ROLE_ARN` — task role ARN (for `taskRoleArn`)
+- `ECS_TASK_FAMILY` — task family name used in the template
+
+## Minimal IAM policy for CI (attach to the GitHub Actions IAM user)
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {"Effect":"Allow","Action":["ecr:GetAuthorizationToken","ecr:BatchCheckLayerAvailability","ecr:CompleteLayerUpload","ecr:UploadLayerPart","ecr:InitiateLayerUpload","ecr:PutImage","ecr:GetDownloadUrlForLayer"],"Resource":"*"},
+    {"Effect":"Allow","Action":["ecs:RegisterTaskDefinition","ecs:UpdateService","ecs:DescribeServices","ecs:DescribeTaskDefinition"],"Resource":"*"},
+    {"Effect":"Allow","Action":["iam:PassRole"],"Resource":"arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole"},
+    {"Effect":"Allow","Action":["logs:CreateLogStream","logs:PutLogEvents","logs:CreateLogGroup"],"Resource":"*"}
+  ]
+}
+```
+
+## How the workflow works
+1. On push to `main`/`master`, the workflow builds the Docker image and pushes two tags: the SHA and `latest`.
+2. It installs `jq` and uses `.github/ecs/taskdef-template.json`, replaces the image, family and role ARNs, registers the task definition, and updates the ECS service to the new task definition.
+
+## Manual testing / console steps
+1. Build and push a test image locally:
+```bash
+docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:sha .
+docker push $ECR_REGISTRY/$ECR_REPOSITORY:sha
+```
+2. Prepare a filled `taskdef.json` (example using `jq`):
+```bash
+IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:sha"
+jq --arg image "$IMAGE" --arg execRole "$ECS_TASK_EXECUTION_ROLE_ARN" --arg taskRole "$ECS_TASK_ROLE_ARN" --arg family "$ECS_TASK_FAMILY" '.containerDefinitions[0].image=$image | .executionRoleArn=$execRole | .taskRoleArn=$taskRole | .family=$family' .github/ecs/taskdef-template.json > taskdef.json
+
+aws ecs register-task-definition --cli-input-json file://taskdef.json --region $AWS_REGION
+aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition <returned-arn-or-family:revision> --force-new-deployment --region $AWS_REGION
+```
+
+## AWS Console quick steps
+1. Create an ECR repository: ECR → Repositories → Create repository → name = `ECR_REPOSITORY`.
+2. Create ECS cluster: ECS → Clusters → Create cluster → choose `Networking only (Powered by AWS Fargate)`.
+3. Create IAM roles:
+   - `ecsTaskExecutionRole`: attach managed policy `AmazonECSTaskExecutionRolePolicy`.
+   - Optional task role: allow access to other AWS services your app needs.
+4. Create log group: CloudWatch Logs → Create log group `/ecs/<family>`.
+5. Create an ECS service pointing at a Fargate task definition (you can create a placeholder task definition first) and configure load balancer if needed.
+
+## Next steps I can do for you
+- Run a dry-run deploy and help fix any permission issues.
+- Add health checks / ALB integration to the task template.
+- Add secrets encryption via GitHub Actions OIDC (remove long-lived keys).
+
+# AWS Deployment Guide
 
 ## Architecture
 
@@ -203,3 +277,93 @@ If you prefer managed hosting for Next.js:
 - Provision RDS and run Prisma migrations
 - Deploy ECS services behind a single ALB with path routing
 - Set critical env vars: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`, `NEXT_PUBLIC_API_URL`
+
+## 11) Regular Backups & Restore
+
+Goals
+- Ensure recoverability from data loss, corruption, or accidental deletion.
+- Keep backups encrypted, retained according to policy, and tested for restores.
+
+Strategy (recommended)
+- Use RDS automated backups + snapshots for point-in-time recovery (PITR); set retention (e.g. 7–30 days) in the RDS console.
+- Maintain application-level logical backups (pg_dump) uploaded to an S3 bucket with lifecycle rules (transition to IA/Glacier and expire after retention period).
+- Keep S3 lifecycle rules to handle pruning; avoid ad-hoc deletion scripts unless required.
+- Run periodic backup jobs (daily) as a scheduled task: choices
+  - GitHub Actions scheduled workflow (simple, uses OIDC to assume a role)
+  - AWS EventBridge → Lambda or ECS Scheduled Task (Fargate)
+
+Quick checklist
+- Enable RDS automated backups and set backup window and retention.
+- Create an S3 bucket (e.g. `modheshwari-backups`) and add a lifecycle policy to expire backups older than N days.
+- Create an IAM role/user for backup jobs with the minimal policy (see example below).
+- Schedule backups daily and test restores monthly.
+
+Sample pg_dump → S3 backup script (`scripts/backup-postgres-to-s3.sh`)
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Required env vars: DATABASE_URL (or PG_*), S3_BUCKET, AWS_REGION, RETENTION_DAYS
+# Example: export DATABASE_URL=postgresql://user:pass@host:5432/dbname
+
+TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+FNAME="db-backup-${TIMESTAMP}.sql.gz"
+
+if [ -z "${S3_BUCKET:-}" ]; then
+  echo "S3_BUCKET is not set" >&2
+  exit 1
+fi
+
+echo "Creating logical dump and uploading to s3://$S3_BUCKET/backups/$FNAME"
+
+# Use pg_dump (plain SQL) piped and gzipped. If you prefer custom format use -Fc and pg_restore.
+pg_dump "$DATABASE_URL" | gzip > "/tmp/$FNAME"
+
+aws s3 cp "/tmp/$FNAME" "s3://$S3_BUCKET/backups/$FNAME" --region "${AWS_REGION:-us-east-1}" --storage-class STANDARD_IA
+rm -f "/tmp/$FNAME"
+
+echo "Backup uploaded. Consider using S3 lifecycle rules to expire old backups."
+
+exit 0
+```
+
+Restore example (plain SQL dump)
+```bash
+# Download the backup from S3 and restore
+aws s3 cp s3://$S3_BUCKET/backups/db-backup-20250101T000000Z.sql.gz - | gunzip | psql "$DATABASE_URL"
+```
+
+IAM policy for backup job (minimal)
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {"Effect":"Allow","Action":["s3:PutObject","s3:GetObject","s3:ListBucket","s3:DeleteObject"],"Resource":["arn:aws:s3:::modheshwari-backups","arn:aws:s3:::modheshwari-backups/*"]},
+    {"Effect":"Allow","Action":["rds:DescribeDBInstances","rds:DescribeDBSnapshots"],"Resource":"*"},
+    {"Effect":"Allow","Action":["logs:CreateLogStream","logs:PutLogEvents"],"Resource":"*"}
+  ]
+}
+```
+
+Notes & operational practices
+- Prefer S3 lifecycle rules for retention instead of custom prune scripts — simpler and robust.
+- Encrypt backups at rest: enable default S3 bucket encryption (SSE-S3 or SSE-KMS). If using KMS, ensure the backup role can use the key.
+- Test restores regularly (monthly): spin up a temporary RDS instance or restore into a staging database to validate backups.
+- For large DBs consider logical incremental strategies (pg_dump is full dump) or use physical snapshotting and AWS snapshot export.
+- Consider storing backup metadata (manifest with file names, checksum, timestamps) in a small DynamoDB table or a JSON file in S3 for auditing.
+
+Automation options
+- GitHub Actions (scheduled): simple to add if you already use Actions. Use OIDC to assume an IAM role and run the script above.
+- AWS EventBridge + Lambda/ECS Scheduled Task: keep backups inside AWS, lower latency to RDS, no external credentials required.
+
+Example S3 lifecycle rule (console): transition to STANDARD_IA after 7 days, expire after 30 days.
+
+Where to put the script
+- Add `scripts/backup-postgres-to-s3.sh` and make it executable. Place a small README explaining required env vars and secrets.
+
+Restore & Recovery runbook (short)
+1. Identify the backup (S3 key) for the required timestamp.
+2. Restore to staging RDS: create a new RDS instance or restore snapshot (if using snapshots).
+3. Run smoke-tests against staging to validate application behavior.
+4. Promote restored DB to production (follow your traffic-cutover plan) or export necessary data and apply to prod carefully.
+

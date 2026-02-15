@@ -32,3 +32,6 @@ jobs:
 
       - name: Productionize (deploy or upload artifacts)
         run: echo "Production deployment step goes here. Replace with actual deployment script."
+
+      - name: Deploy 
+        run: run ./cd.yml
