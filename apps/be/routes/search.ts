@@ -24,6 +24,15 @@ import {
   buildSelectClause,
 } from "../utils/searchParser";
 
+let elasticClient: any = null;
+try {
+  // lazy require to avoid startup errors if client not configured
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  elasticClient = require("../lib/elastic").default;
+} catch (_e) {
+  elasticClient = null;
+}
+
 type CacheEntry = { ts: number; data: any };
 const CACHE_TTL = 60 * 1000; // 60 seconds
 const cache = new Map<string, CacheEntry>();
@@ -139,6 +148,56 @@ export async function handleSearch(req: Request): Promise<Response> {
     // Build dynamic where clause based on mode
     const where = buildWhereClause(parsed.mode, parsed.value);
     const select = buildSelectClause();
+
+    // If Elasticsearch is available, prefer it for full-text and structured modes
+    if (elasticClient) {
+      try {
+        // Build ES query depending on parsed.mode
+        let esQuery: any = { bool: { must: [] as any[], filter: [] as any[] } };
+
+        const value = parsed.value;
+
+        if (parsed.mode === SearchMode.BLOOD) {
+          esQuery.bool.filter.push({ term: { "profile.bloodGroup": value } });
+        } else if (parsed.mode === SearchMode.ROLE) {
+          esQuery.bool.filter.push({ term: { role: normalizeRole(value) } });
+        } else if (parsed.mode === SearchMode.GOTRA) {
+          esQuery.bool.must.push({ match_phrase: { "profile.gotra": value } });
+        } else if (parsed.mode === SearchMode.PROFESSION) {
+          esQuery.bool.must.push({ match: { "profile.profession": { query: value, fuzziness: "AUTO" } } });
+        } else if (parsed.mode === SearchMode.LOCATION) {
+          esQuery.bool.must.push({ match: { "profile.location": { query: value, fuzziness: "AUTO" } } });
+        } else {
+          // generic fallback multi-field search
+          esQuery = {
+            multi_match: {
+              query: value,
+              fields: ["name^3", "email^2", "profile.profession", "profile.gotra", "profile.location"],
+              fuzziness: "AUTO",
+            },
+          };
+        }
+
+        const esBody: any = {
+          query: esQuery,
+          from: skip,
+          size: take,
+        };
+
+        const res = await elasticClient.search({ index: "users", body: esBody });
+        const hits = res.hits?.hits || [];
+        const totalHits = typeof res.hits.total === "object" ? res.hits.total.value : res.hits.total || 0;
+
+        const users = hits.map((h: any) => ({ ...h._source }));
+
+        cache.set(cacheKey, { ts: now, data: users });
+
+        return success("Search results", buildPaginationResponse(users, totalHits, page, limit));
+      } catch (err) {
+        console.warn('Elasticsearch query failed, falling back to DB', err);
+        // fall through to DB-based search
+      }
+    }
 
     // Get total count
     const total = await prisma.user.count({ where });
