@@ -1,0 +1,35 @@
+name: Scheduled Postgres Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # daily at 02:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: |
+          chmod +x ./scripts/*.sh
+
+      - name: Load .env if present (local testing only)
+        run: |
+          if [ -f .env ]; then
+            while IFS='=' read -r key val; do
+              if [[ -n "$key" && ! "$key" =~ ^# ]]; then
+                echo "$key=$val" >> $GITHUB_ENV
+              fi
+            done < .env
+          fi
+
+      - name: Run Postgres backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          ./scripts/postgres-backup.sh
