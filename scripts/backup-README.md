@@ -34,7 +34,6 @@ Make scripts executable
 - Run `chmod +x ./scripts/*.sh` or execute `./scripts/make-scripts-exec.sh` to mark scripts executable locally.
 
 Using a `.env` file
-Using a `.env` file
 - Copy `.env.example` to `.env` at the repository root and populate values. The scripts in `./scripts/` will automatically load variables from `.env` when present.
 - Important: Do not commit `.env` to source control. Use CI secrets for production workflows.
 
@@ -48,13 +47,23 @@ echo 'export PATH="/opt/homebrew/opt/libpq/bin:$PATH"' >> ~/.zshrc
 ```
 
 Docker fallback
-- If `pg_dump`/`pg_restore` are not available locally the scripts will attempt to use a Docker image (default `postgres:15`). To override the image, set `PG_DOCKER_IMAGE` in `.env`, for example:
+ If `pg_dump`/`pg_restore` are not available locally the scripts will attempt to use a Docker image (default `postgres:17`). Set `PG_DOCKER_IMAGE` in `.env` to override, and make sure the image major version matches your Postgres server (e.g. `postgres:17` for a Postgres 17 server):
 
-- If `pg_dump`/`pg_restore` are not available locally the scripts will attempt to use a Docker image (default `postgres:17`). Set `PG_DOCKER_IMAGE` in `.env` to override, and make sure the image major version matches your Postgres server (e.g. `postgres:17` for a Postgres 17 server):
+ ```
+ PG_DOCKER_IMAGE=postgres:17
+ ```
 
-```
-PG_DOCKER_IMAGE=postgres:17
-```
+ Direct streaming to S3 (no local dump)
+ To avoid creating large local files and to prevent committing dumps to git, enable streaming to S3 by setting `STREAM_TO_S3=true` and `AWS_S3_BUCKET` in your `.env` (or environment). The script will compress the dump with `gzip` and upload directly to `s3://$AWS_S3_BUCKET/db-<TIMESTAMP>.dump.gz` using the `aws` CLI.
+ Example in `.env`:
+
+ ```
+ STREAM_TO_S3=true
+ AWS_S3_BUCKET=my-backup-bucket
+ PG_DOCKER_IMAGE=postgres:17
+ ```
+
+ The script uses `pg_dump | gzip | aws s3 cp - s3://...` when `STREAM_TO_S3=true`; if `pg_dump` is unavailable it falls back to running `pg_dump` inside Docker and streaming the output to S3. Ensure AWS credentials are available to the host or CI environment (AWS CLI configured or environment variables).
 
 This requires Docker to be installed and running. When using the Docker fallback the scripts mount the `scripts/backups` directory into the container so the generated dumps are accessible locally.
 
