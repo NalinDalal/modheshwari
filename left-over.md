@@ -7,22 +7,7 @@
 
 policy creation, then key access policy, origins
 
-## What this repo includes
-
-- `scripts/backup-postgres.sh` — example script: creates a compressed `pg_dump` in custom format, uploads to S3, and prunes older backups based on retention.
-
-## Dependencies for the script
-
-- `pg_dump` (PostgreSQL client tools)
-- `aws` (AWS CLI v2)
-- `jq` (for optional object listing)
-- Linux shell (the script uses GNU `date` for retention calculation)
-
-Install example (Ubuntu):
-```bash
-sudo apt-get update && sudo apt-get install -y postgresql-client awscli jq
-```
-
+\
 ## Environment variables used by the script
 
 - `DATABASE_URL` — Postgres connection string (libpq format). Alternatively the usual `PGHOST`, `PGUSER`, `PGPASSWORD`, `PGPORT`, `PGDATABASE` env vars are supported by `pg_dump`.
