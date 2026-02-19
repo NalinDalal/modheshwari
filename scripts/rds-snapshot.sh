@@ -33,6 +33,17 @@ load_env() {
 
 load_env "$REPO_ROOT/.env"
 
+# ── Notification helper ───────────────────────────────────────────────────────
+NOTIFY_SCRIPT="${SCRIPT_DIR}/backup-notify.sh"
+
+trap_failure() {
+  local exit_code=$?
+  if [ $exit_code -ne 0 ] && [ -x "$NOTIFY_SCRIPT" ]; then
+    BACKUP_TYPE=rds "$NOTIFY_SCRIPT" failure "rds-snapshot.sh exited with code ${exit_code}" || true
+  fi
+}
+trap trap_failure EXIT
+
 # Create an RDS snapshot and optionally copy it to another region.
 # Usage: RDS_INSTANCE=<identifier> DEST_REGION=<region> ./rds-snapshot.sh
 
@@ -53,6 +64,11 @@ if [ -n "${DEST_REGION-}" ]; then
   echo "Copying snapshot to ${DEST_REGION}"
   aws rds copy-db-snapshot --source-db-snapshot-identifier arn:aws:rds:${AWS_REGION:-$(aws configure get region)}:${AWS_ACCOUNT_ID:-}:snapshot:${SNAP_NAME} --target-db-snapshot-identifier "${SNAP_NAME}-${DEST_REGION}" --source-region "${AWS_REGION:-$(aws configure get region)}" --region "$DEST_REGION"
   echo "Copy initiated."
+fi
+
+# ── Report success ────────────────────────────────────────────────────────────
+if [ -x "$NOTIFY_SCRIPT" ]; then
+  BACKUP_TYPE=rds "$NOTIFY_SCRIPT" success || true
 fi
 
 echo "Done."

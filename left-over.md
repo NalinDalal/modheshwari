@@ -7,7 +7,7 @@
 
 policy creation, then key access policy, origins
 
-\
+
 ## Environment variables used by the script
 
 - `DATABASE_URL` — Postgres connection string (libpq format). Alternatively the usual `PGHOST`, `PGUSER`, `PGPASSWORD`, `PGPORT`, `PGDATABASE` env vars are supported by `pg_dump`.
@@ -31,7 +31,9 @@ Attach a policy that allows the running principal to upload and list/remove obje
   "Version": "2012-10-17",
   "Statement": [
     {"Effect":"Allow","Action":["s3:PutObject","s3:ListBucket","s3:DeleteObject","s3:GetObject"],"Resource":["arn:aws:s3:::YOUR_BUCKET","arn:aws:s3:::YOUR_BUCKET/*"]},
-    {"Effect":"Allow","Action":["logs:CreateLogStream","logs:PutLogEvents"],"Resource":"*"}
+    {"Effect":"Allow","Action":["logs:CreateLogStream","logs:PutLogEvents"],"Resource":"*"},
+    {"Effect":"Allow","Action":["cloudwatch:PutMetricData"],"Resource":"*"},
+    {"Effect":"Allow","Action":["sns:Publish"],"Resource":"arn:aws:sns:*:*:modheshwari-backup-alerts"}
   ]
 }
 ```
@@ -50,9 +52,6 @@ pg_restore -h HOST -U USER -d restored_db /path/to/db-backup-2026-02-14T120000Z.
 
 - Replace logical dumps with `pgBackRest` or `WAL-G` for PITR (recommended for production databases).
 - Add multi-region replication of backups (S3 replication or AWS Backup vault copies).
-- Add monitoring/alerting on backup success/failure (CloudWatch alarms, Slack/email notifications).
+- Add monitoring/alerting on backup success/failure (CloudWatch alarms, 
 
-
-like deploy on render, then do like github action
-
-analyse codebase, ask if vps is feasible or not
+so need to ssh into the machine, if done, then ask gpt for same

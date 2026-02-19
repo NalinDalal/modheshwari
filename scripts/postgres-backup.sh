@@ -34,6 +34,18 @@ load_env() {
 
 load_env "$REPO_ROOT/.env"
 
+# ── Notification helper ───────────────────────────────────────────────────────
+NOTIFY_SCRIPT="${SCRIPT_DIR}/backup-notify.sh"
+
+# On any non-zero exit, report failure
+trap_failure() {
+  local exit_code=$?
+  if [ $exit_code -ne 0 ] && [ -x "$NOTIFY_SCRIPT" ]; then
+    "$NOTIFY_SCRIPT" failure "postgres-backup.sh exited with code ${exit_code}" || true
+  fi
+}
+trap trap_failure EXIT
+
 # Simple PostgreSQL backup script supporting DATABASE_URL or PG env vars.
 # Optional: set AWS_S3_BUCKET to upload backups to S3 (requires `aws` CLI configured).
 
@@ -130,6 +142,11 @@ MSG
     fi
   fi
 
+fi
+
+# ── Report success ────────────────────────────────────────────────────────────
+if [ -x "$NOTIFY_SCRIPT" ]; then
+  BACKUP_TYPE=postgres "$NOTIFY_SCRIPT" success || true
 fi
 
 echo "Done."

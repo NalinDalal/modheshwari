@@ -86,3 +86,29 @@ Terraform S3 retention & cross-region replication
 Security & operations notes
 - Keep secret values in a secrets manager or CI vault. Do not commit credentials.
 - Test restore procedures regularly in a non-production environment.
+
+Monitoring & alerting
+Both `postgres-backup.sh` and `rds-snapshot.sh` automatically report success/failure via `backup-notify.sh` (if it exists and is executable). The notification script supports three channels:
+
+1. **CloudWatch custom metric** (`Modheshwari/Backups` → `BackupSuccess`):
+   Published on every run. A CloudWatch alarm (provisioned in `infra/terraform/monitoring.tf`) fires when no successful metric is recorded in 24 hours.
+
+2. **SNS email notifications:**
+   Set `BACKUP_SNS_TOPIC_ARN` in the environment (output of `terraform apply`). Subscribe an email address via Terraform variable `alert_email` or manually in the AWS console.
+
+3. **Slack notifications:**
+   - *Via Lambda* (recommended): Set `slack_webhook_url` Terraform variable. A Lambda function subscribes to the SNS topic and forwards alerts to Slack.
+   - *Direct webhook* (no Terraform required): Set `SLACK_WEBHOOK_URL` in your `.env`. The script will POST directly to Slack when SNS is not configured.
+
+Required environment variables for notifications:
+```
+AWS_REGION=ap-south-1
+BACKUP_SNS_TOPIC_ARN=arn:aws:sns:ap-south-1:123456789012:modheshwari-backup-alerts  # optional
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T.../B.../...                     # optional
+```
+
+To deploy the monitoring infrastructure:
+```
+cd infra/terraform
+terraform apply -var="alert_email=ops@example.com" -var="slack_webhook_url=https://hooks.slack.com/..."
+```
