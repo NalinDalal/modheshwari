@@ -94,7 +94,7 @@ export async function handleFHLogin(
       200,
     );
   } catch (err) {
-    console.error("Login Error:", err);
+    logger.error("Login Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -134,7 +134,6 @@ export async function handleFHSignup(
   role: string,
 ): Promise<Response> {
   try {
-    console.log("signup endpoint for family-head");
     // Validate role early and create a typed prismaRole before any await
     const rawRole = role?.toUpperCase();
     if (rawRole !== "FAMILY_HEAD") {
