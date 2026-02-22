@@ -3,11 +3,15 @@
  * Validates credentials, checks role, and returns a signed JWT if successful.
  */
 
+import { randomUUID } from "crypto";
+
 import prisma from "@modheshwari/db";
 import { comparePassword, hashPassword } from "@modheshwari/utils/hash";
 import { signJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 import type { Role as PrismaRole } from "@prisma/client";
+
+import { logger } from "../../lib/logger";
 
 /**
  * Handles user login for a specific role.
@@ -44,9 +48,9 @@ export async function handleFHLogin(
       return failure("Missing credentials", "Validation Error", 400);
     }
 
-    // --- Fetch user by email ---
+    // --- Fetch user by email and expected role ---
     const user = await prisma.user.findFirst({
-      where: { email, role: "FAMILY_HEAD" },
+      where: { email, role: expectedRole as PrismaRole },
       include: { families: { include: { family: true } } },
     });
 
@@ -93,7 +97,7 @@ export async function handleFHLogin(
       200,
     );
   } catch (err) {
-    console.error("Login Error:", err);
+    logger.error("Login Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -133,7 +137,6 @@ export async function handleFHSignup(
   role: string,
 ): Promise<Response> {
   try {
-    console.log("signup endpoint for family-head");
     // Validate role early and create a typed prismaRole before any await
     const rawRole = role?.toUpperCase();
     if (rawRole !== "FAMILY_HEAD") {
@@ -180,7 +183,7 @@ export async function handleFHSignup(
       const f = await tx.family.create({
         data: {
           name: familyName,
-          uniqueId: `FAM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+          uniqueId: `FAM-${randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`,
           headId: u.id,
         },
       });
@@ -201,7 +204,7 @@ export async function handleFHSignup(
     const token = signJWT({ userId: user.id, role: user.role });
 
     // --- Step 8: Return structured success response ---
-    console.log(
+    logger.info(
       `Signup successful: ${user.name} (${user.email}) — Family: ${family.name} (${family.id})`,
     );
     return success(
@@ -223,7 +226,7 @@ export async function handleFHSignup(
       201,
     );
   } catch (err) {
-    console.error("Signup Error:", err);
+    logger.error("Signup Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

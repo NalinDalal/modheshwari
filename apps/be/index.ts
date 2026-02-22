@@ -46,7 +46,6 @@ serve({
   fetch: router,
 });
 
-console.log(` Server running on http://localhost:${PORT}`);
 logger.info(`Server running on http://localhost:${PORT}`);
 
 // Start background workers after server is up
@@ -57,8 +56,8 @@ drainHandle = startNotificationDrain();
 dlqHandle = startDLQRetryWorker();
 
 // Graceful shutdown
-process.on("SIGINT", () => {
-  logger.info("Shutting down gracefully (SIGINT)");
+function shutdown(signal: string) {
+  logger.info(`Shutting down gracefully (${signal})`);
   try {
     drainHandle?.stop?.();
     dlqHandle?.stop?.();
@@ -66,18 +65,10 @@ process.on("SIGINT", () => {
     logger.warn('Error stopping background workers', e);
   }
   process.exit(0);
-});
+}
 
-process.on("SIGTERM", () => {
-  logger.info("Shutting down gracefully (SIGTERM)");
-  try {
-    drainHandle?.stop?.();
-    dlqHandle?.stop?.();
-  } catch (e) {
-    logger.warn('Error stopping background workers', e);
-  }
-  process.exit(0);
-});
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 // Expose default metrics and ensure metrics collection started
 try {

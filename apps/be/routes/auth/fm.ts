@@ -7,6 +7,8 @@ import {
   hashPassword,
 } from "@modheshwari/utils/index";
 
+import { logger } from "../../lib/logger";
+
 /**
  * @description Handles Family Member login flow.
  * Steps:
@@ -34,7 +36,7 @@ import {
  */
 export async function handleMemberLogin(req: Request) {
   try {
-    const body: any = await (req as Request).json().catch(() => null);
+    const body: any = await req.json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
     const { email, password } = body;
@@ -50,13 +52,6 @@ export async function handleMemberLogin(req: Request) {
       include: { families: { include: { family: true } } },
     });
     if (!user) return failure("User not found", "Not Found", 404);
-
-    if (user.role !== "MEMBER")
-      return failure(
-        "Unauthorized — only Family Members can login here",
-        "Access Denied",
-        403,
-      );
 
       // --- Block login if user is marked deceased/inactive ---
     // `status` is a boolean in the Prisma `User` model (true = alive, false = deceased)
@@ -99,6 +94,7 @@ export async function handleMemberLogin(req: Request) {
       200,
     );
   } catch (err) {
+    logger.error("MemberLogin Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -122,7 +118,7 @@ export async function handleMemberLogin(req: Request) {
  */
 export async function handleMemberSignup(req: Request) {
   try {
-    const body: any = await (req as Request).json().catch(() => null);
+    const body: any = await req.json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
     const { name, email, password, familyId, relationWithFamilyHead } = body;
@@ -196,6 +192,7 @@ export async function handleMemberSignup(req: Request) {
       201,
     );
   } catch (err) {
+    logger.error("MemberSignup Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

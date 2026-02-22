@@ -6,6 +6,7 @@
 import { verifyJWT } from "@modheshwari/utils/jwt";
 
 import { extractAndVerifyToken } from "../utils/auth";
+import { logger } from "../lib/logger";
 
 interface HttpError extends Error {
   status?: number;
@@ -40,7 +41,7 @@ export async function authMiddleware({ request, set, store }: any) {
     // Continue silently (no return = pass-through)
     return;
   } catch (err: unknown) {
-    console.error("Auth Middleware Error:", err);
+    logger.error("Auth Middleware Error:", err);
 
     let status = 500;
     let message = "Internal Server Error";
@@ -79,7 +80,7 @@ export function getAuthPayload(req: Request) {
     const decoded = verifyJWT(token);
     return decoded as any;
   } catch (err) {
-    console.error("Get Auth Payload Error:", err);
+    logger.error("Get Auth Payload Error:", err);
     return null;
   }
 }
@@ -91,11 +92,6 @@ export function getAuthPayload(req: Request) {
  */
 export function requireAuth(req: Request, allowedRoles?: string[]) {
   const payload: any = getAuthPayload(req);
-  console.log(
-    `[requireAuth] Auth header:`,
-    req.headers.get("authorization") ? "present" : "missing",
-  );
-  console.log(`[requireAuth] Payload:`, payload);
   if (!payload) {
     return {
       ok: false,
@@ -112,9 +108,6 @@ export function requireAuth(req: Request, allowedRoles?: string[]) {
 
   if (allowedRoles && Array.isArray(allowedRoles)) {
     if (!allowedRoles.includes(payload.role)) {
-      console.log(
-        `[requireAuth] Role forbidden. Required: ${allowedRoles}, got: ${payload.role}`,
-      );
       return {
         ok: false,
         response: new Response(

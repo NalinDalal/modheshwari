@@ -8,6 +8,7 @@ import {
   isValidBloodGroup,
   normalizeBloodGroup,
 } from "../utils/searchParser";
+import { logger } from "../lib/logger";
 
 /**
  * GET /api/me
@@ -91,12 +92,12 @@ export async function handleGetMe(req: Request): Promise<Response> {
       updatedAt: user.updatedAt,
     };
 
-    console.log(`/me fetched for userId=${user.id}`);
+    logger.debug(`/me fetched for userId=${user.id}`);
 
     // --- Step 4: Send success response ---
     return success("Fetched profile", formatted);
   } catch (err) {
-    console.error("GetMe Error:", err);
+    logger.error("GetMe Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -231,7 +232,7 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
     // --- Step 4: Send success response ---
     return success("Profile updated successfully", updatedProfile);
   } catch (err) {
-    console.error("UpdateMe Error:", err);
+    logger.error("UpdateMe Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

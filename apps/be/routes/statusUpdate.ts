@@ -57,12 +57,13 @@ export async function handleCreateStatusUpdateRequest(req: Request) {
  * @param {import("/Users/nalindalal/modheshwari/node_modules/.prisma/client/index").$Enums.Role} role - Description of role
  * @returns {Promise<string>} Description of return value
  */
-async function findApprover(role: Role) {
+async function findApprover(role: Role): Promise<string> {
   const approver = await prisma.user.findFirst({
     where: { role, status: true },
     select: { id: true },
   });
-  return approver?.id ?? "";
+  if (!approver) throw new Error(`No active approver found for role: ${role}`);
+  return approver.id;
 }
 
 // ---------------- LIST ----------------

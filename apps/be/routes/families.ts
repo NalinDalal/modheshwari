@@ -1,3 +1,5 @@
+import { randomUUID } from "crypto";
+
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import { hashPassword } from "@modheshwari/utils/hash";
@@ -26,7 +28,7 @@ export async function handleCreateFamily(req: any): Promise<Response> {
         name,
         uniqueId: uniqueId
           ? uniqueId
-          : `FAM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+          : `FAM-${randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`,
         headId: userId,
       },
     });
@@ -189,7 +191,7 @@ export async function handleReviewInvite(
 
         // If invite was created for an email (no user exists yet), create a placeholder user
         if (!invitedUserId && invite.inviteEmail) {
-          const pw = Math.random().toString(36).slice(2, 10);
+          const pw = randomUUID();
           const hashed = await hashPassword(pw);
           const newUser = await tx.user.create({
             data: {
