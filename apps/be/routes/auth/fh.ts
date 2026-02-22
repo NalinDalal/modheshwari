@@ -8,6 +8,7 @@ import { comparePassword, hashPassword } from "@modheshwari/utils/hash";
 import { signJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 import type { Role as PrismaRole } from "@prisma/client";
+import { logger } from "../../lib/logger";
 
 /**
  * Handles user login for a specific role.
@@ -44,9 +45,9 @@ export async function handleFHLogin(
       return failure("Missing credentials", "Validation Error", 400);
     }
 
-    // --- Fetch user by email ---
+    // --- Fetch user by email and expected role ---
     const user = await prisma.user.findFirst({
-      where: { email, role: "FAMILY_HEAD" },
+      where: { email, role: expectedRole as PrismaRole },
       include: { families: { include: { family: true } } },
     });
 

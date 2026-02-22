@@ -9,6 +9,8 @@ import { signJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 import type { Role as PrismaRole } from "@prisma/client";
 
+import { logger } from "../../lib/logger";
+
 const ALLOWED_ROLES = [
   "COMMUNITY_HEAD",
   "COMMUNITY_SUBHEAD",
@@ -118,7 +120,7 @@ export async function handleAdminSignup(
       201,
     );
   } catch (err) {
-    console.error("Admin Signup Error:", err);
+    logger.error("Admin Signup Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -176,7 +178,7 @@ export async function handleAdminLogin(
       200,
     );
   } catch (err) {
-    console.error("Admin Login Error:", err);
+    logger.error("Admin Login Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

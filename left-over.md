@@ -52,6 +52,6 @@ pg_restore -h HOST -U USER -d restored_db /path/to/db-backup-2026-02-14T120000Z.
 
 - Replace logical dumps with `pgBackRest` or `WAL-G` for PITR (recommended for production databases).
 - Add multi-region replication of backups (S3 replication or AWS Backup vault copies).
-- Add monitoring/alerting on backup success/failure (CloudWatch alarms, 
+- Add monitoring/alerting on backup success/failure (CloudWatch alarms)
 
 so need to ssh into the machine, if done, then ask gpt for same

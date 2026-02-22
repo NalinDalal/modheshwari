@@ -21,6 +21,13 @@ export async function handleFamilyTransfer(req: Request) {
   if (!newFamilyId) return failure("newFamilyId is required", null, 400);
 
   try {
+    // Verify the target family exists
+    const targetFamily = await prisma.family.findUnique({
+      where: { id: newFamilyId },
+      select: { id: true },
+    });
+    if (!targetFamily) return failure("Family not found", "Not Found", 404);
+    
     // Create membership in the new family
     const membership = await prisma.familyMember.create({
       data: {
