@@ -27,6 +27,7 @@ export async function handleFamilyTransfer(req: Request) {
       select: { id: true },
     });
     if (!targetFamily) return failure("Family not found", "Not Found", 404);
+    
 
     // Create membership in the new family
     const membership = await prisma.familyMember.create({

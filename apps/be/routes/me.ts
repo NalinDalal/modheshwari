@@ -92,7 +92,7 @@ export async function handleGetMe(req: Request): Promise<Response> {
       updatedAt: user.updatedAt,
     };
 
-    logger.debug(`/me fetched for userId=${user.id}`);
+    logger.info(`/me fetched for userId=${user.id}`);
 
     // --- Step 4: Send success response ---
     return success("Fetched profile", formatted);

@@ -62,7 +62,7 @@ async function findApprover(role: Role): Promise<string> {
     where: { role, status: true },
     select: { id: true },
   });
-  if (!approver) throw new Error(`No active approver found for role: ${role}`);
+if (!approver) throw new Error(`No active approver found for role: ${role}`);
   return approver.id;
 }
 

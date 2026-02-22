@@ -10,6 +10,7 @@ import { comparePassword, hashPassword } from "@modheshwari/utils/hash";
 import { signJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 import type { Role as PrismaRole } from "@prisma/client";
+import { logger } from "../../lib/logger";
 
 import { logger } from "../../lib/logger";
 

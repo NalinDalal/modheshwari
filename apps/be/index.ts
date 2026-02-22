@@ -65,7 +65,7 @@ function shutdown(signal: string) {
     logger.warn('Error stopping background workers', e);
   }
   process.exit(0);
-}
+};
 
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));

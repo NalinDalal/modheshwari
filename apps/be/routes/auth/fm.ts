@@ -6,6 +6,7 @@ import {
   failure,
   hashPassword,
 } from "@modheshwari/utils/index";
+import { logger } from "../../lib/logger";
 
 import { logger } from "../../lib/logger";
 
@@ -94,7 +95,9 @@ export async function handleMemberLogin(req: Request) {
       200,
     );
   } catch (err) {
-    logger.error("MemberLogin Error:", err);
+
+      logger.error("MemberLogin Error:", err);
+
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
