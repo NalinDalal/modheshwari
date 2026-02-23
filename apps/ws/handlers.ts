@@ -49,7 +49,7 @@ export function handleOpen(ws: ServerWebSocket<WSData>) {
 
     try {
       ws.send(
-        JSON.stringify({ type: "ping", timestamp: new Date().toISOString() }),
+        JSON.stringify({ type: "ping" }),
       );
     } catch (err) {
       // Log heartbeat send failures for observability; close handler will clean up
@@ -97,7 +97,7 @@ export async function handleMessage(ws: ServerWebSocket<WSData>, message: string
               }
               return;
             }
-            try { ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() })); } catch (err) {
+            try { ws.send(JSON.stringify({ type: 'ping' })); } catch (err) {
               logger.debug("Heartbeat send failed (post-auth)", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
             }
           }, HEARTBEAT_INTERVAL) as unknown as number;
@@ -294,13 +294,24 @@ async function handleReadReceipt(data: IncomingMessage, userId: string) {
       select: { id: true, senderId: true, conversationId: true },
     });
 
+    // Batch read receipts by senderId + conversationId to avoid per-message WS sends
+    const grouped = new Map<string, { senderId: string; conversationId: string; ids: string[] }>();
     for (const msg of messages) {
-      pushToUser(msg.senderId, {
+      const key = `${msg.senderId}:${msg.conversationId}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, { senderId: msg.senderId, conversationId: msg.conversationId, ids: [] });
+      }
+      grouped.get(key)!.ids.push(msg.id);
+    }
+
+    const ts = new Date().toISOString();
+    for (const { senderId, conversationId, ids } of grouped.values()) {
+      pushToUser(senderId, {
         type: "read",
-        messageIds: [msg.id],
-        conversationId: msg.conversationId,
+        messageIds: ids,
+        conversationId,
         userId,
-        timestamp: new Date().toISOString(),
+        timestamp: ts,
       });
     }
   });

@@ -227,6 +227,17 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
         ) as PrismaBloodGroup),
         ...updateData,
       },
+      select: {
+        phone: true,
+        address: true,
+        profession: true,
+        gotra: true,
+        location: true,
+        locationLat: true,
+        locationLng: true,
+        status: true,
+        bloodGroup: true,
+      },
     });
 
     // --- Step 4: Send success response ---

@@ -54,7 +54,14 @@ export async function handleGetFamilyMembers(req: Request): Promise<Response> {
             name: true,
             email: true,
             status: true,
-            profile: true,
+            profile: {
+              select: {
+                phone: true,
+                gotra: true,
+                profession: true,
+                location: true,
+              },
+            },
           },
         },
       },

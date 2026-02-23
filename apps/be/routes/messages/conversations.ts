@@ -33,18 +33,17 @@ export async function handleGetConversations(req: Request): Promise<Response> {
       },
     });
 
-    // Get participant details
-    const conversationsWithDetails = await Promise.all(
-      conversations.map(async (conv) => {
-        const otherParticipantIds = conv.participants.filter(
-          (id: string) => id !== userId,
-        );
-        const participants = await prisma.user.findMany({
-          where: {
-            id: {
-              in: otherParticipantIds,
-            },
-          },
+    // Get participant details — batch all participant IDs into a single query
+    const allOtherIds = new Set<string>();
+    for (const conv of conversations) {
+      for (const pid of conv.participants) {
+        if (pid !== userId) allOtherIds.add(pid);
+      }
+    }
+
+    const participantUsers = allOtherIds.size > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: [...allOtherIds] } },
           select: {
             id: true,
             name: true,
@@ -55,27 +54,37 @@ export async function handleGetConversations(req: Request): Promise<Response> {
               },
             },
           },
-        });
+        })
+      : [];
 
-        const unreadCount = await prisma.message.count({
-          where: {
-            conversationId: conv.id,
-            senderId: {
-              not: userId,
-            },
-            readBy: {
-              hasEvery: [userId],
-            },
-          },
-        });
+    const participantMap = new Map(participantUsers.map((u) => [u.id, u]));
 
-        return {
-          ...conv,
-          participants,
-          unreadCount,
-        };
-      }),
-    );
+    // Batch unread counts — single query with groupBy
+    const unreadCounts = await prisma.message.groupBy({
+      by: ["conversationId"],
+      where: {
+        conversationId: { in: conversations.map((c) => c.id) },
+        senderId: { not: userId },
+        NOT: { readBy: { has: userId } },
+      },
+      _count: true,
+    });
+
+    const unreadMap = new Map(unreadCounts.map((u) => [u.conversationId, u._count]));
+
+    const conversationsWithDetails = conversations.map((conv) => {
+      const otherParticipantIds = conv.participants.filter(
+        (id: string) => id !== userId,
+      );
+      return {
+        id: conv.id,
+        lastMessageAt: conv.lastMessageAt,
+        lastMessage: (conv as any).lastMessage,
+        participants: otherParticipantIds.map((pid: string) => participantMap.get(pid)).filter(Boolean),
+        unreadCount: unreadMap.get(conv.id) ?? 0,
+        latestMessage: conv.messages[0] ?? null,
+      };
+    });
 
     return success("Conversations retrieved", conversationsWithDetails);
   } catch (err) {

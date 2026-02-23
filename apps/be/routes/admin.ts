@@ -16,13 +16,27 @@ export async function handleListAllRequests(req: any): Promise<Response> {
 
     // Resource requests (include approvals and requester)
     const resourceRequests = await prisma.resourceRequest.findMany({
-      include: { approvals: true, user: true },
+      include: {
+        approvals: {
+          select: { id: true, status: true, approverName: true, role: true, reviewedAt: true, remarks: true },
+        },
+        user: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
     // Events (include approvals and creator)
     const events = await prisma.event.findMany({
-      include: { approvals: true, createdBy: true },
+      include: {
+        approvals: {
+          select: { id: true, status: true, approverName: true, role: true, reviewedAt: true, remarks: true },
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 

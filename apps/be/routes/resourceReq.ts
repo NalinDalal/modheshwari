@@ -50,6 +50,7 @@ export async function handleCreateResourceRequest(
 
     const communityHead = await prisma.user.findFirst({
       where: { role: "COMMUNITY_HEAD", status: true },
+      select: { id: true, name: true },
     });
 
     if (communityHead) {
@@ -62,6 +63,7 @@ export async function handleCreateResourceRequest(
 
     const communitySub = await prisma.user.findFirst({
       where: { role: "COMMUNITY_SUBHEAD", status: true },
+      select: { id: true, name: true },
     });
 
     if (communitySub) {
@@ -74,6 +76,7 @@ export async function handleCreateResourceRequest(
 
     const profile = await prisma.profile.findUnique({
       where: { userId },
+      select: { gotra: true },
     });
 
     if (profile?.gotra) {
@@ -185,7 +188,14 @@ export async function handleListResourceRequests(
     // Get paginated results
     const list = await prisma.resourceRequest.findMany({
       where,
-      include: { approvals: true, user: true },
+      include: {
+        approvals: {
+          select: { id: true, status: true, approverName: true, role: true, reviewedAt: true, remarks: true },
+        },
+        user: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
       orderBy: { createdAt: "desc" },
       skip,
       take,
@@ -222,7 +232,14 @@ export async function handleGetResourceRequest(
 
     const r = await prisma.resourceRequest.findUnique({
       where: { id },
-      include: { approvals: true, user: true },
+      include: {
+        approvals: {
+          select: { id: true, status: true, approverName: true, role: true, reviewedAt: true, remarks: true },
+        },
+        user: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
     });
 
     if (!r) return failure("Request not found", "Not Found", 404);

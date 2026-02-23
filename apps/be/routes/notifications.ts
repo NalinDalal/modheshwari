@@ -195,7 +195,7 @@ export async function handleCreateNotification(req: Request) {
         const previewId = result?.eventId || randomUUID();
         const PREVIEW_TTL = Number(process.env.NOTIFICATION_PREVIEW_TTL_SECONDS || 60);
         for (const u of users) {
-          const payload = JSON.stringify({ recipientId: u.id, notification: { previewId, message, subject: subject ?? null, createdAt: now } });
+          const payload = JSON.stringify({ notification: { previewId, message, subject: subject ?? null, createdAt: now } });
           // publish to channel `inapp:{userId}` which ws redis-sub listens for via pSubscribe
           try {
             await redis.publish(`inapp:${u.id}`, payload);
@@ -243,12 +243,26 @@ export async function handleListNotifications(req: Request): Promise<Response> {
 
     const userId = auth.payload.userId ?? auth.payload.id;
 
-    const list = await prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
+    const url = new URL(req.url);
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10)));
+    const skip = (page - 1) * limit;
 
-    return success("Notifications fetched", { notifications: list }, 200);
+    const [list, total] = await Promise.all([
+      prisma.notification.findMany({
+        where: { userId },
+        select: { id: true, type: true, message: true, read: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.notification.count({ where: { userId } }),
+    ]);
+
+    return success("Notifications fetched", {
+      notifications: list,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    }, 200);
   } catch (err) {
     console.error("List Notifications Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);

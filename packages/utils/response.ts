@@ -41,7 +41,7 @@ export function createResponse<T>({
     timestamp: new Date().toISOString(),
   };
 
-  return new Response(JSON.stringify(body, null, 2), {
+  return new Response(JSON.stringify(body), {
     status: statusCode ?? (status === "success" ? 200 : 400),
     headers: { "Content-Type": "application/json" },
   });

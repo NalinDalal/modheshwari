@@ -60,6 +60,7 @@ export async function checkRoleChangePermission(
         role: "COMMUNITY_SUBHEAD",
         status: true,
       },
+      select: { id: true },
     });
 
     if (approvers.length < 2) {

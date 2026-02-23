@@ -48,7 +48,14 @@ export async function handleFHLogin(
     // --- Fetch user by email and expected role ---
     const user = await prisma.user.findFirst({
       where: { email, role: expectedRole as PrismaRole },
-      include: { families: { include: { family: true } } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        password: true,
+        role: true,
+        status: true,
+      },
     });
 
     // --- Verify existence and role match ---

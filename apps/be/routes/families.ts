@@ -129,7 +129,11 @@ export async function handleListInvites(
 
     const invites = await prisma.memberInvite.findMany({
       where: { familyId, status: "PENDING" },
-      include: { invitedUser: true },
+      include: {
+        invitedUser: {
+          select: { id: true, name: true, email: true },
+        },
+      },
     });
 
     return success("Invites fetched", { invites }, 200);

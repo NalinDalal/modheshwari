@@ -283,8 +283,25 @@ export async function handleMarkAllAsRead(req: Request): Promise<Response> {
       }),
     ]);
 
-    // Publish read events
-    await Promise.all(unreadNotifications.map((notif: { id: string }) => publishReadEvent(notif.id, userId)));
+    // Publish read events in batch (single Kafka send with multiple messages)
+    if (unreadNotifications.length > 0) {
+      try {
+        await ensureProducerConnected();
+        await producer.send({
+          topic: "notification.read",
+          messages: unreadNotifications.map((notif: { id: string }) => ({
+            key: notif.id,
+            value: JSON.stringify({
+              notificationId: notif.id,
+              userId,
+              readAt: new Date().toISOString(),
+            }),
+          })),
+        });
+      } catch (error) {
+        // Don't fail the request if Kafka publish fails
+      }
+    }
 
     return new Response(
       JSON.stringify({
@@ -342,8 +359,21 @@ export async function handleGetDeliveryStatus(req: Request, id: string): Promise
         id: notificationId,
         userId,
       },
-      include: {
+      select: {
+        id: true,
+        read: true,
+        readAt: true,
+        deliveryStrategy: true,
+        priority: true,
         deliveries: {
+          select: {
+            channel: true,
+            status: true,
+            attemptCount: true,
+            scheduledFor: true,
+            deliveredAt: true,
+            error: true,
+          },
           orderBy: { createdAt: "asc" },
         },
       },
@@ -365,14 +395,7 @@ export async function handleGetDeliveryStatus(req: Request, id: string): Promise
           deliveryStrategy: notification.deliveryStrategy,
           priority: notification.priority,
         },
-        deliveries: notification.deliveries.map((d: any) => ({
-          channel: d.channel,
-          status: d.status,
-          attemptCount: d.attemptCount,
-          scheduledFor: d.scheduledFor,
-          deliveredAt: d.deliveredAt,
-          error: d.error,
-        })),
+        deliveries: notification.deliveries,
       }),
       {
         status: 200,

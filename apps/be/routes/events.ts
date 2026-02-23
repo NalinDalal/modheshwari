@@ -230,13 +230,6 @@ export async function handleGetEvent(
             },
           },
         },
-        registrations: {
-          include: {
-            user: {
-              select: { id: true, name: true, email: true },
-            },
-          },
-        },
         _count: {
           select: { registrations: true },
         },
@@ -437,7 +430,11 @@ export async function handleApproveEvent(
         eventId: id,
         approverId,
       },
-      include: { event: true },
+      include: {
+        event: {
+          select: { id: true, name: true, status: true, createdById: true },
+        },
+      },
     });
 
     if (!approval) {

@@ -32,6 +32,7 @@ export async function handleGetChat(req: Request) {
     if (fm) {
       const familyMembers = await prisma.familyMember.findMany({
         where: { familyId: fm.familyId },
+        select: { userId: true },
       });
 
       const memberIds = familyMembers.map((m) => m.userId);

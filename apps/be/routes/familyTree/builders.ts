@@ -50,11 +50,7 @@ export async function buildAncestorTree(
       toUserId: userId,
       type: "PARENT",
     },
-    include: {
-      fromUser: {
-        select: { id: true, name: true, email: true, role: true },
-      },
-    },
+    select: { fromUserId: true },
   });
 
   if (parentRelations.length > 0) {
@@ -144,11 +140,7 @@ export async function buildDescendantTree(
       fromUserId: userId,
       type: "CHILD",
     },
-    include: {
-      toUser: {
-        select: { id: true },
-      },
-    },
+    select: { toUserId: true },
   });
 
   if (childRelations.length > 0) {

@@ -407,7 +407,7 @@ Notes:
 | Resource Requests     | Complete       | ✅       | ✅      | ✅      | 100%                  |
 | Medical Info          | Complete       | ✅       | ✅      | ✅      | 100%                  |
 | Messaging (WebSocket) | Complete       | ✅       | ✅      | ✅      | 100%                  |
-| Notifications         | Complete       | ✅       | ✅      | ✅      | 100% (preferences UI missing) |
+| Notifications         | Complete       | ✅       | ✅      | ✅      | 100%                  |
 | Admin Features        | Complete       | ✅       | ✅      | ✅      | 100%                  |
 | QR Code Passes        | Not Started    | ⚠️       | ❌      | ❌      | 10%                   |
 | Payments              | Partial        | ✅       | ❌      | ❌      | 20%                   |

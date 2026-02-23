@@ -84,8 +84,12 @@ export async function handleListStatusUpdateRequests(req: Request) {
       ],
     },
     include: {
-      targetUser: true,
-      approvals: true,
+      targetUser: {
+        select: { id: true, name: true, email: true, role: true, status: true },
+      },
+      approvals: {
+        select: { id: true, status: true, approverName: true, role: true, reviewedAt: true, remarks: true },
+      },
     },
   });
 

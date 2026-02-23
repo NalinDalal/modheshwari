@@ -49,6 +49,14 @@ export async function handleGetMessages(
           },
         }),
       },
+      select: {
+        id: true,
+        conversationId: true,
+        senderId: true,
+        senderName: true,
+        content: true,
+        createdAt: true,
+      },
       orderBy: {
         createdAt: "desc",
       },
@@ -114,6 +122,14 @@ export async function handleSendMessage(req: Request): Promise<Response> {
         senderName: user.name,
         content,
       },
+      select: {
+        id: true,
+        conversationId: true,
+        senderId: true,
+        senderName: true,
+        content: true,
+        createdAt: true,
+      },
     });
 
     // Update conversation's last message timestamp
@@ -161,24 +177,16 @@ export async function handleMarkMessagesRead(req: Request): Promise<Response> {
     }
 
     // Update all unread messages in the conversation for this user
-    const messages = await prisma.message.findMany({
+    await prisma.message.updateMany({
       where: {
         conversationId,
+        senderId: { not: userId },
+        NOT: { readBy: { has: userId } },
+      },
+      data: {
+        readBy: { push: userId },
       },
     });
-
-    for (const message of messages) {
-      if (!message.readBy.includes(userId)) {
-        await prisma.message.update({
-          where: { id: message.id },
-          data: {
-            readBy: {
-              push: userId,
-            },
-          },
-        });
-      }
-    }
 
     return success("Messages marked as read");
   } catch (err) {

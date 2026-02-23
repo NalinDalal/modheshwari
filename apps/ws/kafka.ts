@@ -70,7 +70,14 @@ async function handleNotificationEvent({ message }: EachMessagePayload) {
   for (const recipientId of parsed.recipientIds) {
     pushToUser(recipientId, {
       type: "notification",
-      notification: parsed,
+      notification: {
+        eventId: parsed.eventId,
+        message: parsed.message,
+        type: parsed.type,
+        subject: parsed.subject,
+        priority: parsed.priority,
+        timestamp: parsed.timestamp,
+      },
     });
   }
 }

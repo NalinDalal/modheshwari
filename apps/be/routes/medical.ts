@@ -66,6 +66,11 @@ export async function handleUpdateMedical(req: Request) {
         allergies: body.allergies || null,
         medicalNotes: body.medicalNotes || null,
       },
+      select: {
+        bloodGroup: true,
+        allergies: true,
+        medicalNotes: true,
+      },
     });
 
     return success("Medical info updated", { profile: updated });
@@ -121,8 +126,6 @@ export async function handleSearchByBloodGroup(req: Request) {
         profile: {
           select: {
             bloodGroup: true,
-            allergies: true,
-            medicalNotes: true,
             phone: true,
             location: true,
           },
@@ -140,8 +143,6 @@ export async function handleSearchByBloodGroup(req: Request) {
       phone: u.profile?.phone,
       location: u.profile?.location,
       bloodGroup: u.profile?.bloodGroup,
-      allergies: u.profile?.allergies,
-      medicalNotes: u.profile?.medicalNotes,
     }));
 
     return success(
