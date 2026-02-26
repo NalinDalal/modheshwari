@@ -12,6 +12,7 @@
     "docs:gen": "bun run packages/scripts/generate-docs.ts",
     "openapi:gen": "bun run packages/scripts/generate-openapi.ts",
     "asyncapi:gen": "bun run packages/scripts/generate-asyncapi.ts",
+    "db:studio": "bun scripts/prisma-studio.ts",
     "db:seed": "tsx packages/db/seed.ts",
     "stress-test": "bash ./scripts/run-stress-test.sh"
   },
@@ -28,7 +29,7 @@
     "prisma": "^7.4.1",
     "ts-morph": "22",
     "tsx": "^4.20.6",
-    "turbo": "^2.8.10",
+    "turbo": "^2.8.11",
     "typedoc": "^0.28.14",
     "typescript": "5.9.2",
     "typescript-eslint": "^8.46.2"

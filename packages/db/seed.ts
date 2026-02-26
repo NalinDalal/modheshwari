@@ -15,6 +15,7 @@ import {
   FanoutStatus,
   InviteStatus,
 } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -44,36 +45,67 @@ async function main() {
   await prisma.profile.deleteMany();
   await prisma.user.deleteMany();
 
+  const demoPassword = "demo123";
+  const demoPasswordHash = await bcrypt.hash(demoPassword, 10);
+
   // ---------------- USERS ----------------
-  const users = await Promise.all([
-    prisma.user.create({
-      data: {
-        email: "head@demo.com",
-        password: "hashed",
-        name: "Community Head",
-        role: Role.COMMUNITY_HEAD,
-        status: true,
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "family@demo.com",
-        password: "hashed",
-        name: "Family Head",
-        role: Role.FAMILY_HEAD,
-        status: true,
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "member@demo.com",
-        password: "hashed",
-        name: "Regular Member",
-        role: Role.MEMBER,
-        status: true,
-      },
-    }),
-  ]);
+  const communityHead = await prisma.user.create({
+    data: {
+      email: "head@demo.com",
+      password: demoPasswordHash,
+      name: "Community Head",
+      role: Role.COMMUNITY_HEAD,
+      status: true,
+    },
+  });
+
+  const communitySubhead = await prisma.user.create({
+    data: {
+      email: "subhead@demo.com",
+      password: demoPasswordHash,
+      name: "Community Subhead",
+      role: Role.COMMUNITY_SUBHEAD,
+      status: true,
+    },
+  });
+
+  const gotraHead = await prisma.user.create({
+    data: {
+      email: "gotra@demo.com",
+      password: demoPasswordHash,
+      name: "Gotra Head",
+      role: Role.GOTRA_HEAD,
+      status: true,
+    },
+  });
+
+  const familyHead = await prisma.user.create({
+    data: {
+      email: "family@demo.com",
+      password: demoPasswordHash,
+      name: "Family Head",
+      role: Role.FAMILY_HEAD,
+      status: true,
+    },
+  });
+
+  const member = await prisma.user.create({
+    data: {
+      email: "member@demo.com",
+      password: demoPasswordHash,
+      name: "Regular Member",
+      role: Role.MEMBER,
+      status: true,
+    },
+  });
+
+  const users = [
+    communityHead,
+    communitySubhead,
+    gotraHead,
+    familyHead,
+    member,
+  ];
 
   // ---------------- PROFILES ----------------
   for (const user of users) {
@@ -109,34 +141,41 @@ async function main() {
     data: {
       name: "Dalal Family",
       uniqueId: "FAM001",
-      headId: users[1].id,
+      headId: familyHead.id,
     },
   });
 
   await prisma.familyMember.createMany({
-    data: users.map((u) => ({
-      familyId: family.id,
-      userId: u.id,
-      role: u.role,
-    })),
+    data: [
+      {
+        familyId: family.id,
+        userId: familyHead.id,
+        role: Role.FAMILY_HEAD,
+      },
+      {
+        familyId: family.id,
+        userId: member.id,
+        role: Role.MEMBER,
+      },
+    ],
   });
 
   // ---------------- USER RELATIONS ----------------
   await prisma.userRelation.createMany({
     data: [
       {
-        fromUserId: users[1].id,
-        toUserId: users[2].id,
+        fromUserId: familyHead.id,
+        toUserId: member.id,
         type: RelationType.PARENT,
       },
       {
-        fromUserId: users[2].id,
-        toUserId: users[1].id,
+        fromUserId: member.id,
+        toUserId: familyHead.id,
         type: RelationType.CHILD,
       },
       {
-        fromUserId: users[0].id,
-        toUserId: users[1].id,
+        fromUserId: communityHead.id,
+        toUserId: familyHead.id,
         type: RelationType.SIBLING,
       },
     ],
@@ -149,7 +188,7 @@ async function main() {
       description: "Community meetup",
       date: new Date(),
       venue: "Community Hall",
-      createdById: users[0].id,
+      createdById: communityHead.id,
       status: EventStatus.PENDING,
     },
   });
@@ -158,16 +197,16 @@ async function main() {
     data: [
       {
         eventId: event.id,
-        approverId: users[1].id,
-        approverName: users[1].name,
-        role: users[1].role,
+        approverId: familyHead.id,
+        approverName: familyHead.name,
+        role: familyHead.role,
         status: ApprovalStatus.APPROVED,
       },
       {
         eventId: event.id,
-        approverId: users[2].id,
-        approverName: users[2].name,
-        role: users[2].role,
+        approverId: gotraHead.id,
+        approverName: gotraHead.name,
+        role: gotraHead.role,
         status: ApprovalStatus.PENDING,
       },
     ],
@@ -205,7 +244,7 @@ async function main() {
 
   const request = await prisma.resourceRequest.create({
     data: {
-      userId: users[2].id,
+      userId: member.id,
       status: ApprovalStatus.PENDING,
       resourceId: resource.id,
       startDate: new Date(),
@@ -217,16 +256,16 @@ async function main() {
     data: [
       {
         requestId: request.id,
-        approverId: users[0].id,
-        approverName: users[0].name,
-        role: users[0].role,
+        approverId: communityHead.id,
+        approverName: communityHead.name,
+        role: communityHead.role,
         status: ApprovalStatus.APPROVED,
       },
       {
         requestId: request.id,
-        approverId: users[1].id,
-        approverName: users[1].name,
-        role: users[1].role,
+        approverId: familyHead.id,
+        approverName: familyHead.name,
+        role: familyHead.role,
         status: ApprovalStatus.PENDING,
       },
     ],
@@ -267,8 +306,8 @@ async function main() {
   // ---------------- STATUS UPDATE REQUEST ----------------
   const statusReq = await prisma.statusUpdateRequest.create({
     data: {
-      targetUserId: users[2].id,
-      requestedById: users[0].id,
+      targetUserId: member.id,
+      requestedById: communityHead.id,
       reason: "Promote to FAMILY_HEAD",
       status: ApprovalStatus.PENDING,
     },
@@ -278,9 +317,9 @@ async function main() {
     data: [
       {
         requestId: statusReq.id,
-        approverId: users[1].id,
-        approverName: users[1].name,
-        role: users[1].role,
+        approverId: familyHead.id,
+        approverName: familyHead.name,
+        role: familyHead.role,
         status: ApprovalStatus.APPROVED,
       },
     ],
@@ -299,7 +338,7 @@ async function main() {
   // ---------------- NOTIFICATIONS ----------------
   const notification = await prisma.notification.create({
     data: {
-      userId: users[2].id,
+      userId: member.id,
       message: "Event Approved!",
       type: NotificationType.EVENT_APPROVAL,
       channel: NotificationChannel.IN_APP,
@@ -326,14 +365,20 @@ async function main() {
   await prisma.fanoutAudit.create({
     data: {
       fanoutId: "fanout-001",
-      initiatedBy: users[0].id,
-      recipientCount: 3,
+      initiatedBy: communityHead.id,
+      recipientCount: users.length,
       channels: ["IN_APP", "EMAIL"],
       status: FanoutStatus.COMPLETED,
     },
   });
 
   console.log("Seeding complete");
+  console.log("Demo login credentials:");
+  console.log("- community head: head@demo.com / demo123");
+  console.log("- community subhead: subhead@demo.com / demo123");
+  console.log("- gotra head: gotra@demo.com / demo123");
+  console.log("- family head: family@demo.com / demo123");
+  console.log("- member: member@demo.com / demo123");
 }
 
 main()
