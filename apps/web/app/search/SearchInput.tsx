@@ -152,7 +152,7 @@ export default function SearchInput({
       case "FAMILY_HEAD":
         return "from-orange-500 to-red-500";
       default:
-        return "from-gray-500 to-gray-600";
+        return "from-gray-400 to-gray-500";
     }
   };
 
@@ -163,18 +163,19 @@ export default function SearchInput({
       .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
       .join(" ");
   };
+
   return (
     <div className="w-full relative">
       {/* Search Input with Filter Selector */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 
         <input
           ref={inputRef}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-12 pr-12 py-4 rounded-xl border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+          className="w-full pl-12 pr-16 py-4 rounded-xl border border-white/70 bg-white/50 backdrop-blur-xl text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300/60 focus:border-white/90 shadow-sm transition-all"
           aria-label="Search"
         />
 
@@ -182,13 +183,17 @@ export default function SearchInput({
         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="text-gray-500 hover:text-white transition-colors p-1"
+            className={`p-1 transition-colors rounded-lg ${
+              showFilters
+                ? "text-pink-500 bg-pink-50"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
             title="Toggle filters"
           >
-            <Filter className="w-5 h-5" />
+            <Filter className="w-4 h-4" />
           </button>
           {loading ? (
-            <Loader2 className="w-5 h-5 text-gray-500 animate-spin" />
+            <Loader2 className="w-4 h-4 text-pink-400 animate-spin" />
           ) : q ? (
             <button
               onClick={() => {
@@ -196,9 +201,9 @@ export default function SearchInput({
                 setResults([]);
                 inputRef.current?.focus();
               }}
-              className="text-gray-500 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           ) : null}
         </div>
@@ -211,7 +216,8 @@ export default function SearchInput({
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="absolute top-full mt-1 left-0 right-0 flex flex-wrap gap-2 p-3 bg-white/8 border border-white/10 rounded-lg z-40"
+            transition={{ duration: 0.15 }}
+            className="absolute top-full mt-2 left-0 right-0 flex flex-wrap gap-2 p-3 bg-white/60 backdrop-blur-xl border border-white/70 rounded-xl shadow-lg z-40"
           >
             {(
               [
@@ -230,10 +236,10 @@ export default function SearchInput({
                   setQ("");
                   inputRef.current?.focus();
                 }}
-                className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                   filterMode === mode
-                    ? "bg-blue-500/50 text-white border border-blue-400/50"
-                    : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
+                    ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm shadow-pink-200"
+                    : "bg-white/70 text-gray-500 border border-gray-200/80 hover:bg-white hover:text-gray-700"
                 }`}
               >
                 {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -251,7 +257,7 @@ export default function SearchInput({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full mt-2 w-full bg-gradient-to-br from-white/20 to-white/8 rounded-xl border border-white/10 shadow-2xl overflow-hidden z-50"
+            className="absolute top-full mt-2 w-full bg-white/60 backdrop-blur-2xl rounded-xl border border-white/70 shadow-xl shadow-pink-100/40 overflow-hidden z-50"
           >
             {/* Loading State */}
             {loading && (
@@ -261,10 +267,10 @@ export default function SearchInput({
                     key={i}
                     className="flex items-center gap-3 animate-pulse"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-white/10" />
+                    <div className="w-10 h-10 rounded-xl bg-gray-200/70" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 w-3/4 bg-white/10 rounded" />
-                      <div className="h-3 w-1/2 bg-white/10 rounded" />
+                      <div className="h-4 w-3/4 bg-gray-200/70 rounded" />
+                      <div className="h-3 w-1/2 bg-gray-200/50 rounded" />
                     </div>
                   </div>
                 ))}
@@ -274,15 +280,16 @@ export default function SearchInput({
             {/* No Results */}
             {!loading && results.length === 0 && debouncedQ && (
               <div className="p-8 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 mb-3">
-                  <Search className="w-6 h-6 text-gray-500" />
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100/80 mb-3">
+                  <Search className="w-5 h-5 text-gray-400" />
                 </div>
-                <p className="text-sm text-gray-400">
-                  No results found for `&quot;`
-                  <span className="text-white font-medium">{debouncedQ}</span>
-                  `&quot;`
+                <p className="text-sm text-gray-500">
+                  No results found for{" "}
+                  <span className="text-gray-700 font-medium">
+                    &ldquo;{debouncedQ}&rdquo;
+                  </span>
                 </p>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-xs text-gray-400 mt-1">
                   Try searching with a different keyword
                 </p>
               </div>
@@ -291,14 +298,14 @@ export default function SearchInput({
             {/* Results List */}
             {!loading && results.length > 0 && (
               <div className="max-h-96 overflow-y-auto">
-                <div className="p-2">
-                  <p className="px-3 py-2 text-xs text-gray-500 font-medium">
+                <div className="px-4 pt-3 pb-1">
+                  <p className="text-xs text-gray-400 font-medium">
                     {results.length}{" "}
                     {results.length === 1 ? "result" : "results"} found
                   </p>
                 </div>
 
-                <ul className="divide-y divide-white/5">
+                <ul className="divide-y divide-gray-100/60">
                   {results.map((r) => (
                     <motion.li
                       key={r.id}
@@ -306,23 +313,23 @@ export default function SearchInput({
                       animate={{ opacity: 1, x: 0 }}
                       className="group"
                     >
-                      <button className="w-full p-4 hover:bg-white/5 transition-all duration-200 text-left">
-                        <div className="flex items-start gap-4">
+                      <button className="w-full px-4 py-3 hover:bg-white/50 transition-all duration-150 text-left">
+                        <div className="flex items-start gap-3">
                           {/* Avatar */}
                           <div
-                            className={`flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${getRoleBadgeColor(r.role)} text-white font-bold shadow-lg flex-shrink-0`}
+                            className={`flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br ${getRoleBadgeColor(r.role)} text-white font-bold shadow-sm flex-shrink-0`}
                           >
                             {r.name?.charAt(0).toUpperCase() || "?"}
                           </div>
 
                           {/* Info */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="text-sm font-medium text-white truncate">
+                            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                              <p className="text-sm font-semibold text-gray-800 truncate">
                                 {r.name || "Unknown"}
                               </p>
                               <span
-                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getRoleBadgeColor(r.role)} text-white`}
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gradient-to-r ${getRoleBadgeColor(r.role)} text-white shadow-sm`}
                               >
                                 {formatRole(r.role)}
                               </span>
@@ -333,24 +340,24 @@ export default function SearchInput({
                             </p>
 
                             {/* Profile Info */}
-                            <div className="flex flex-wrap gap-2 text-xs">
+                            <div className="flex flex-wrap gap-1.5 text-xs">
                               {r.profile?.gotra && (
-                                <span className="px-2 py-1 bg-white/5 text-gray-300 rounded">
+                                <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100">
                                   Gotra: {r.profile.gotra}
                                 </span>
                               )}
                               {r.profile?.profession && (
-                                <span className="px-2 py-1 bg-white/5 text-gray-300 rounded">
+                                <span className="px-2 py-0.5 bg-green-50 text-green-600 rounded-md border border-green-100">
                                   {r.profile.profession}
                                 </span>
                               )}
                               {r.profile?.location && (
-                                <span className="px-2 py-1 bg-white/5 text-gray-300 rounded">
+                                <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-md border border-purple-100">
                                   📍 {r.profile.location}
                                 </span>
                               )}
                               {r.profile?.bloodGroup && (
-                                <span className="px-2 py-1 bg-red-500/10 text-red-300 rounded">
+                                <span className="px-2 py-0.5 bg-red-50 text-red-500 rounded-md border border-red-100">
                                   🩸 {r.profile.bloodGroup}
                                 </span>
                               )}
@@ -358,7 +365,7 @@ export default function SearchInput({
 
                             {/* Family */}
                             {r.families && r.families.length > 0 && (
-                              <p className="text-xs text-gray-500 mt-2">
+                              <p className="text-xs text-amber-600 mt-1.5">
                                 Family:{" "}
                                 {r.families.map((f) => f.name).join(", ")}
                               </p>

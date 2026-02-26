@@ -110,7 +110,9 @@ export default function MePage() {
 
         if (mounted) setLoading(true);
 
-        const result: any = await apiFetch(`${API_BASE}/me`, { throwOnError: false });
+        const result: any = await apiFetch(`${API_BASE}/me`, {
+          throwOnError: false,
+        });
         if (result?.ok === false) {
           localStorage.removeItem("token");
           if (mounted) router.push("/signin");
@@ -159,60 +161,128 @@ export default function MePage() {
     .join("")
     .toUpperCase();
 
-  const primaryFamily = user.families[0];
+  // Role badge color
+  const roleColors: Record<string, string> = {
+    COMMUNITY_HEAD: "bg-pink-600",
+    COMMUNITY_SUBHEAD: "bg-purple-600",
+    GOTRA_HEAD: "bg-yellow-500",
+    FAMILY_HEAD: "bg-blue-600",
+    MEMBER: "bg-green-600",
+  };
 
+  // Status chip
+  const statusChip = user.status ? (
+    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700 border border-green-200">
+      Active
+    </span>
+  ) : (
+    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-500 border border-gray-200">
+      Inactive
+    </span>
+  );
+
+  // Dashboard layout
   return (
-    <main className="max-w-3xl mx-auto px-4 pb-12">
-      {/* Profile Card */}
-      <section className="card border-transparent p-8 flex gap-6 items-center">
-        <div className="h-24 w-24 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-semibold">
+    <main className="max-w-4xl mx-auto px-4 pb-12">
+      {/* Top Summary Bar */}
+      <section className="flex items-center gap-6 py-8 border-b mb-8">
+        <div
+          className="h-20 w-20 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg"
+          style={{ background: roleColors[user.role] || "#444" }}
+        >
           {initials}
         </div>
-
         <div className="flex-1">
-          <h1 className="text-2xl font-semibold">{user.name}</h1>
-          <p className="text-sm text-neutral-500">{user.email}</p>
-
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-            <Meta label="Role" value={user.role} />
-            <Meta label="Status" value={user.status ? "Active" : "Inactive"} />
-            <Meta label="Family" value={primaryFamily?.family.name ?? "—"} />
-          </div>
-
-          <div className="mt-6 flex gap-3">
-            <button
-              onClick={() => router.push("/me/edit")}
-              className="btn-primary"
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold">{user.name}</h1>
+            <span
+              className={`px-2 py-1 rounded text-xs font-semibold text-white ${roleColors[user.role] || "bg-gray-600"}`}
             >
-              Edit profile
-            </button>
-
-            <button
-              onClick={() => {
-                localStorage.removeItem("token");
-                router.push("/signin");
-              }}
-              className="px-5 py-2 border rounded-lg text-sm"
-            >
-              Sign out
-            </button>
+              {user.role.replace(/_/g, " ")}
+            </span>
+            {statusChip}
           </div>
+          <p className="text-sm text-neutral-500 mt-1">{user.email}</p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => router.push("/me/edit")}
+            className="btn-primary"
+          >
+            Edit profile
+          </button>
+          <button
+            onClick={() => {
+              localStorage.removeItem("token");
+              router.push("/signin");
+            }}
+            className="px-5 py-2 border rounded-lg text-sm"
+          >
+            Sign out
+          </button>
         </div>
       </section>
 
-      {/* Profile Details */}
-      {user.profile && (
-        <section className="mt-6 card border-transparent p-6">
-          <h2 className="text-base font-semibold mb-4">Personal Details</h2>
-
+      {/* Dashboard Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Profile Card */}
+        <section className="card border-transparent p-6">
+          <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+            <span>Personal Details</span>
+            <span className="text-xs text-neutral-400">Profile</span>
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <ProfileField label="Profession" value={user.profile.profession} />
-            <ProfileField label="Gotra" value={user.profile.gotra} />
-            <ProfileField label="Blood Group" value={user.profile.bloodGroup} />
-            <ProfileField label="Location" value={user.profile.location} />
+            <ProfileField label="Profession" value={user.profile?.profession} />
+            <ProfileField label="Gotra" value={user.profile?.gotra} />
+            <ProfileField
+              label="Blood Group"
+              value={user.profile?.bloodGroup}
+            />
+            <ProfileField label="Location" value={user.profile?.location} />
+            <ProfileField label="Phone" value={user.profile?.phone} />
+            <ProfileField label="Address" value={user.profile?.address} />
           </div>
         </section>
-      )}
+
+        {/* Families Card */}
+        <section className="card border-transparent p-6">
+          <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+            <span>Family Memberships</span>
+            <span className="text-xs text-neutral-400">Families</span>
+          </h2>
+          {user.families.length === 0 ? (
+            <div className="text-neutral-400 text-sm">No families linked.</div>
+          ) : (
+            <ul className="space-y-3">
+              {user.families.map((fm) => (
+                <li
+                  key={fm.id}
+                  className="border rounded-lg p-3 flex items-center gap-3"
+                >
+                  <span className="font-semibold text-blue-600">
+                    {fm.family.name}
+                  </span>
+                  <span className="text-xs text-neutral-400">
+                    {fm.role.replace(/_/g, " ")}
+                  </span>
+                  <span className="text-xs text-neutral-400">
+                    Joined: {new Date(fm.joinedAt).toLocaleDateString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      {/* Activity/Notifications Card (placeholder) */}
+      <section className="mt-8 card border-transparent p-6">
+        <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+          <span>Activity & Notifications</span>
+          <span className="text-xs text-neutral-400">Recent</span>
+        </h2>
+        <div className="text-neutral-400 text-sm">No recent activity.</div>
+      </section>
     </main>
   );
 }
