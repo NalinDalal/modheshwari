@@ -75,10 +75,3 @@ pg_restore -h HOST -U USER -d restored_db /path/to/db-backup-2026-02-14T120000Z.
 - Add monitoring/alerting on backup success/failure (CloudWatch alarms)
 
 so need to ssh into the machine, if done, then ask gpt for same
-
----
-
-problems: nothing works, i mean, need to check for routes again, signup and signin issues
-while signin it is creating problem, why??
-debug it
-
