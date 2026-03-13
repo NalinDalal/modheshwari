@@ -198,7 +198,7 @@ export default function MePage() {
             <span
               className={`px-2 py-1 rounded text-xs font-semibold text-white ${roleColors[user.role] || "bg-gray-600"}`}
             >
-              {user.role.replace(/_/g, " ")}
+              {user.role ? user.role.replace(/_/g, " ") : "Unknown"}
             </span>
             {statusChip}
           </div>
@@ -250,7 +250,7 @@ export default function MePage() {
             <span>Family Memberships</span>
             <span className="text-xs text-neutral-400">Families</span>
           </h2>
-          {user.families.length === 0 ? (
+          {!Array.isArray(user.families) || user.families.length === 0 ? (
             <div className="text-neutral-400 text-sm">No families linked.</div>
           ) : (
             <ul className="space-y-3">

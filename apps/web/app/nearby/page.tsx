@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
+import { NotAuthenticated } from "@repo/ui/not-authenticated";
 import apiFetch from "../../lib/api";
 import { API_BASE } from "../../lib/config";
 

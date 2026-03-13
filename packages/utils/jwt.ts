@@ -58,3 +58,25 @@ export async function verifyAuth(req: Request): Promise<AuthPayload | null> {
 
   return verifyJWT(token);
 }
+
+/**
+ * Signs a refresh JWT token for the given payload.
+ * @param payload - The data to embed in the token.
+ * @returns A signed JWT valid for 7 days (refresh token).
+ */
+export function signRefreshJWT(payload: AuthPayload) {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+}
+
+/**
+ * Verifies a refresh JWT and returns its decoded payload, or null if invalid.
+ * @param token - The JWT string to verify.
+ * @returns Decoded payload or null on failure.
+ */
+export function verifyRefreshJWT(token: string): AuthPayload | null {
+  try {
+    return jwt.verify(token, JWT_SECRET) as AuthPayload;
+  } catch {
+    return null;
+  }
+}

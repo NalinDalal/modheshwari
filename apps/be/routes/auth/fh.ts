@@ -5,7 +5,7 @@
 
 import prisma from "@modheshwari/db";
 import { comparePassword, hashPassword } from "@modheshwari/utils/hash";
-import { signJWT } from "@modheshwari/utils/jwt";
+import { signJWT, signRefreshJWT } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 import type { Role as PrismaRole } from "@prisma/client";
 import { logger } from "../../lib/logger";
@@ -85,11 +85,11 @@ export async function handleFHLogin(
     // --- Generate JWT token ---
     // Standardize token payload to { userId, role }
     const token = signJWT({ userId: user.id, role: user.role });
-
-    // --- Success response ---
-    return success(
-      "Logged in successfully",
-      {
+    const refreshToken = signRefreshJWT({ userId: user.id });
+    const headers = new Headers();
+    headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800`);
+    return new Response(
+      JSON.stringify({
         token,
         user: {
           id: user.id,
@@ -97,8 +97,8 @@ export async function handleFHLogin(
           email: user.email,
           role: user.role,
         },
-      },
-      200,
+      }),
+      { status: 200, headers }
     );
   } catch (err) {
     logger.error("Login Error:", err);
@@ -206,14 +206,14 @@ export async function handleFHSignup(
 
     // --- Step 7: Generate JWT token ---
     const token = signJWT({ userId: user.id, role: user.role });
-
-    // --- Step 8: Return structured success response ---
+    const refreshToken = signRefreshJWT({ userId: user.id });
+    const headers = new Headers();
+    headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800`);
     console.log(
       `Signup successful: ${user.name} (${user.email}) — Family: ${family.name} (${family.id})`,
     );
-    return success(
-      "Signup successful",
-      {
+    return new Response(
+      JSON.stringify({
         user: {
           id: user.id,
           name: user.name,
@@ -226,8 +226,8 @@ export async function handleFHSignup(
           uniqueId: family.uniqueId,
         },
         token,
-      },
-      201,
+      }),
+      { status: 201, headers }
     );
   } catch (err) {
     console.error("Signup Error:", err);

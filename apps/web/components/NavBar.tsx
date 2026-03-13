@@ -284,7 +284,7 @@ export default function NavBar() {
                         <span
                           className={`px-2 py-1 rounded text-xs font-semibold text-white ${roleColors[user.role] || "bg-gray-600"}`}
                         >
-                          {user.role.replace(/_/g, " ")}
+                          {user.role ? user.role.replace(/_/g, " ") : "Unknown"}
                         </span>
                         {statusChip}
                       </div>

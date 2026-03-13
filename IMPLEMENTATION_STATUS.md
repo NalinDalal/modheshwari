@@ -417,3 +417,14 @@ Notes:
 ---
 
 **Summary:** The platform is production-ready for core functionality (family management, search, events, resources, messaging, notifications). Main gaps are in monetization (payments, QR codes) and secondary modules (calendar, forums, polling). Overall ~88% feature complete with 96% database model completion.
+
+----
+
+## Update 13 Mar
+jwt didn't had refresh token, implemented refresh token hence now the auth shouldn't auto sign-out now
+fixed run time errors in react components
+downgrade to prisma6 for successful build
+Audited and fixed login flow: ensured frontend sends role in uppercase to match backend.
+Reviewed schema and seed data for user/role consistency.
+Added frontend logic for silent refresh token handling—auto-renews access token on expiry.
+fixed builds

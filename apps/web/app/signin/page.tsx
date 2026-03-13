@@ -33,7 +33,7 @@ export default function SigninPage() {
     setLoading(true);
     try {
       // use centralized API helper for consistent base URL and error handling
-      const resp = await apiPost(`${API_BASE}/login/${role}`, { email, password }, { throwOnError: false });
+      const resp = await apiPost(`${API_BASE}/login/${role.toUpperCase()}`, { email, password }, { throwOnError: false });
 
       // api helper may return shape { ok:false, status, data } when throwOnError=false
       const data = resp && (resp.ok === false ? resp.data : resp);
