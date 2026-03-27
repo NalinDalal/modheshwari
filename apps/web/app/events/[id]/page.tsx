@@ -121,7 +121,7 @@ export default function EventDetailsPage() {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE, eventId, token, userId]);
+  }, [API_BASE, eventId, userId]);
 
   useEffect(() => {
     if (hydrated && eventId) {
@@ -134,7 +134,9 @@ export default function EventDetailsPage() {
 
     setRegistering(true);
     try {
-      await apiFetch(`${API_BASE}/events/${eventId}/register`, { method: "POST" });
+      await apiFetch(`${API_BASE}/events/${eventId}/register`, {
+        method: "POST",
+      });
       setIsRegistered(true);
       fetchEvent(); // Refresh to get updated registration count
     } catch (error: unknown) {
@@ -150,7 +152,9 @@ export default function EventDetailsPage() {
 
     setRegistering(true);
     try {
-      await apiFetch(`${API_BASE}/events/${eventId}/register`, { method: "DELETE" });
+      await apiFetch(`${API_BASE}/events/${eventId}/register`, {
+        method: "DELETE",
+      });
       setIsRegistered(false);
       fetchEvent(); // Refresh to get updated registration count
     } catch (error: unknown) {
@@ -265,10 +269,10 @@ export default function EventDetailsPage() {
     <DreamySunsetBackground className="px-6 py-10">
       <div className="max-w-5xl mx-auto">
         <div className="rounded-[28px] bg-black/30 backdrop-blur-2xl border border-white/10 shadow-[0_50px_140px_rgba(0,0,0,0.35)] p-5 md:p-8">
-        {/* Header */}
-        <button
-          onClick={() => router.back()}
-className="
+          {/* Header */}
+          <button
+            onClick={() => router.back()}
+            className="
   inline-flex items-center gap-2
   text-white/70 hover:text-white
   transition
@@ -277,17 +281,16 @@ className="
   bg-white/5 border border-white/10
   hover:bg-white/10
 "
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Events
+          </button>
 
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Events
-        </button>
-
-        {/* Event Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="
+          {/* Event Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="
   rounded-[24px]
   bg-white/6
   backdrop-blur-2xl
@@ -295,90 +298,92 @@ className="
   shadow-[0_30px_90px_rgba(0,0,0,0.25)]
   p-6 md:p-8
 "
-
-        >
-          {/* Status & Registration Count */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-
-            {getStatusBadge(event.status)}
-            <span className="flex items-center gap-2 text-gray-400">
-              <Users className="w-5 h-5" />
-              <span className="font-semibold">
-                {event._count.registrations}
+          >
+            {/* Status & Registration Count */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              {getStatusBadge(event.status)}
+              <span className="flex items-center gap-2 text-gray-400">
+                <Users className="w-5 h-5" />
+                <span className="font-semibold">
+                  {event._count.registrations}
+                </span>
+                <span className="text-sm">registered</span>
               </span>
-              <span className="text-sm">registered</span>
-            </span>
-          </div>
-
-          {/* Event Name */}
-         <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-3 text-white">
-  {event.name}
-</h1>
-
-          {/* Description */}
-          {event.description && (
-            <p className="text-white/70 mb-7 leading-relaxed text-[15px]">
-
-              {event.description}
-            </p>
-          )}
-
-          {/* Event Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <div className="flex items-start gap-3 p-4 bg-white/5 rounded-lg border border-white/10">
-              <Calendar className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Date & Time</p>
-                <p className="text-sm font-medium">{formatDate(event.date)}</p>
-              </div>
             </div>
 
-            {event.venue && (
-              <div className="
+            {/* Event Name */}
+            <h1 className="text-2xl md:text-4xl font-bold tracking-tight mb-3 text-white">
+              {event.name}
+            </h1>
+
+            {/* Description */}
+            {event.description && (
+              <p className="text-white/70 mb-7 leading-relaxed text-[15px]">
+                {event.description}
+              </p>
+            )}
+
+            {/* Event Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              <div className="flex items-start gap-3 p-4 bg-white/5 rounded-lg border border-white/10">
+                <Calendar className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Date & Time</p>
+                  <p className="text-sm font-medium">
+                    {formatDate(event.date)}
+                  </p>
+                </div>
+              </div>
+
+              {event.venue && (
+                <div
+                  className="
   flex items-start gap-3
   p-4 rounded-2xl
   bg-white/5 border border-white/10
   hover:bg-white/7 transition
 "
-              >
-                <MapPin className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Venue</p>
-                  <p className="text-sm font-medium">{event.venue}</p>
+                >
+                  <MapPin className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Venue</p>
+                    <p className="text-sm font-medium">{event.venue}</p>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Organizer */}
-          <div className="p-5 bg-white/5 rounded-2xl border border-white/10 mb-8">
-            <p className="text-xs text-gray-500 mb-2">Organized by</p>
-            <div className="flex items-center gap-3">
-              <div 
-              className="
+            {/* Organizer */}
+            <div className="p-5 bg-white/5 rounded-2xl border border-white/10 mb-8">
+              <p className="text-xs text-gray-500 mb-2">Organized by</p>
+              <div className="flex items-center gap-3">
+                <div
+                  className="
   w-11 h-11 rounded-2xl
   bg-white/10 border border-white/15
   flex items-center justify-center
   text-white font-bold
 "
->
-                {event.createdBy.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="font-medium">{event.createdBy.name}</p>
-                <p className="text-xs text-gray-500">{event.createdBy.email}</p>
+                >
+                  {event.createdBy.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-medium">{event.createdBy.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {event.createdBy.email}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Registration Button */}
-          {event.status === "APPROVED" && (
-            <div className="flex gap-3">
-              {isRegistered ? (
-                <button
-                  onClick={handleUnregister}
-                  disabled={registering}
-                  className="
+            {/* Registration Button */}
+            {event.status === "APPROVED" && (
+              <div className="flex gap-3">
+                {isRegistered ? (
+                  <button
+                    onClick={handleUnregister}
+                    disabled={registering}
+                    className="
   flex-1 flex items-center justify-center gap-2
   px-6 py-3 rounded-2xl
   bg-red-500/15 border border-red-500/25
@@ -386,25 +391,24 @@ className="
   hover:bg-red-500/20 transition
   disabled:opacity-50 disabled:cursor-not-allowed
 "
-
-                >
-                  {registering ? (
-                    <>
-                      <Loader className="w-5 h-5 animate-spin" />
-                      Unregistering...
-                    </>
-                  ) : (
-                    <>
-                      <UserX className="w-5 h-5" />
-                      Unregister
-                    </>
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={handleRegister}
-                  disabled={registering}
-                  className="
+                  >
+                    {registering ? (
+                      <>
+                        <Loader className="w-5 h-5 animate-spin" />
+                        Unregistering...
+                      </>
+                    ) : (
+                      <>
+                        <UserX className="w-5 h-5" />
+                        Unregister
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleRegister}
+                    disabled={registering}
+                    className="
   flex-1 flex items-center justify-center gap-2
   px-6 py-3 rounded-2xl
   bg-white/10 border border-white/15
@@ -413,119 +417,115 @@ className="
   disabled:opacity-50 disabled:cursor-not-allowed
   shadow-[0_20px_60px_rgba(0,0,0,0.25)]
 "
-   >
-                  {registering ? (
-                    <>
-                      <Loader className="w-5 h-5 animate-spin" />
-                      Registering...
-                    </>
-                  ) : (
-                    <>
-                      <UserCheck className="w-5 h-5" />
-                      Register for Event
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          )}
+                  >
+                    {registering ? (
+                      <>
+                        <Loader className="w-5 h-5 animate-spin" />
+                        Registering...
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck className="w-5 h-5" />
+                        Register for Event
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
 
-          {event.status === "PENDING" && (
-            <div 
-            
-            className="
+            {event.status === "PENDING" && (
+              <div
+                className="
   p-4 rounded-2xl
   bg-white/5 border border-white/10
   text-white/70 text-sm
-">
-              <strong>Pending Approval:</strong> This event is awaiting approval
-              from community admins.
-            </div>
-          )}
+"
+              >
+                <strong>Pending Approval:</strong> This event is awaiting
+                approval from community admins.
+              </div>
+            )}
 
-          {event.status === "REJECTED" && (
-            <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-lg text-red-200 text-sm">
-              <strong>Rejected:</strong> This event was not approved by the
-              admins.
-            </div>
-          )}
+            {event.status === "REJECTED" && (
+              <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-lg text-red-200 text-sm">
+                <strong>Rejected:</strong> This event was not approved by the
+                admins.
+              </div>
+            )}
 
-          {event.status === "CANCELLED" && (
-            <div className="p-4 bg-gray-900/20 border border-gray-500/30 rounded-lg text-gray-200 text-sm">
-              <strong>Cancelled:</strong> This event has been cancelled.
-            </div>
-          )}
-        </motion.div>
+            {event.status === "CANCELLED" && (
+              <div className="p-4 bg-gray-900/20 border border-gray-500/30 rounded-lg text-gray-200 text-sm">
+                <strong>Cancelled:</strong> This event has been cancelled.
+              </div>
+            )}
+          </motion.div>
 
-        {/* Approval Status (if pending/rejected) */}
-        {event.approvals && event.approvals.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="
+          {/* Approval Status (if pending/rejected) */}
+          {event.approvals && event.approvals.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="
             mt-6 rounded-[24px]
   bg-white/6 backdrop-blur-2xl
   border border-white/10
   p-6
 "
-            
-          >
-            <h2 className="text-xl font-semibold mb-4">Approval Status</h2>
-            <div className="space-y-3">
-              {event.approvals.map((approval) => (
-                <div
-                  key={approval.id}
-
-                  className="
+            >
+              <h2 className="text-xl font-semibold mb-4">Approval Status</h2>
+              <div className="space-y-3">
+                {event.approvals.map((approval) => (
+                  <div
+                    key={approval.id}
+                    className="
   flex items-center justify-between gap-4
   p-4 rounded-2xl
   bg-white/5 border border-white/10
 "
-
-                  
-                >
-                  <div>
-                    <p className="font-medium">{approval.approver.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {approval.approver.role.replace(/_/g, " ")}
-                    </p>
-                  </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      approval.status === "APPROVED"
-                        ? "bg-green-500/20 text-green-400"
-                        : approval.status === "REJECTED"
-                          ? "bg-red-500/20 text-red-400"
-                          : "bg-yellow-500/20 text-yellow-400"
-                    }`}
                   >
-                    {approval.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-        {/* Moderation Area - visible to admins */}
-        {isAdmin && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="mt-6 bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-6"
-          >
-            <h2 className="text-lg font-semibold mb-3">Moderation</h2>
-            <p className="text-sm text-gray-400 mb-4">
-              You can approve or reject this event, or suggest changes. Your
-              action will be recorded.
-            </p>
+                    <div>
+                      <p className="font-medium">{approval.approver.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {approval.approver.role.replace(/_/g, " ")}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        approval.status === "APPROVED"
+                          ? "bg-green-500/20 text-green-400"
+                          : approval.status === "REJECTED"
+                            ? "bg-red-500/20 text-red-400"
+                            : "bg-yellow-500/20 text-yellow-400"
+                      }`}
+                    >
+                      {approval.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+          {/* Moderation Area - visible to admins */}
+          {isAdmin && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="mt-6 bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-6"
+            >
+              <h2 className="text-lg font-semibold mb-3">Moderation</h2>
+              <p className="text-sm text-gray-400 mb-4">
+                You can approve or reject this event, or suggest changes. Your
+                action will be recorded.
+              </p>
 
-            <textarea
-              value={moderationRemarks}
-              onChange={(e) => setModerationRemarks(e.target.value)}
-              placeholder="Optional remarks / suggested changes"
-              className="
+              <textarea
+                value={moderationRemarks}
+                onChange={(e) => setModerationRemarks(e.target.value)}
+                placeholder="Optional remarks / suggested changes"
+                className="
   w-full min-h-[90px]
   p-4 rounded-2xl
   bg-white/5 border border-white/10
@@ -534,55 +534,54 @@ className="
   focus:outline-none focus:ring-2 focus:ring-white/20
   mb-4
 "
+              />
 
-            />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleModeration("APPROVED")}
+                  disabled={moderating}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-60"
+                >
+                  {moderating ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin" /> Approving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" /> Approve
+                    </>
+                  )}
+                </button>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleModeration("APPROVED")}
-                disabled={moderating}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-60"
-              >
-                {moderating ? (
-                  <>
-                    <Loader className="w-4 h-4 animate-spin" /> Approving...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4" /> Approve
-                  </>
-                )}
-              </button>
+                <button
+                  onClick={() => handleModeration("REJECTED")}
+                  disabled={moderating}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
+                >
+                  {moderating ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin" /> Rejecting...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-4 h-4" /> Reject
+                    </>
+                  )}
+                </button>
 
-              <button
-                onClick={() => handleModeration("REJECTED")}
-                disabled={moderating}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
-              >
-                {moderating ? (
-                  <>
-                    <Loader className="w-4 h-4 animate-spin" /> Rejecting...
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="w-4 h-4" /> Reject
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={() => {
-                  const url = `/events/${event.id}/edit`;
-                  router.push(url);
-                }}
-                className="px-4 py-2 bg-white/5 text-sm rounded-lg border border-white/10 text-gray-200 hover:bg-white/7"
-              >
-                Suggest Changes
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </div>
+                <button
+                  onClick={() => {
+                    const url = `/events/${event.id}/edit`;
+                    router.push(url);
+                  }}
+                  className="px-4 py-2 bg-white/5 text-sm rounded-lg border border-white/10 text-gray-200 hover:bg-white/7"
+                >
+                  Suggest Changes
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
     </DreamySunsetBackground>
   );

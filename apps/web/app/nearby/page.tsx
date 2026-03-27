@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
-import { NotAuthenticated } from "@repo/ui/not-authenticated";
 import apiFetch from "../../lib/api";
 import { API_BASE } from "../../lib/config";
 
@@ -43,7 +42,8 @@ export default function NearbyPage() {
   const [radiusKm, setRadiusKm] = useState(5);
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) {
       router.push("/signin");
       return;
@@ -58,7 +58,10 @@ export default function NearbyPage() {
         setError(null);
 
         // use centralized api helper which attaches Authorization header
-        const resp = await apiFetch(`${API_BASE}/users/nearby?radiusKm=${radiusKm}`, { throwOnError: false });
+        const resp = await apiFetch(
+          `${API_BASE}/users/nearby?radiusKm=${radiusKm}`,
+          { throwOnError: false },
+        );
         const data = resp && (resp.ok === false ? resp.data : resp);
 
         // Accept multiple shapes: direct array, { data: [...] }, or { status: 'success', data: [...] }
@@ -66,11 +69,11 @@ export default function NearbyPage() {
           setUsers(data as NearbyUser[]);
         } else if (data && Array.isArray(data.data)) {
           setUsers(data.data as NearbyUser[]);
-        } else if (data && data.status === "success" && Array.isArray(data.data)) {
-          setUsers(data.data as NearbyUser[]);
         } else {
           // fall back to empty and surface message
-          const msg = (data && (data.error || data.message)) || "Failed to fetch nearby users";
+          const msg =
+            (data && (data.error || data.message)) ||
+            "Failed to fetch nearby users";
           throw new Error(msg);
         }
       } catch (err) {

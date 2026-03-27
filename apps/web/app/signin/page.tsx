@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
-import apiFetch, { apiPost } from "../../lib/api";
+import { apiPost } from "../../lib/api";
 import { API_BASE } from "../../lib/config";
 
 const roles = [
@@ -27,13 +27,16 @@ export default function SigninPage() {
   const [role, setRole] = useState("familyhead");
   const [loading, setLoading] = useState(false);
 
-
   async function handleLogin(e?: React.FormEvent) {
     if (e) e.preventDefault();
     setLoading(true);
     try {
       // use centralized API helper for consistent base URL and error handling
-      const resp = await apiPost(`${API_BASE}/login/${role.toUpperCase()}`, { email, password }, { throwOnError: false });
+      const resp = await apiPost(
+        `${API_BASE}/login/${role.toUpperCase()}`,
+        { email, password },
+        { throwOnError: false },
+      );
 
       // api helper may return shape { ok:false, status, data } when throwOnError=false
       const data = resp && (resp.ok === false ? resp.data : resp);
@@ -43,15 +46,20 @@ export default function SigninPage() {
         localStorage.setItem("token", token);
         try {
           window.dispatchEvent(new Event("authChanged"));
-        } catch (_e) {}
+        } catch {
+          // ignore dispatch errors
+        }
         router.push("/me");
       } else {
-        const msg = (data && (data.message || data.error)) || "Invalid credentials";
+        const msg =
+          (data && (data.message || data.error)) || "Invalid credentials";
         alert("Login failed: " + msg);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Login error:", err);
-      alert("Network error: " + (err?.message || String(err)));
+      alert(
+        "Network error: " + (err instanceof Error ? err.message : String(err)),
+      );
     } finally {
       setLoading(false);
     }

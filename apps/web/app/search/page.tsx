@@ -6,8 +6,6 @@ import { motion } from "framer-motion";
 import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
 
 import SearchInput from "./SearchInput";
-import apiFetch from "../../lib/api";
-import { API_BASE } from "../../lib/config";
 /**
  * Search Members Page with:
  * - Better layout
@@ -20,8 +18,6 @@ import { API_BASE } from "../../lib/config";
 export default function SearchPage() {
   const [focusTrigger, setFocusTrigger] = useState(0);
   const [isMac, setIsMac] = useState(false);
-  const [user, setUser] = useState<{ name?: string } | null>(null);
-  const [notifications, setNotifications] = useState<any[] | null>(null);
 
   // Detect if user is on Mac for keyboard shortcut display
   useEffect(() => {
@@ -38,51 +34,6 @@ export default function SearchPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
-
-  // Load current user and notifications for small header preview
-  useEffect(() => {
-    let mounted = true;
-
-    const load = async () => {
-      try {
-        const me = await apiFetch(`${API_BASE}/me`, { throwOnError: false });
-        if (me?.ok === false) {
-          setUser(null);
-        } else {
-          const u = me?.data?.data ?? me?.data ?? me;
-          if (mounted) setUser(u || null);
-        }
-      } catch (e) {
-        setUser(null);
-      }
-
-      try {
-        const not = await apiFetch(`${API_BASE}/notifications`, {
-          throwOnError: false,
-        });
-        if (not?.ok === false) {
-          setNotifications(null);
-        } else {
-          const list = not?.data?.data ?? not?.data ?? not;
-          if (mounted) setNotifications(Array.isArray(list) ? list : []);
-        }
-      } catch (e) {
-        setNotifications(null);
-      }
-    };
-
-    load();
-
-    const handler = () => setTimeout(load, 10);
-    window.addEventListener("storage", handler);
-    window.addEventListener("authChanged", handler as EventListener);
-
-    return () => {
-      mounted = false;
-      window.removeEventListener("storage", handler);
-      window.removeEventListener("authChanged", handler as EventListener);
-    };
   }, []);
 
   return (

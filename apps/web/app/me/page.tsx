@@ -47,20 +47,6 @@ interface FamilyMembership {
 ======================= */
 
 /**
- * Performs  meta operation.
- * @param {{ label: string; value: string; }} { label, value } - Description of { label, value }
- * @returns {React.JSX.Element} Description of return value
- */
-function Meta({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="p-3 border rounded-lg">
-      <div className="text-xs text-neutral-400">{label}</div>
-      <div className="font-medium">{value}</div>
-    </div>
-  );
-}
-
-/**
  * Performs  profile field operation.
  * @param {{ label: string; value?: string; }} {
  *   label,
@@ -110,7 +96,7 @@ export default function MePage() {
 
         if (mounted) setLoading(true);
 
-        const result: any = await apiFetch(`${API_BASE}/me`, {
+        const result = await apiFetch(`${API_BASE}/me`, {
           throwOnError: false,
         });
         if (result?.ok === false) {
@@ -121,8 +107,7 @@ export default function MePage() {
 
         const u = result?.data?.data ?? result?.data ?? result;
         if (u && mounted) setUser(u as User);
-      } catch (err: any) {
-        // treat as unauthenticated
+      } catch (err) {
         console.error("Failed to fetch /me", err);
         localStorage.removeItem("token");
         if (mounted) router.push("/signin");

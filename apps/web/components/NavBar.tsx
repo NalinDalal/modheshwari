@@ -65,7 +65,7 @@ export default function NavBar() {
 
         if (mounted) setLoading(true);
 
-        const result: any = await apiFetch(`${API_BASE}/me`, {
+        const result = await apiFetch(`${API_BASE}/me`, {
           throwOnError: false,
         });
         if (result?.ok === false) {
@@ -77,7 +77,7 @@ export default function NavBar() {
 
         const u = result?.data?.data ?? result?.data ?? result;
         if (u && mounted) setUser(u);
-      } catch (e) {
+      } catch {
         localStorage.removeItem("token");
         if (mounted) setUser(null);
       } finally {

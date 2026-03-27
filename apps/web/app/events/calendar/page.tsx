@@ -13,6 +13,7 @@ type EventItem = {
   date: string;
   venue?: string;
   status: string;
+  createdAt?: string;
 };
 
 /**
@@ -61,11 +62,14 @@ export default function EventsCalendar() {
         const end = new Date(monthEnd);
         // set end to end of day
         end.setHours(23, 59, 59, 999);
-        const json = await apiFetch(`${base}/events?status=APPROVED&startDate=${encodeURIComponent(start)}&endDate=${encodeURIComponent(
-          end.toISOString(),
-        )}&limit=500`, { throwOnError: false });
+        const json = await apiFetch(
+          `${base}/events?status=APPROVED&startDate=${encodeURIComponent(start)}&endDate=${encodeURIComponent(
+            end.toISOString(),
+          )}&limit=500`,
+          { throwOnError: false },
+        );
         // Normalize response into an array. API may return { status, data: { data: [...] } } or pagination objects.
-        let items: any = [];
+        let items: EventItem[] = [];
         if (json == null) {
           items = [];
         } else if (Array.isArray(json)) {
@@ -75,21 +79,25 @@ export default function EventsCalendar() {
         } else if (json.data && Array.isArray(json.data.data)) {
           items = json.data.data;
         } else if (json.ok === false && json.data) {
-          // non-throwing error shape
-          items = Array.isArray(json.data) ? json.data : (Array.isArray(json.data.data) ? json.data.data : []);
+          items = Array.isArray(json.data)
+            ? json.data
+            : Array.isArray(json.data.data)
+              ? json.data.data
+              : [];
         } else {
           items = [];
         }
 
-        // Avoid setting events state repeatedly with identical data (prevents update loops)
         try {
-          const ids = Array.isArray(items) ? items.map((it: any) => it?.id ?? JSON.stringify(it)) : [];
+          const ids = Array.isArray(items)
+            ? items.map((it: EventItem) => it?.id ?? JSON.stringify(it))
+            : [];
           const hash = JSON.stringify(ids);
           if (lastItemsRef.current !== hash) {
             setEvents(items);
             lastItemsRef.current = hash;
           }
-        } catch (_err) {
+        } catch {
           setEvents(items);
         }
       } catch (e) {
@@ -99,9 +107,7 @@ export default function EventsCalendar() {
       }
     }
     load();
-  }, [base, current]);
-
-  
+  }, [base, current, monthEnd, monthStart]);
 
   // Build calendar days (Sun-Sat) for display including leading/trailing days
   const firstDayIndex = monthStart.getDay();
@@ -118,29 +124,33 @@ export default function EventsCalendar() {
 
   // current month
   for (let d = 1; d <= daysInMonth; d++) {
-    days.push({ date: new Date(current.getFullYear(), current.getMonth(), d), inMonth: true });
+    days.push({
+      date: new Date(current.getFullYear(), current.getMonth(), d),
+      inMonth: true,
+    });
   }
 
   // next month's head to complete weeks
   while (days.length % 7 !== 0) {
-  const lastDay = days.at(-1);
-  if (!lastDay) break; // safety for TS
+    const lastDay = days.at(-1);
+    if (!lastDay) break; // safety for TS
 
-  const nd = new Date(lastDay.date);
-  nd.setDate(nd.getDate() + 1);
-  days.push({ date: nd, inMonth: false });
-}
-
+    const nd = new Date(lastDay.date);
+    nd.setDate(nd.getDate() + 1);
+    days.push({ date: nd, inMonth: false });
+  }
 
   const eventsByDay = new Map<string, EventItem[]>();
-  events.forEach((ev: any) => {
+  events.forEach((ev: EventItem) => {
     try {
-      const d = new Date(ev.date || ev.createdAt).toISOString().slice(0, 10);
+      const dateStr = ev.date || ev.createdAt;
+      if (!dateStr) return;
+      const d = new Date(dateStr).toISOString().slice(0, 10);
       const arr = eventsByDay.get(d) || [];
       arr.push(ev);
       eventsByDay.set(d, arr);
-    } catch (_err) {
-      void _err;
+    } catch {
+      // skip invalid dates
     }
   });
 
@@ -256,14 +266,15 @@ export default function EventsCalendar() {
                       {dayEvents.length > 0 && (
                         <div className="absolute top-2 left-2">
                           <div className="text-[11px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
-                            {dayEvents.length} event{dayEvents.length > 1 ? "s" : ""}
+                            {dayEvents.length} event
+                            {dayEvents.length > 1 ? "s" : ""}
                           </div>
                         </div>
                       )}
 
                       {/* Event preview (bottom) */}
                       <div className="absolute left-2 right-2 bottom-2 space-y-1">
-                        {dayEvents.slice(0, 1).map((ev: any) => (
+                        {dayEvents.slice(0, 1).map((ev: EventItem) => (
                           <div
                             key={ev.id}
                             onClick={(e) => {
@@ -351,9 +362,11 @@ export default function EventsCalendar() {
                   ))}
 
                   {selectedDate &&
-                    (eventsByDay.get(
-                      selectedDate.toISOString().slice(0, 10),
-                    ) || []).length === 0 && (
+                    (
+                      eventsByDay.get(
+                        selectedDate.toISOString().slice(0, 10),
+                      ) || []
+                    ).length === 0 && (
                       <div className="text-sm text-gray-600">
                         No events on this day
                       </div>
@@ -364,9 +377,7 @@ export default function EventsCalendar() {
           </div>
 
           {loading && (
-            <div className="mt-4 text-sm text-gray-600">
-              Loading events...
-            </div>
+            <div className="mt-4 text-sm text-gray-600">Loading events...</div>
           )}
         </div>
       </div>
