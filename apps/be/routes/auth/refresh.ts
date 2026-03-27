@@ -1,4 +1,8 @@
-import { verifyRefreshJWT, signJWT, signRefreshJWT } from "@modheshwari/utils/jwt";
+import {
+  verifyRefreshJWT,
+  signJWT,
+  signRefreshJWT,
+} from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/response";
 import prisma from "@modheshwari/db";
 
@@ -10,13 +14,17 @@ export async function handleRefresh(req: Request): Promise<Response> {
   try {
     const cookie = req.headers.get("cookie") || "";
     const refreshToken = getCookie(cookie, "refreshToken");
-    if (!refreshToken) return failure("Missing refresh token", "Auth Error", 401);
+    if (!refreshToken)
+      return failure("Missing refresh token", "Auth Error", 401);
 
     const payload = verifyRefreshJWT(refreshToken);
-    if (!payload || !payload.userId) return failure("Invalid refresh token", "Auth Error", 401);
+    if (!payload || !payload.userId)
+      return failure("Invalid refresh token", "Auth Error", 401);
 
     // Optionally check user existence/status
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+    });
     if (!user) return failure("User not found", "Auth Error", 401);
 
     // Issue new access token
@@ -26,12 +34,15 @@ export async function handleRefresh(req: Request): Promise<Response> {
 
     // Set new refresh token cookie
     const headers = new Headers();
-    headers.append("Set-Cookie", `refreshToken=${newRefreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800`);
-
-    return new Response(
-      JSON.stringify({ accessToken }),
-      { status: 200, headers }
+    headers.append(
+      "Set-Cookie",
+      `refreshToken=${newRefreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800; Secure`,
     );
+
+    return new Response(JSON.stringify({ accessToken }), {
+      status: 200,
+      headers,
+    });
   } catch (err) {
     return failure("Internal server error", "Unexpected Error", 500);
   }
