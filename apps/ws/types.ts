@@ -1,7 +1,13 @@
 import type { ServerWebSocket } from "bun";
-import type { NotificationChannel } from "@prisma/client";
+import { NotificationChannel } from "@prisma/client";
 
-export type WSData = { userId: string; lastSeen: number; heartbeatId?: number;authTimeoutId?: number; authenticated?: boolean };
+export type WSData = {
+  userId: string;
+  lastSeen: number;
+  heartbeatId?: number;
+  authTimeoutId?: number;
+  authenticated?: boolean;
+};
 
 export type NotificationEvent = {
   eventId: string;

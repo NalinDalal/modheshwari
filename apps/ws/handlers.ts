@@ -1,9 +1,20 @@
 import type { ServerWebSocket } from "bun";
+import { Prisma, PrismaClient } from "@prisma/client";
 import prisma from "@modheshwari/db";
 
 import type { WSData, IncomingMessage, ChatMessage } from "./types";
-import { MAX_MESSAGE_SIZE, HEARTBEAT_INTERVAL, CONNECTION_TIMEOUT } from "./config";
-import { addSocket, removeSocket, checkRateLimit, getMessageSize, pushToUser } from "./utils";
+import {
+  MAX_MESSAGE_SIZE,
+  HEARTBEAT_INTERVAL,
+  CONNECTION_TIMEOUT,
+} from "./config";
+import {
+  addSocket,
+  removeSocket,
+  checkRateLimit,
+  getMessageSize,
+  pushToUser,
+} from "./utils";
 import { logger } from "./logger";
 
 /**
@@ -14,14 +25,20 @@ export function handleOpen(ws: ServerWebSocket<WSData>) {
   if (!ws.data.authenticated) {
     const authTimeout = setTimeout(() => {
       try {
-        ws.send(JSON.stringify({ type: 'error', message: 'Authentication required' }));
+        ws.send(
+          JSON.stringify({ type: "error", message: "Authentication required" }),
+        );
       } catch (err) {
-        logger.warn("Failed to send auth-required message", { error: err instanceof Error ? err.message : String(err) });
+        logger.warn("Failed to send auth-required message", {
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
       try {
         ws.close();
       } catch (err) {
-        logger.warn("Failed to close websocket after auth timeout", { error: err instanceof Error ? err.message : String(err) });
+        logger.warn("Failed to close websocket after auth timeout", {
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }, 5000) as unknown as number;
     ws.data.authTimeoutId = authTimeout;
@@ -42,18 +59,22 @@ export function handleOpen(ws: ServerWebSocket<WSData>) {
       try {
         ws.close();
       } catch (err) {
-        logger.warn("Failed to close websocket due to connection timeout", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+        logger.warn("Failed to close websocket due to connection timeout", {
+          error: err instanceof Error ? err.message : String(err),
+          userId: ws.data.userId,
+        });
       }
       return;
     }
 
     try {
-      ws.send(
-        JSON.stringify({ type: "ping" }),
-      );
+      ws.send(JSON.stringify({ type: "ping" }));
     } catch (err) {
       // Log heartbeat send failures for observability; close handler will clean up
-      logger.debug("Heartbeat send failed", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+      logger.debug("Heartbeat send failed", {
+        error: err instanceof Error ? err.message : String(err),
+        userId: ws.data.userId,
+      });
     }
   }, HEARTBEAT_INTERVAL) as unknown as number;
   ws.data.heartbeatId = heartbeatId;
@@ -62,22 +83,32 @@ export function handleOpen(ws: ServerWebSocket<WSData>) {
 /**
  * Handle incoming WebSocket message.
  */
-export async function handleMessage(ws: ServerWebSocket<WSData>, message: string | Uint8Array) {
+export async function handleMessage(
+  ws: ServerWebSocket<WSData>,
+  message: string | Uint8Array,
+) {
   const userId = ws.data.userId;
   const size = getMessageSize(message);
-  
+
   // If not authenticated, only accept auth handshake messages
   if (!ws.data.authenticated) {
     try {
-      const raw = typeof message === 'string' ? message : new TextDecoder().decode(message as Uint8Array);
+      const raw =
+        typeof message === "string"
+          ? message
+          : new TextDecoder().decode(message as Uint8Array);
       const parsed = JSON.parse(raw);
-      if (parsed?.type === 'auth' && typeof parsed.token === 'string') {
+      if (parsed?.type === "auth" && typeof parsed.token === "string") {
         // validate token
         try {
-          const decoded = (await import('@modheshwari/utils/jwt')).verifyJWT(parsed.token);
+          const decoded = (await import("@modheshwari/utils/jwt")).verifyJWT(
+            parsed.token,
+          );
           const authUserId = decoded?.id || decoded?.userId;
           if (!authUserId) {
-            ws.send(JSON.stringify({ type: 'error', message: 'Invalid token' }));
+            ws.send(
+              JSON.stringify({ type: "error", message: "Invalid token" }),
+            );
             ws.close();
             return;
           }
@@ -87,43 +118,108 @@ export async function handleMessage(ws: ServerWebSocket<WSData>, message: string
           ws.data.authenticated = true;
           // register socket and start heartbeat
           addSocket(ws.data.userId, ws);
-          ws.send(JSON.stringify({ type: 'connected', userId: ws.data.userId }));
+          ws.send(
+            JSON.stringify({ type: "connected", userId: ws.data.userId }),
+          );
           ws.data.lastSeen = Date.now();
           const heartbeatId = setInterval(() => {
             const now = Date.now();
             if (now - ws.data.lastSeen > CONNECTION_TIMEOUT) {
-              try { ws.close(); } catch (err) {
-                logger.warn("Failed to close websocket during auth heartbeat", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+              try {
+                ws.close();
+              } catch (err) {
+                logger.warn("Failed to close websocket during auth heartbeat", {
+                  error: err instanceof Error ? err.message : String(err),
+                  userId: ws.data.userId,
+                });
               }
               return;
             }
-            try { ws.send(JSON.stringify({ type: 'ping' })); } catch (err) {
-              logger.debug("Heartbeat send failed (post-auth)", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+            try {
+              ws.send(JSON.stringify({ type: "ping" }));
+            } catch (err) {
+              logger.debug("Heartbeat send failed (post-auth)", {
+                error: err instanceof Error ? err.message : String(err),
+                userId: ws.data.userId,
+              });
             }
           }, HEARTBEAT_INTERVAL) as unknown as number;
           ws.data.heartbeatId = heartbeatId;
         } catch (e) {
-          try { ws.send(JSON.stringify({ type: 'error', message: 'Authentication failed' })); } catch (err) {
-            logger.warn("Failed to send authentication-failed message", { error: err instanceof Error ? err.message : String(err), authError: e instanceof Error ? e.message : String(e), userId: ws.data.userId });
+          try {
+            ws.send(
+              JSON.stringify({
+                type: "error",
+                message: "Authentication failed",
+              }),
+            );
+          } catch (err) {
+            logger.warn("Failed to send authentication-failed message", {
+              error: err instanceof Error ? err.message : String(err),
+              authError: e instanceof Error ? e.message : String(e),
+              userId: ws.data.userId,
+            });
           }
-          try { ws.close(); } catch (err) {
-            logger.warn("Failed to close websocket after authentication failure", { error: err instanceof Error ? err.message : String(err), authError: e instanceof Error ? e.message : String(e), userId: ws.data.userId });
+          try {
+            ws.close();
+          } catch (err) {
+            logger.warn(
+              "Failed to close websocket after authentication failure",
+              {
+                error: err instanceof Error ? err.message : String(err),
+                authError: e instanceof Error ? e.message : String(e),
+                userId: ws.data.userId,
+              },
+            );
           }
         }
       } else {
-        try { ws.send(JSON.stringify({ type: 'error', message: 'Authentication required' })); } catch (err) {
-          logger.warn("Failed to send auth-required message (non-auth payload)", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+        try {
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              message: "Authentication required",
+            }),
+          );
+        } catch (err) {
+          logger.warn(
+            "Failed to send auth-required message (non-auth payload)",
+            {
+              error: err instanceof Error ? err.message : String(err),
+              userId: ws.data.userId,
+            },
+          );
         }
-        try { ws.close(); } catch (err) {
-          logger.warn("Failed to close websocket after non-auth payload", { error: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+        try {
+          ws.close();
+        } catch (err) {
+          logger.warn("Failed to close websocket after non-auth payload", {
+            error: err instanceof Error ? err.message : String(err),
+            userId: ws.data.userId,
+          });
         }
       }
     } catch (err) {
-      try { ws.send(JSON.stringify({ type: 'error', message: 'Invalid auth message' })); } catch (sendErr) {
-        logger.warn("Failed to send invalid-auth-message to websocket", { error: sendErr instanceof Error ? sendErr.message : String(sendErr), parseError: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+      try {
+        ws.send(
+          JSON.stringify({ type: "error", message: "Invalid auth message" }),
+        );
+      } catch (sendErr) {
+        logger.warn("Failed to send invalid-auth-message to websocket", {
+          error: sendErr instanceof Error ? sendErr.message : String(sendErr),
+          parseError: err instanceof Error ? err.message : String(err),
+          userId: ws.data.userId,
+        });
       }
-      try { ws.close(); } catch (closeErr) {
-        logger.warn("Failed to close websocket after invalid auth message", { error: closeErr instanceof Error ? closeErr.message : String(closeErr), parseError: err instanceof Error ? err.message : String(err), userId: ws.data.userId });
+      try {
+        ws.close();
+      } catch (closeErr) {
+        logger.warn("Failed to close websocket after invalid auth message", {
+          error:
+            closeErr instanceof Error ? closeErr.message : String(closeErr),
+          parseError: err instanceof Error ? err.message : String(err),
+          userId: ws.data.userId,
+        });
       }
     }
     return;
@@ -131,9 +227,14 @@ export async function handleMessage(ws: ServerWebSocket<WSData>, message: string
 
   if (!checkRateLimit(userId)) {
     try {
-      ws.send(JSON.stringify({ type: "error", message: "Rate limit exceeded" }));
+      ws.send(
+        JSON.stringify({ type: "error", message: "Rate limit exceeded" }),
+      );
     } catch (err) {
-      logger.warn("Failed to send rate-limit message", { error: err instanceof Error ? err.message : String(err), userId });
+      logger.warn("Failed to send rate-limit message", {
+        error: err instanceof Error ? err.message : String(err),
+        userId,
+      });
     }
     return;
   }
@@ -142,7 +243,10 @@ export async function handleMessage(ws: ServerWebSocket<WSData>, message: string
     try {
       ws.send(JSON.stringify({ type: "error", message: "Message too large" }));
     } catch (err) {
-      logger.warn("Failed to send message-too-large response", { error: err instanceof Error ? err.message : String(err), userId });
+      logger.warn("Failed to send message-too-large response", {
+        error: err instanceof Error ? err.message : String(err),
+        userId,
+      });
     }
     return;
   }
@@ -169,9 +273,14 @@ export async function handleMessage(ws: ServerWebSocket<WSData>, message: string
       userId,
     });
     try {
-      ws.send(JSON.stringify({ type: "error", message: "Failed to process message" }));
+      ws.send(
+        JSON.stringify({ type: "error", message: "Failed to process message" }),
+      );
     } catch (sendErr) {
-      logger.warn("Failed to send failure notification to websocket", { error: sendErr instanceof Error ? sendErr.message : String(sendErr), userId });
+      logger.warn("Failed to send failure notification to websocket", {
+        error: sendErr instanceof Error ? sendErr.message : String(sendErr),
+        userId,
+      });
     }
   }
 }
@@ -179,7 +288,11 @@ export async function handleMessage(ws: ServerWebSocket<WSData>, message: string
 /**
  * Handle chat message.
  */
-async function handleChatMessage(ws: ServerWebSocket<WSData>, data: IncomingMessage, userId: string) {
+async function handleChatMessage(
+  ws: ServerWebSocket<WSData>,
+  data: IncomingMessage,
+  userId: string,
+) {
   const conversationId = data.conversationId;
   if (!conversationId) return;
   const content = data.content;
@@ -295,11 +408,18 @@ async function handleReadReceipt(data: IncomingMessage, userId: string) {
     });
 
     // Batch read receipts by senderId + conversationId to avoid per-message WS sends
-    const grouped = new Map<string, { senderId: string; conversationId: string; ids: string[] }>();
+    const grouped = new Map<
+      string,
+      { senderId: string; conversationId: string; ids: string[] }
+    >();
     for (const msg of messages) {
       const key = `${msg.senderId}:${msg.conversationId}`;
       if (!grouped.has(key)) {
-        grouped.set(key, { senderId: msg.senderId, conversationId: msg.conversationId, ids: [] });
+        grouped.set(key, {
+          senderId: msg.senderId,
+          conversationId: msg.conversationId,
+          ids: [],
+        });
       }
       grouped.get(key)!.ids.push(msg.id);
     }
