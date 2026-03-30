@@ -302,47 +302,49 @@ async function handleChatMessage(
     return;
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    const conversation = await tx.conversation.findFirst({
-      where: {
-        id: conversationId,
-        participants: { has: userId },
-      },
-    });
+  const result = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      const conversation = await tx.conversation.findFirst({
+        where: {
+          id: conversationId,
+          participants: { has: userId },
+        },
+      });
 
-    if (!conversation) {
-      throw new Error("User not in conversation");
-    }
+      if (!conversation) {
+        throw new Error("User not in conversation");
+      }
 
-    const sender = await tx.user.findUnique({
-      where: { id: userId },
-      select: { name: true },
-    });
+      const sender = await tx.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
 
-    if (!sender) {
-      throw new Error("Sender not found");
-    }
+      if (!sender) {
+        throw new Error("Sender not found");
+      }
 
-    const savedMessage = await tx.message.create({
-      data: {
-        conversationId,
-        senderId: userId,
-        senderName: sender.name,
-        content,
-        readBy: [userId],
-      },
-    });
+      const savedMessage = await tx.message.create({
+        data: {
+          conversationId,
+          senderId: userId,
+          senderName: sender.name,
+          content,
+          readBy: [userId],
+        },
+      });
 
-    await tx.conversation.update({
-      where: { id: conversationId },
-      data: {
-        lastMessage: content,
-        lastMessageAt: savedMessage.createdAt,
-      },
-    });
+      await tx.conversation.update({
+        where: { id: conversationId },
+        data: {
+          lastMessage: content,
+          lastMessageAt: savedMessage.createdAt,
+        },
+      });
 
-    return { savedMessage, sender, conversation };
-  });
+      return { savedMessage, sender, conversation };
+    },
+  );
 
   const chatPayload: ChatMessage = {
     type: "chat",
@@ -391,7 +393,7 @@ async function handleReadReceipt(data: IncomingMessage, userId: string) {
     return;
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.message.updateMany({
       where: {
         id: { in: data.messageIds },

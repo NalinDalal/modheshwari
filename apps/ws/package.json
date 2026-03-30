@@ -14,7 +14,7 @@
   },
   "scripts": {
     "dev": "bun run index.ts",
-    "build": "tsc --outDir dist --module esnext --target esnext",
+    "build": "bunx tsc --outDir dist --module esnext --target esnext",
     "worker:notifications": "bun run worker.ts"
   }
 }
