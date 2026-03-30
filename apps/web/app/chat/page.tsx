@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { NotAuthenticated } from "@repo/ui/not-authenticated";
+import { NotAuthenticated } from "@repo/ui/notAuthenticated";
 
 type Conversation = {
   id: string;

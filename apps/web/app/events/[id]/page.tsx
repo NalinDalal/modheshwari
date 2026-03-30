@@ -16,8 +16,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { LoaderOne } from "@repo/ui/loading";
-import { NotAuthenticated } from "@repo/ui/not-authenticated";
-import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
+import { NotAuthenticated } from "@repo/ui/notAuthenticated";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 import apiFetch from "../../../lib/api";
 
 interface EventDetails {

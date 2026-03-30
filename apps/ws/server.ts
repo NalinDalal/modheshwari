@@ -5,7 +5,7 @@ import { WS_PORT } from "./config";
 import { authenticate } from "./utils";
 import { handleOpen, handleMessage, handleClose } from "./handlers";
 import { startKafkaConsumer, consumer } from "./kafka";
-import { startRedisSubscriber, stopRedisSubscriber } from './redis-sub';
+import { startRedisSubscriber, stopRedisSubscriber } from './redisSub';
 import { logger } from "./logger";
 
 export const server = serve<WSData>({

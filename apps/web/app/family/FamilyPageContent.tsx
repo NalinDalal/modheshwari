@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderOne } from "@repo/ui/loading";
-import { NotAuthenticated } from "@repo/ui/not-authenticated";
-import { MemberCard } from "@repo/ui/member-card";
+import { NotAuthenticated } from "@repo/ui/notAuthenticated";
+import { MemberCard } from "@repo/ui/memberCard";
 
 /**
  * Type for a single family member.

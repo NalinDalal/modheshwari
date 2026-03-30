@@ -8,11 +8,11 @@ import { apiPost } from "../../lib/api";
 import { API_BASE } from "../../lib/config";
 
 const roles = [
-  { label: "Family Head", value: "familyhead" },
-  { label: "Family Member", value: "member" },
-  { label: "Gotra Head", value: "gotrahead" },
-  { label: "Community Head", value: "communityhead" },
-  { label: "Community Subhead", value: "communitysubhead" },
+    { label: "Family Head", value: "familyhead" },
+    { label: "Family Member", value: "member" },
+    { label: "Gotra Head", value: "gotrahead" },
+    { label: "Community Head", value: "communityhead" },
+    { label: "Community Subhead", value: "communitysubhead" },
 ];
 
 /**
@@ -21,213 +21,212 @@ const roles = [
  */
 
 export default function SigninPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("familyhead");
-  const [loading, setLoading] = useState(false);
+    const router = useRouter();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [role, setRole] = useState("familyhead");
+    const [loading, setLoading] = useState(false);
 
-  async function handleLogin(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    setLoading(true);
-    try {
-      // use centralized API helper for consistent base URL and error handling
-      const resp = await apiPost(
-        `${API_BASE}/login/${role.toUpperCase()}`,
-        { email, password },
-        { throwOnError: false },
-      );
-
-      // api helper may return shape { ok:false, status, data } when throwOnError=false
-      const data = resp && (resp.ok === false ? resp.data : resp);
-
-      const token = data?.data?.token || data?.token;
-      if (token) {
-        localStorage.setItem("token", token);
+    async function handleLogin(e?: React.FormEvent) {
+        if (e) e.preventDefault();
+        setLoading(true);
         try {
-          window.dispatchEvent(new Event("authChanged"));
-        } catch {
-          // ignore dispatch errors
+            // use centralized API helper for consistent base URL and error handling
+            const resp = await apiPost(
+                `${API_BASE}/login/${role.toUpperCase()}`,
+                { email, password },
+                { throwOnError: false },
+            );
+
+            // api helper may return shape { ok:false, status, data } when throwOnError=false
+            const data = resp && (resp.ok === false ? resp.data : resp);
+
+            const token = data?.data?.token || data?.token;
+            if (token) {
+                localStorage.setItem("token", token);
+                try {
+                    window.dispatchEvent(new Event("authChanged"));
+                } catch {
+                    // ignore dispatch errors
+                }
+                router.push("/me");
+            } else {
+                const msg =
+                    (data && (data.message || data.error)) || "Invalid credentials";
+                alert("Login failed: " + msg);
+            }
+        } catch (err) {
+            console.error("Login error:", err);
+            alert(
+                "Network error: " + (err instanceof Error ? err.message : String(err)),
+            );
+        } finally {
+            setLoading(false);
         }
-        router.push("/me");
-      } else {
-        const msg =
-          (data && (data.message || data.error)) || "Invalid credentials";
-        alert("Login failed: " + msg);
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      alert(
-        "Network error: " + (err instanceof Error ? err.message : String(err)),
-      );
-    } finally {
-      setLoading(false);
     }
-  }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <motion.main
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-md relative z-10"
-      >
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-pink-200 shadow-lg">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="inline-flex items-center justify-center h-16 w-16 rounded-xl bg-gradient-to-br from-pink-600 to-rose-600 text-white text-2xl font-bold shadow-lg shadow-pink-500/25 mb-4"
+    return (
+        <div className="min-h-screen flex items-center justify-center px-4">
+            <motion.main
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="w-full max-w-md relative z-10"
             >
-              M
-            </motion.div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-              Welcome Back
-            </h1>
-            <p className="text-sm text-gray-600">
-              Sign in to manage your community
-            </p>
-          </div>
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-pink-200 shadow-lg">
+                    {/* Header */}
+                    <div className="text-center mb-8">
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.1 }}
+                            className="inline-flex items-center justify-center h-16 w-16 rounded-xl bg-gradient-to-br from-pink-600 to-rose-600 text-white text-2xl font-bold shadow-lg shadow-pink-500/25 mb-4"
+                        >
+                            M
+                        </motion.div>
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                            Welcome Back
+                        </h1>
+                        <p className="text-sm text-gray-600">
+                            Sign in to manage your community
+                        </p>
+                    </div>
 
-          <div className="space-y-6">
-            {/* Role Selector */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-3">
-                Select Your Role
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {roles.map((r) => (
-                  <label
-                    key={r.value}
-                    className={`
+                    <div className="space-y-6">
+                        {/* Role Selector */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-3">
+                                Select Your Role
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {roles.map((r) => (
+                                    <label
+                                        key={r.value}
+                                        className={`
                       relative px-3 py-2 rounded-lg border cursor-pointer text-xs font-medium transition-all duration-200
-                      ${
-                        role === r.value
-                          ? "bg-gradient-to-r from-pink-600 to-rose-600 text-white border-transparent shadow-lg shadow-pink-500/25"
-                          : "bg-pink-50 text-gray-700 border-pink-200 hover:bg-pink-100 hover:border-pink-300"
-                      }
+                      ${role === r.value
+                                                ? "bg-gradient-to-r from-pink-600 to-rose-600 text-white border-transparent shadow-lg shadow-pink-500/25"
+                                                : "bg-pink-50 text-gray-700 border-pink-200 hover:bg-pink-100 hover:border-pink-300"
+                                            }
                     `}
-                  >
-                    <input
-                      type="radio"
-                      name="role"
-                      value={r.value}
-                      checked={role === r.value}
-                      onChange={() => setRole(r.value)}
-                      className="hidden"
-                    />
-                    {r.label}
-                  </label>
-                ))}
-              </div>
-            </div>
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="role"
+                                            value={r.value}
+                                            checked={role === r.value}
+                                            onChange={() => setRole(r.value)}
+                                            className="hidden"
+                                        />
+                                        {r.label}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
 
-            {/* Email Input */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  className="w-full pl-11 pr-4 py-3 rounded-lg border border-pink-200 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-transparent transition-all"
-                  placeholder="your.email@example.com"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+                        {/* Email Input */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-2">
+                                Email Address
+                            </label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-pink-200 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-transparent transition-all"
+                                    placeholder="your.email@example.com"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        </div>
 
-            {/* Password Input */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  className="w-full pl-11 pr-4 py-3 rounded-lg border border-pink-200 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-transparent transition-all"
-                  placeholder="Enter your password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && email && password) {
-                      void handleLogin();
-                    }
-                  }}
-                  required
-                />
-              </div>
-            </div>
+                        {/* Password Input */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-2">
+                                Password
+                            </label>
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    className="w-full pl-11 pr-4 py-3 rounded-lg border border-pink-200 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-transparent transition-all"
+                                    placeholder="Enter your password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && email && password) {
+                                            void handleLogin();
+                                        }
+                                    }}
+                                    required
+                                />
+                            </div>
+                        </div>
 
-            {/* Submit Button */}
-            <button
-              onClick={handleLogin}
-              disabled={loading || !email || !password}
-              className="group relative w-full px-6 py-3 rounded-lg bg-gradient-to-r from-pink-600 to-rose-600 text-white font-semibold shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {/* Submit Button */}
+                        <button
+                            onClick={handleLogin}
+                            disabled={loading || !email || !password}
+                            className="group relative w-full px-6 py-3 rounded-lg bg-gradient-to-r from-pink-600 to-rose-600 text-white font-semibold shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-              {loading ? (
+                            {loading ? (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="relative flex items-center justify-center gap-2"
+                                >
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>Signing In...</span>
+                                </motion.div>
+                            ) : (
+                                <span className="relative flex items-center justify-center gap-2">
+                                    Sign In
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Footer Links */}
+                    <div className="mt-6 pt-6 border-t border-pink-200">
+                        <p className="text-center text-sm text-gray-600">
+                            Don&apos;t have an account?{" "}
+                            <a
+                                href="/signup"
+                                className="text-pink-600 hover:text-pink-700 font-medium transition-colors"
+                            >
+                                Sign Up
+                            </a>
+                        </p>
+                    </div>
+
+                    {/* Additional Help */}
+                    <div className="mt-4 text-center">
+                        <a
+                            href="/forgot-password"
+                            className="text-xs text-gray-500 hover:text-gray-600 transition-colors"
+                        >
+                            Forgot your password?
+                        </a>
+                    </div>
+                </div>
+
+                {/* Trust Badge */}
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="relative flex items-center justify-center gap-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    className="mt-6 text-center"
                 >
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Signing In...</span>
+                    <p className="text-xs text-gray-600">
+                        🔒 Secure authentication powered by Modheshwari
+                    </p>
                 </motion.div>
-              ) : (
-                <span className="relative flex items-center justify-center gap-2">
-                  Sign In
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Footer Links */}
-          <div className="mt-6 pt-6 border-t border-pink-200">
-            <p className="text-center text-sm text-gray-600">
-              Don&apos;t have an account?{" "}
-              <a
-                href="/signup"
-                className="text-pink-600 hover:text-pink-700 font-medium transition-colors"
-              >
-                Sign Up
-              </a>
-            </p>
-          </div>
-
-          {/* Additional Help */}
-          <div className="mt-4 text-center">
-            <a
-              href="/forgot-password"
-              className="text-xs text-gray-500 hover:text-gray-600 transition-colors"
-            >
-              Forgot your password?
-            </a>
-          </div>
+            </motion.main>
         </div>
-
-        {/* Trust Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-6 text-center"
-        >
-          <p className="text-xs text-gray-600">
-            🔒 Secure authentication powered by Modheshwari
-          </p>
-        </motion.div>
-      </motion.main>
-    </div>
-  );
+    );
 }

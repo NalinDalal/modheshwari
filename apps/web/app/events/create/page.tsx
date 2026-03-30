@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import apiFetch from "../../../lib/api";
 import { useRouter } from "next/navigation";
 import { Calendar, MapPin, FileText, ArrowLeft, Loader } from "lucide-react";
-import { NotAuthenticated } from "@repo/ui/not-authenticated";
-import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
+import { NotAuthenticated } from "@repo/ui/notAuthenticated";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 
 /**
  * Performs  create event page operation.

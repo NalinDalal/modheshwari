@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Bug, HelpCircle, Lightbulb, MessageSquare, Send } from "lucide-react";
-import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 
 /* ============================== */
 /* Types                          */

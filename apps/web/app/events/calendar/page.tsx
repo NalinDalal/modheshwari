@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Calendar as CalIcon } from "lucide-react";
-import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 import apiFetch from "../../../lib/api";
 import { API_BASE } from "../../../lib/config";
 

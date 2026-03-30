@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { LoaderOne } from "@repo/ui/loading";
 import { List, Network } from "lucide-react";
-import { DreamySunsetBackground } from "@repo/ui/theme-DreamySunsetBackground";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 
 import FamilyPageContent from "./FamilyPageContent";
 import FamilyTreeView from "./FamilyTreeView";
