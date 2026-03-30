@@ -4,7 +4,7 @@ import { Role, NotificationType, NotificationChannel } from "@prisma/client";
 import { randomUUID } from "crypto";
 
 import { requireAuth } from "./authMiddleware";
-import { broadcastNotification } from "../kafka/notification-producer";
+import { broadcastNotification } from "../kafka/notificationProducer";
 import getRedisClient from "../lib/redisClient";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
@@ -13,12 +13,12 @@ const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
  * Shape of create notification request body
  */
 interface CreateNotificationBody {
-  message: string;
-  type?: NotificationType;
-  channels?: NotificationChannel[];
-  targetRole?: Role;
-  subject?: string;
-  priority?: "low" | "normal" | "high" | "urgent";
+    message: string;
+    type?: NotificationType;
+    channels?: NotificationChannel[];
+    targetRole?: Role;
+    subject?: string;
+    priority?: "low" | "normal" | "high" | "urgent";
 }
 
 /**
@@ -27,203 +27,203 @@ interface CreateNotificationBody {
  * Body: { message: string, type?: string, channels?: string[], targetRole?: Role, subject?: string, priority?: string }
  */
 export async function handleCreateNotification(req: Request) {
-  try {
-    const auth = requireAuth(req, [
-      "COMMUNITY_HEAD",
-      "COMMUNITY_SUBHEAD",
-      "GOTRA_HEAD",
-      "FAMILY_HEAD",
-    ]);
+    try {
+        const auth = requireAuth(req, [
+            "COMMUNITY_HEAD",
+            "COMMUNITY_SUBHEAD",
+            "GOTRA_HEAD",
+            "FAMILY_HEAD",
+        ]);
 
-    if (!auth.ok) return auth.response as Response;
+        if (!auth.ok) return auth.response as Response;
 
-    /**
-     * Parse body safely
-     * `req.json()` returns `unknown` in strict TS
-     */
-    const rawBody: unknown = await req.json().catch(() => null);
+        /**
+         * Parse body safely
+         * `req.json()` returns `unknown` in strict TS
+         */
+        const rawBody: unknown = await req.json().catch(() => null);
 
-    if (
-      !rawBody ||
-      typeof rawBody !== "object" ||
-      !("message" in rawBody) ||
-      typeof (rawBody as any).message !== "string" ||
-      !(rawBody as any).message.trim()
-    ) {
-      return failure("Missing message", "Validation Error", 400);
-    }
+        if (
+            !rawBody ||
+            typeof rawBody !== "object" ||
+            !("message" in rawBody) ||
+            typeof (rawBody as any).message !== "string" ||
+            !(rawBody as any).message.trim()
+        ) {
+            return failure("Missing message", "Validation Error", 400);
+        }
 
-    const {
-      message,
-      type = NotificationType.GENERIC,
-      channels = [NotificationChannel.IN_APP],
-      targetRole,
-      subject,
-      priority = "normal",
-    } = rawBody as CreateNotificationBody;
+        const {
+            message,
+            type = NotificationType.GENERIC,
+            channels = [NotificationChannel.IN_APP],
+            targetRole,
+            subject,
+            priority = "normal",
+        } = rawBody as CreateNotificationBody;
 
-    const senderId = auth.payload.userId;
-    const senderRole = auth.payload.role as Role;
+        const senderId = auth.payload.userId;
+        const senderRole = auth.payload.role as Role;
 
-    /**
-     * Permission matrix:
-     * - COMMUNITY_HEAD        → everyone
-     * - COMMUNITY_SUBHEAD     → admins only
-     * - GOTRA_HEAD            → own gotra
-     * - FAMILY_HEAD           → own family
-     */
-    const ROLE_TARGETS: Record<Role, Role[]> = {
-      COMMUNITY_HEAD: [
-        "COMMUNITY_HEAD",
-        "COMMUNITY_SUBHEAD",
-        "GOTRA_HEAD",
-        "FAMILY_HEAD",
-        "MEMBER",
-      ],
-      COMMUNITY_SUBHEAD: ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"],
-      GOTRA_HEAD: ["FAMILY_HEAD", "MEMBER"],
-      FAMILY_HEAD: ["MEMBER"],
-      MEMBER: [],
-    };
+        /**
+         * Permission matrix:
+         * - COMMUNITY_HEAD        → everyone
+         * - COMMUNITY_SUBHEAD     → admins only
+         * - GOTRA_HEAD            → own gotra
+         * - FAMILY_HEAD           → own family
+         */
+        const ROLE_TARGETS: Record<Role, Role[]> = {
+            COMMUNITY_HEAD: [
+                "COMMUNITY_HEAD",
+                "COMMUNITY_SUBHEAD",
+                "GOTRA_HEAD",
+                "FAMILY_HEAD",
+                "MEMBER",
+            ],
+            COMMUNITY_SUBHEAD: ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"],
+            GOTRA_HEAD: ["FAMILY_HEAD", "MEMBER"],
+            FAMILY_HEAD: ["MEMBER"],
+            MEMBER: [],
+        };
 
-    // Validate targetRole if provided
-    if (targetRole) {
-      const allowed = ROLE_TARGETS[senderRole] || [];
-      if (!allowed.includes(targetRole)) {
-        return failure("Invalid target role", "Forbidden", 403);
-      }
-    }
+        // Validate targetRole if provided
+        if (targetRole) {
+            const allowed = ROLE_TARGETS[senderRole] || [];
+            if (!allowed.includes(targetRole)) {
+                return failure("Invalid target role", "Forbidden", 403);
+            }
+        }
 
-    /**
-     * Base user filter
-     */
-    const where: any = {
-      status: true,
-    };
+        /**
+         * Base user filter
+         */
+        const where: any = {
+            status: true,
+        };
 
-    /**
-     * Apply role-based scoping
-     */
-    switch (senderRole) {
-      case "FAMILY_HEAD": {
-        // Restrict to sender's family
-        const family = await prisma.familyMember.findFirst({
-          where: { userId: senderId, role: "FAMILY_HEAD" },
-          select: { familyId: true },
+        /**
+         * Apply role-based scoping
+         */
+        switch (senderRole) {
+            case "FAMILY_HEAD": {
+                // Restrict to sender's family
+                const family = await prisma.familyMember.findFirst({
+                    where: { userId: senderId, role: "FAMILY_HEAD" },
+                    select: { familyId: true },
+                });
+
+                if (!family) {
+                    return failure("Family not found", "Invalid State", 400);
+                }
+
+                where.families = {
+                    some: { familyId: family.familyId },
+                };
+                break;
+            }
+
+            case "GOTRA_HEAD": {
+                // Restrict to sender's gotra
+                const profile = await prisma.profile.findUnique({
+                    where: { userId: senderId },
+                    select: { gotra: true },
+                });
+
+                if (!profile?.gotra) {
+                    return failure("Gotra not found", "Invalid State", 400);
+                }
+
+                where.profile = {
+                    gotra: profile.gotra,
+                };
+                break;
+            }
+
+            case "COMMUNITY_SUBHEAD": {
+                // Admins only
+                where.role = {
+                    in: ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"],
+                };
+                break;
+            }
+
+            case "COMMUNITY_HEAD":
+                // No restriction (full broadcast)
+                break;
+        }
+
+        /**
+         * Optional role filter (after scope)
+         */
+        if (targetRole) {
+            where.role = targetRole;
+        }
+
+        /**
+         * Fetch recipients
+         */
+        const users = await prisma.user.findMany({
+            where,
+            select: { id: true },
         });
 
-        if (!family) {
-          return failure("Family not found", "Invalid State", 400);
+        if (!users.length) {
+            return failure("No users found for broadcast", "Not Found", 404);
         }
 
-        where.families = {
-          some: { familyId: family.familyId },
-        };
-        break;
-      }
-
-      case "GOTRA_HEAD": {
-        // Restrict to sender's gotra
-        const profile = await prisma.profile.findUnique({
-          where: { userId: senderId },
-          select: { gotra: true },
+        /**
+         * Use Kafka pub/sub to broadcast notifications
+         * This decouples notification creation from delivery
+         */
+        const result = await broadcastNotification({
+            message,
+            type,
+            channels,
+            subject,
+            recipientIds: users.map((u) => u.id),
+            senderId,
+            priority,
         });
 
-        if (!profile?.gotra) {
-          return failure("Gotra not found", "Invalid State", 400);
+        // If IN_APP channel requested, publish lightweight realtime preview events to Redis
+        // so WS subscribers can receive an immediate preview before DB persistence.
+        if (channels.includes(NotificationChannel.IN_APP)) {
+            try {
+                const redis = await getRedisClient();
+                const now = new Date().toISOString();
+                // use eventId when available so previews can be correlated with persisted events
+                const previewId = result?.eventId || randomUUID();
+                const PREVIEW_TTL = Number(process.env.NOTIFICATION_PREVIEW_TTL_SECONDS || 60);
+                for (const u of users) {
+                    const payload = JSON.stringify({ notification: { previewId, message, subject: subject ?? null, createdAt: now } });
+                    // publish to channel `inapp:{userId}` which ws redis-sub listens for via pSubscribe
+                    try {
+                        await redis.publish(`inapp:${u.id}`, payload);
+                        // mark that this recipient received a preview for this eventId so duplicates can be suppressed
+                        const key = `notification_preview:${u.id}:${previewId}`;
+                        await redis.set(key, '1', { EX: PREVIEW_TTL });
+                    } catch (e) {
+                        console.warn('Failed to publish preview to redis for', u.id, e instanceof Error ? e.message : String(e));
+                    }
+                }
+            } catch (err) {
+                console.warn("Realtime publish failed", err instanceof Error ? err.message : String(err));
+            }
         }
 
-        where.profile = {
-          gotra: profile.gotra,
-        };
-        break;
-      }
-
-      case "COMMUNITY_SUBHEAD": {
-        // Admins only
-        where.role = {
-          in: ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"],
-        };
-        break;
-      }
-
-      case "COMMUNITY_HEAD":
-        // No restriction (full broadcast)
-        break;
+        return success(
+            "Notifications queued for delivery",
+            {
+                eventId: result.eventId,
+                recipientCount: result.recipientCount,
+                channels,
+            },
+            202, // Accepted (async processing)
+        );
+    } catch (err) {
+        console.error("Create Notification Error:", err);
+        return failure("Internal server error", "Unexpected Error", 500);
     }
-
-    /**
-     * Optional role filter (after scope)
-     */
-    if (targetRole) {
-      where.role = targetRole;
-    }
-
-    /**
-     * Fetch recipients
-     */
-    const users = await prisma.user.findMany({
-      where,
-      select: { id: true },
-    });
-
-    if (!users.length) {
-      return failure("No users found for broadcast", "Not Found", 404);
-    }
-
-    /**
-     * Use Kafka pub/sub to broadcast notifications
-     * This decouples notification creation from delivery
-     */
-    const result = await broadcastNotification({
-      message,
-      type,
-      channels,
-      subject,
-      recipientIds: users.map((u) => u.id),
-      senderId,
-      priority,
-    });
-
-    // If IN_APP channel requested, publish lightweight realtime preview events to Redis
-    // so WS subscribers can receive an immediate preview before DB persistence.
-    if (channels.includes(NotificationChannel.IN_APP)) {
-      try {
-        const redis = await getRedisClient();
-        const now = new Date().toISOString();
-        // use eventId when available so previews can be correlated with persisted events
-        const previewId = result?.eventId || randomUUID();
-        const PREVIEW_TTL = Number(process.env.NOTIFICATION_PREVIEW_TTL_SECONDS || 60);
-        for (const u of users) {
-          const payload = JSON.stringify({ notification: { previewId, message, subject: subject ?? null, createdAt: now } });
-          // publish to channel `inapp:{userId}` which ws redis-sub listens for via pSubscribe
-          try {
-            await redis.publish(`inapp:${u.id}`, payload);
-            // mark that this recipient received a preview for this eventId so duplicates can be suppressed
-            const key = `notification_preview:${u.id}:${previewId}`;
-            await redis.set(key, '1', { EX: PREVIEW_TTL });
-          } catch (e) {
-            console.warn('Failed to publish preview to redis for', u.id, e instanceof Error ? e.message : String(e));
-          }
-        }
-      } catch (err) {
-        console.warn("Realtime publish failed", err instanceof Error ? err.message : String(err));
-      }
-    }
-
-    return success(
-      "Notifications queued for delivery",
-      {
-        eventId: result.eventId,
-        recipientCount: result.recipientCount,
-        channels,
-      },
-      202, // Accepted (async processing)
-    );
-  } catch (err) {
-    console.error("Create Notification Error:", err);
-    return failure("Internal server error", "Unexpected Error", 500);
-  }
 }
 
 /* =========================================================
@@ -237,34 +237,34 @@ export async function handleCreateNotification(req: Request) {
  * @returns {Promise<Response>} Description of return value
  */
 export async function handleListNotifications(req: Request): Promise<Response> {
-  try {
-    const auth = requireAuth(req);
-    if (!auth.ok) return auth.response as Response;
+    try {
+        const auth = requireAuth(req);
+        if (!auth.ok) return auth.response as Response;
 
-    const userId = auth.payload.userId ?? auth.payload.id;
+        const userId = auth.payload.userId ?? auth.payload.id;
 
-    const url = new URL(req.url);
-    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
-    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10)));
-    const skip = (page - 1) * limit;
+        const url = new URL(req.url);
+        const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
+        const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10)));
+        const skip = (page - 1) * limit;
 
-    const [list, total] = await Promise.all([
-      prisma.notification.findMany({
-        where: { userId },
-        select: { id: true, type: true, message: true, read: true, createdAt: true },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.notification.count({ where: { userId } }),
-    ]);
+        const [list, total] = await Promise.all([
+            prisma.notification.findMany({
+                where: { userId },
+                select: { id: true, type: true, message: true, read: true, createdAt: true },
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
+            prisma.notification.count({ where: { userId } }),
+        ]);
 
-    return success("Notifications fetched", {
-      notifications: list,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    }, 200);
-  } catch (err) {
-    console.error("List Notifications Error:", err);
-    return failure("Internal server error", "Unexpected Error", 500);
-  }
+        return success("Notifications fetched", {
+            notifications: list,
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        }, 200);
+    } catch (err) {
+        console.error("List Notifications Error:", err);
+        return failure("Internal server error", "Unexpected Error", 500);
+    }
 }

@@ -9,72 +9,72 @@ import { startRedisSubscriber, stopRedisSubscriber } from './redis-sub';
 import { logger } from "./logger";
 
 export const server = serve<WSData>({
-  port: WS_PORT,
-  async fetch(req) {
-    if (req.headers.get("upgrade") === "websocket") {
-      // Allow upgrade for unauthenticated clients; require an auth message shortly after connect.
-      const userId = authenticate(req);
-      if (userId) {
-        server.upgrade(req, {
-          data: { userId, lastSeen: Date.now(), authenticated: true } satisfies WSData,
-        });
-        return;
-      }
+    port: WS_PORT,
+    async fetch(req) {
+        if (req.headers.get("upgrade") === "websocket") {
+            // Allow upgrade for unauthenticated clients; require an auth message shortly after connect.
+            const userId = authenticate(req);
+            if (userId) {
+                server.upgrade(req, {
+                    data: { userId, lastSeen: Date.now(), authenticated: true } satisfies WSData,
+                });
+                return;
+            }
 
-      // upgrade without userId; client must send an auth message within the timeout
-      server.upgrade(req, {
-        data: { userId: "", lastSeen: Date.now(), authenticated: false } satisfies WSData,
-      });
-      return;
-    }
+            // upgrade without userId; client must send an auth message within the timeout
+            server.upgrade(req, {
+                data: { userId: "", lastSeen: Date.now(), authenticated: false } satisfies WSData,
+            });
+            return;
+        }
 
-    const { pathname } = new URL(req.url);
-    if (pathname === "/health") {
-      return Response.json({ status: "ok", service: "ws" });
-    }
+        const { pathname } = new URL(req.url);
+        if (pathname === "/health") {
+            return Response.json({ status: "ok", service: "ws" });
+        }
 
-    return new Response("Not Found", { status: 404 });
-  },
-  websocket: {
-    open: handleOpen,
-    message: handleMessage,
-    close: handleClose,
-  },
+        return new Response("Not Found", { status: 404 });
+    },
+    websocket: {
+        open: handleOpen,
+        message: handleMessage,
+        close: handleClose,
+    },
 });
 
 /**
  * Start the WebSocket server.
  */
 export async function startServer() {
-  try {
-    await startKafkaConsumer();
-  } catch (err) {
-    logger.warn(
-      "Kafka consumer failed to start — continuing without real-time features (dev)",
-      err instanceof Error ? err.message : String(err),
-    );
-  }
+    try {
+        await startKafkaConsumer();
+    } catch (err) {
+        logger.warn(
+            "Kafka consumer failed to start — continuing without real-time features (dev)",
+            err instanceof Error ? err.message : String(err),
+        );
+    }
 
-  try {
-    await startRedisSubscriber();
-  } catch (err) {
-    logger.warn('Redis subscriber failed to start — continuing without Redis', err instanceof Error ? err.message : String(err));
-  }
+    try {
+        await startRedisSubscriber();
+    } catch (err) {
+        logger.warn('Redis subscriber failed to start — continuing without Redis', err instanceof Error ? err.message : String(err));
+    }
 
-  logger.info(`server running on ws://localhost:${WS_PORT}`);
+    logger.info(`server running on ws://localhost:${WS_PORT}`);
 }
 
 /**
  * Gracefully shutdown server.
  */
 export async function shutdown() {
-  logger.info("shutting down...");
-  try {
-    await consumer.disconnect();
-    await stopRedisSubscriber();
-  } catch (err) {
-    logger.error("consumer disconnect failed", err instanceof Error ? err : String(err));
-  }
-  server.stop(true);
-  process.exit(0);
+    logger.info("shutting down...");
+    try {
+        await consumer.disconnect();
+        await stopRedisSubscriber();
+    } catch (err) {
+        logger.error("consumer disconnect failed", err instanceof Error ? err : String(err));
+    }
+    server.stop(true);
+    process.exit(0);
 }

@@ -24,8 +24,8 @@ export async function router(req: Request): Promise<Response> {
     return withCorsHeaders(
       Response.json(
         { error: "Too many requests. Please try again later." },
-        { status: 429 }
-      )
+        { status: 429 },
+      ),
     );
   }
 
@@ -33,14 +33,14 @@ export async function router(req: Request): Promise<Response> {
     // 1. Try auth routes (signup/login)
     for (const route of authRoutes) {
       if (route.path === url.pathname && route.method === method) {
-        return withCorsHeaders(await route.handler(req));
+        return withCorsHeaders(await route.handler(req), req);
       }
     }
 
     // 2. Try static routes
     for (const route of staticRoutes) {
       if (route.path === url.pathname && route.method === method) {
-        return withCorsHeaders(await route.handler(req));
+        return withCorsHeaders(await route.handler(req), req);
       }
     }
 
@@ -48,33 +48,35 @@ export async function router(req: Request): Promise<Response> {
     const paramMatch = matchParameterizedRoute(url.pathname, method);
     if (paramMatch) {
       const { route, params } = paramMatch;
-      
+
       // Validate required params exist
       const missingParams = Object.entries(params).filter(([_, v]) => !v);
       if (missingParams.length > 0) {
         const firstMissing = missingParams[0];
         return withCorsHeaders(
           Response.json(
-            { error: `Missing required parameter: ${firstMissing ? firstMissing[0] : 'unknown'}` },
-            { status: 400 }
-          )
+            {
+              error: `Missing required parameter: ${firstMissing ? firstMissing[0] : "unknown"}`,
+            },
+            { status: 400 },
+          ),
+          req,
         );
       }
-      
-      return withCorsHeaders(await route.handler(req, params));
+
+      return withCorsHeaders(await route.handler(req, params), req);
     }
 
     // 4. No route matched - 404
     return withCorsHeaders(
-      Response.json({ error: "Endpoint not found" }, { status: 404 })
+      Response.json({ error: "Endpoint not found" }, { status: 404 }),
+      req,
     );
   } catch (err) {
     console.error("Request error:", err);
     return withCorsHeaders(
-      Response.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      )
+      Response.json({ error: "Internal server error" }, { status: 500 }),
+      req,
     );
   }
 }

@@ -1,4 +1,4 @@
-import type { RedisClientType } from 'redis';
+import type { RedisClientType } from "redis";
 
 export interface FanoutMessage {
   fanoutId?: string;
@@ -22,8 +22,9 @@ export async function processFanoutMessage(opts: {
   chunkSize?: number;
 }) {
   const { prisma, producer, redis = null, msg, chunkSize = 500 } = opts;
-  if (!prisma) throw new Error('prisma required');
-  if (!msg || !Array.isArray(msg.recipientIds)) throw new Error('invalid message');
+  if (!prisma) throw new Error("prisma required");
+  if (!msg || !Array.isArray(msg.recipientIds))
+    throw new Error("invalid message");
 
   const recipientIds = msg.recipientIds;
   const chunks: string[][] = [];
@@ -38,10 +39,10 @@ export async function processFanoutMessage(opts: {
     try {
       await prisma.fanoutAudit.updateMany({
         where: { fanoutId: msg.fanoutId },
-        data: { status: 'PROCESSING' },
+        data: { status: "PROCESSING" },
       });
     } catch (e) {
-      console.warn('Failed to mark fanout audit PROCESSING', e);
+      console.warn("Failed to mark fanout audit PROCESSING", e);
     }
   }
 
@@ -49,23 +50,34 @@ export async function processFanoutMessage(opts: {
     for (const chunk of chunks) {
       const data = chunk.map((id) => ({
         userId: id,
-        type: msg.message?.type || 'ANNOUNCEMENT',
-        title: msg.message?.title || null,
-        body: typeof msg.message === 'string' ? msg.message : msg.message?.body || null,
+        type: msg.message?.type || "ANNOUNCEMENT",
+        message:
+          typeof msg.message === "string"
+            ? msg.message
+            : msg.message?.body || msg.message?.title || "",
         createdAt: new Date(),
         fanoutId: msg.fanoutId || null,
       }));
 
       if (redis) {
         // Cache notifications per-user in Redis list for quick reads and later persistence
-        const TTL = Number(process.env.NOTIFICATION_CACHE_TTL_SECONDS || 60 * 60 * 24 * 7); // default 7 days
+        const TTL = Number(
+          process.env.NOTIFICATION_CACHE_TTL_SECONDS || 60 * 60 * 24 * 7,
+        ); // default 7 days
         for (const item of data) {
           const key = `notifications:${item.userId}`;
           try {
-            await redis.rPush(key, JSON.stringify({ ...item, cachedAt: new Date().toISOString() }));
+            await redis.rPush(
+              key,
+              JSON.stringify({ ...item, cachedAt: new Date().toISOString() }),
+            );
             await redis.expire(key, TTL);
           } catch (e) {
-            console.warn('Failed to write notification to redis cache for', item.userId, e);
+            console.warn(
+              "Failed to write notification to redis cache for",
+              item.userId,
+              e,
+            );
           }
         }
         created += data.length;
@@ -77,9 +89,9 @@ export async function processFanoutMessage(opts: {
     }
 
     // Emit a routing event so downstream workers pick up channel-specific work
-    if (producer && typeof producer.send === 'function') {
+    if (producer && typeof producer.send === "function") {
       await producer.send({
-        topic: 'notification.events',
+        topic: "notification.events",
         messages: [
           {
             value: JSON.stringify({
@@ -99,10 +111,14 @@ export async function processFanoutMessage(opts: {
       try {
         await prisma.fanoutAudit.updateMany({
           where: { fanoutId: msg.fanoutId },
-          data: { status: 'COMPLETED', processedAt: new Date(), processedCount: created },
+          data: {
+            status: "COMPLETED",
+            processedAt: new Date(),
+            processedCount: created,
+          },
         });
       } catch (e) {
-        console.warn('Failed to mark fanout audit COMPLETED', e);
+        console.warn("Failed to mark fanout audit COMPLETED", e);
       }
     }
 
@@ -113,14 +129,14 @@ export async function processFanoutMessage(opts: {
       try {
         await prisma.fanoutAudit.updateMany({
           where: { fanoutId: msg.fanoutId },
-          data: { status: 'FAILED', error: String(err?.message || err) },
+          data: { status: "FAILED", error: String(err?.message || err) },
         });
       } catch (e) {
-        console.warn('Failed to mark fanout audit FAILED', e);
+        console.warn("Failed to mark fanout audit FAILED", e);
       }
     }
 
-    console.error('processFanoutMessage failed:', err);
+    console.error("processFanoutMessage failed:", err);
     throw err;
   }
 }

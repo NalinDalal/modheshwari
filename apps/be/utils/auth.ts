@@ -1,6 +1,5 @@
 import type { AuthPayload } from "@modheshwari/utils/jwt";
 import { verifyJWT } from "@modheshwari/utils/jwt";
-import { failure } from "@modheshwari/utils/response";
 
 /**
  * Extracts and verifies the JWT from the request headers.
@@ -12,14 +11,13 @@ export function extractAndVerifyToken(req: Request): string | null {
   const token = authHeader.replace("Bearer ", "").trim();
 
   if (!token) {
-    throw failure("Missing token", "Auth Error", 401);
+    return null;
   }
 
   try {
     const decoded = verifyJWT(token) as AuthPayload;
-    // Support tokens that contain either `userId` or `id` for historical compatibility
     return (decoded?.userId as string) ?? (decoded?.id as string) ?? null;
   } catch {
-    throw failure("Invalid or expired token", "Auth Error", 401);
+    return null;
   }
 }

@@ -29,12 +29,26 @@ export default function useNotifications(): UseNotificationsHook {
 
   const mergePersisted = (prev: Notification[], fetched: Notification[]) => {
     const next = [...fetched];
-    const fetchedKeys = new Set(next.map((n) => (n.id ? `id:${n.id}` : n.previewId ? `preview:${n.previewId}` : `fallback:${n.message}:${n.createdAt}`)));
-    const fetchedPreviewIds = new Set(next.map((n) => n.previewId).filter(Boolean));
+    const fetchedKeys = new Set(
+      next.map((n) =>
+        n.id
+          ? `id:${n.id}`
+          : n.previewId
+            ? `preview:${n.previewId}`
+            : `fallback:${n.message}:${n.createdAt}`,
+      ),
+    );
+    const fetchedPreviewIds = new Set(
+      next.map((n) => n.previewId).filter(Boolean),
+    );
 
     for (const p of prev) {
       if (p.previewId && fetchedPreviewIds.has(p.previewId)) continue;
-      const key = p.id ? `id:${p.id}` : p.previewId ? `preview:${p.previewId}` : `fallback:${p.message}:${p.createdAt}`;
+      const key = p.id
+        ? `id:${p.id}`
+        : p.previewId
+          ? `preview:${p.previewId}`
+          : `fallback:${p.message}:${p.createdAt}`;
       if (fetchedKeys.has(key)) continue;
       next.unshift(p);
     }
@@ -44,7 +58,8 @@ export default function useNotifications(): UseNotificationsHook {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) {
         setNotifications([]);
         setUnreadCount(0);
@@ -62,11 +77,12 @@ export default function useNotifications(): UseNotificationsHook {
   useEffect(() => {
     void fetchNotifications();
 
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return;
 
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${proto}://${window.location.hostname}:3002/?token=${encodeURIComponent(token)}`;
+    const wsUrl = `${proto}://${window.location.hostname}:3002/`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -108,11 +124,19 @@ export default function useNotifications(): UseNotificationsHook {
   }, [fetchNotifications]);
 
   async function markRead(notificationId: string, currentRead: boolean) {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return false;
     try {
-      await apiFetch(`${API_BASE}/notifications/${notificationId}`, { method: "PATCH", body: JSON.stringify({ read: !currentRead }) });
-      setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, read: !currentRead } : n)));
+      await apiFetch(`${API_BASE}/notifications/${notificationId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ read: !currentRead }),
+      });
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notificationId ? { ...n, read: !currentRead } : n,
+        ),
+      );
       if (!currentRead) setUnreadCount((c) => Math.max(0, c - 1));
       else setUnreadCount((c) => c + 1);
 
@@ -124,11 +148,11 @@ export default function useNotifications(): UseNotificationsHook {
   }
 
   async function markAllRead() {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return false;
     try {
-      // Try bulk endpoint first
-      await apiFetch(`${API_BASE}/notifications/mark-all`, { method: "POST" });
+      await apiFetch(`${API_BASE}/notifications/read-all`, { method: "POST" });
       await fetchNotifications();
       return true;
     } catch (err) {
@@ -137,5 +161,12 @@ export default function useNotifications(): UseNotificationsHook {
     }
   }
 
-  return { unreadCount, notifications, refresh: fetchNotifications, markRead, markAllRead, pulse };
+  return {
+    unreadCount,
+    notifications,
+    refresh: fetchNotifications,
+    markRead,
+    markAllRead,
+    pulse,
+  };
 }

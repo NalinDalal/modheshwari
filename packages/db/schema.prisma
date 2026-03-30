@@ -116,6 +116,7 @@ model UserRelation {
   toUser     User         @relation("ToUser", fields: [toUserId], references: [id])
 
   @@unique([fromUserId, toUserId, type])
+  @@index([toUserId])
 }
 
 model Event {
@@ -158,6 +159,9 @@ model EventRegistration {
   registeredAt DateTime @default(now())
   event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user         User     @relation(fields: [userId], references: [id])
+
+  @@index([eventId])
+  @@index([userId])
 }
 
 model Payment {
@@ -202,6 +206,9 @@ model ResourceRequest {
   resource     Resource                  @relation(fields: [resourceId], references: [id])
   user         User                      @relation("RequestedBy", fields: [userId], references: [id])
   approvals    ResourceRequestApproval[]
+
+  @@index([userId])
+  @@index([approverId])
 }
 
 model ResourceRequestApproval {
@@ -349,6 +356,9 @@ model StatusUpdateRequest {
   approvals     StatusUpdateApproval[]
   requestedBy   User                   @relation("StatusUpdateRequestedBy", fields: [requestedById], references: [id])
   targetUser    User                   @relation("TargetUser", fields: [targetUserId], references: [id])
+
+  @@index([targetUserId])
+  @@index([requestedById])
 }
 
 model StatusUpdateApproval {

@@ -11,6 +11,7 @@ import {
 } from "@modheshwari/utils/pagination";
 
 import { requireAuth } from "./authMiddleware";
+import { extractAndVerifyToken } from "../utils/auth";
 
 /**
  * POST /api/events
@@ -117,8 +118,10 @@ export async function handleListEvents(req: Request): Promise<Response> {
     }
 
     // Optional date range filtering to support calendar and server-side range queries
-    const startDate = url.searchParams.get("startDate") || url.searchParams.get("from");
-    const endDate = url.searchParams.get("endDate") || url.searchParams.get("to");
+    const startDate =
+      url.searchParams.get("startDate") || url.searchParams.get("from");
+    const endDate =
+      url.searchParams.get("endDate") || url.searchParams.get("to");
 
     if (startDate || endDate) {
       const dateFilter: any = {};
@@ -169,11 +172,18 @@ export async function handleListEvents(req: Request): Promise<Response> {
  * Query params: startDate, endDate, status (optional), limit (optional)
  */
 export async function handleListEventsCompact(req: Request): Promise<Response> {
+  const userId = extractAndVerifyToken(req);
+  if (!userId) {
+    return failure("Unauthorized", "Auth Error", 401);
+  }
+
   try {
     const url = new URL(req.url);
     const statusFilter = url.searchParams.get("status");
-    const startDate = url.searchParams.get("startDate") || url.searchParams.get("from");
-    const endDate = url.searchParams.get("endDate") || url.searchParams.get("to");
+    const startDate =
+      url.searchParams.get("startDate") || url.searchParams.get("from");
+    const endDate =
+      url.searchParams.get("endDate") || url.searchParams.get("to");
 
     const where: any = {};
     if (statusFilter) where.status = statusFilter.toUpperCase();

@@ -59,7 +59,7 @@ export async function handleMemberLogin(req: Request) {
         403,
       );
 
-      // --- Block login if user is marked deceased/inactive ---
+    // --- Block login if user is marked deceased/inactive ---
     // `status` is a boolean in the Prisma `User` model (true = alive, false = deceased)
     if (user.status === false) {
       return failure(
@@ -68,7 +68,7 @@ export async function handleMemberLogin(req: Request) {
         403,
       );
     }
-    
+
     // --- Step 3: Verify password ---
     const isValid = await comparePassword(password, user.password);
     if (!isValid)
@@ -100,7 +100,7 @@ export async function handleMemberLogin(req: Request) {
       200,
     );
   } catch (err) {
-      logger.error("MemberLogin Error:", err);
+    logger.error("MemberLogin Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -152,12 +152,11 @@ export async function handleMemberSignup(req: Request) {
       },
     });
 
-    // --- Step 5: Create Family Join Request (Pending approval) ---
-    const joinRequest = await (prisma as any).familyJoinRequest.create({
+    // --- Step 5: Create Member Invite (Pending approval) ---
+    const joinRequest = await prisma.memberInvite.create({
       data: {
-        userId: user.id,
+        invitedUserId: user.id,
         familyId,
-        relation: relationWithFamilyHead || "UNKNOWN",
         status: "PENDING",
       },
     });
@@ -192,7 +191,6 @@ export async function handleMemberSignup(req: Request) {
           id: joinRequest.id,
           familyId: joinRequest.familyId,
           status: joinRequest.status,
-          relation: joinRequest.relation,
         },
       },
       201,

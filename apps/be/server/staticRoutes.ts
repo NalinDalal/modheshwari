@@ -10,11 +10,17 @@ export const staticRoutes: Route[] = [
     handler: () => Response.json({ status: "ok" }, { status: 200 }),
   },
 
-  // Metrics endpoint for Prometheus
+  // Metrics endpoint for Prometheus (protected)
   {
     path: "/metrics",
     method: "GET",
-    handler: () => metricsHandler(),
+    handler: (req: Request) => {
+      const key = req.headers.get("x-metrics-token");
+      if (key !== process.env.METRICS_SECRET) {
+        return new Response("Forbidden", { status: 403 });
+      }
+      return metricsHandler();
+    },
   },
 
   // Families

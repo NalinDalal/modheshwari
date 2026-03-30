@@ -9,9 +9,9 @@
    ------------------------------------------- */
 
 type RateLimitOptions = {
-  max: number; // max requests
-  windowMs: number; // time window
-  scope?: string; // endpoint / feature name
+    max: number; // max requests
+    windowMs: number; // time window
+    scope?: string; // endpoint / feature name
 };
 
 type HitStore = Map<string, number[]>;
@@ -29,14 +29,14 @@ const hits: HitStore = new Map();
  * @returns {string} Description of return value
  */
 export function getClientIp(req: Request): string {
-  const header =
-    req.headers.get("x-forwarded-for") ||
-    req.headers.get("x-real-ip") ||
-    req.headers.get("cf-connecting-ip");
+    const header =
+        req.headers.get("x-forwarded-for") ||
+        req.headers.get("x-real-ip") ||
+        req.headers.get("cf-connecting-ip");
 
-  if (header) return header.split(",")[0]?.trim() || "unknown";
+    if (header) return header.split(",")[0]?.trim() || "unknown";
 
-  return (req as any)?.ip || "unknown";
+    return (req as any)?.ip || "unknown";
 }
 
 /* -------------------------------------------
@@ -50,28 +50,28 @@ export function getClientIp(req: Request): string {
  * @returns {boolean} Description of return value
  */
 export function isRateLimited(
-  req: Request,
-  { max, windowMs, scope = "global" }: RateLimitOptions,
+    req: Request,
+    { max, windowMs, scope = "global" }: RateLimitOptions,
 ): boolean {
-  const ip = getClientIp(req);
-  const now = Date.now();
+    const ip = getClientIp(req);
+    const now = Date.now();
 
-  // key = ip + endpoint scope
-  const key = `${scope}:${ip}`;
-  const timestamps = hits.get(key) || [];
+    // key = ip + endpoint scope
+    const key = `${scope}:${ip}`;
+    const timestamps = hits.get(key) || [];
 
-  // sliding window: keep only recent timestamps
-  const recent = timestamps.filter((t) => now - t < windowMs);
-  recent.push(now);
+    // sliding window: keep only recent timestamps
+    const recent = timestamps.filter((t) => now - t < windowMs);
+    recent.push(now);
 
-  hits.set(key, recent);
+    hits.set(key, recent);
 
-  // opportunistic cleanup (prevents memory leak)
-  if (hits.size > 10_000) {
-    for (const [k, v] of hits) {
-      if (v.length === 0) hits.delete(k);
+    // opportunistic cleanup (prevents memory leak)
+    if (hits.size > 10_000) {
+        for (const [k, v] of hits) {
+            if (v.length === 0) hits.delete(k);
+        }
     }
-  }
 
-  return recent.length > max;
+    return recent.length > max;
 }

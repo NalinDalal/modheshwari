@@ -92,11 +92,6 @@ export function getAuthPayload(req: Request) {
  */
 export function requireAuth(req: Request, allowedRoles?: string[]) {
   const payload: any = getAuthPayload(req);
-  console.log(
-    `[requireAuth] Auth header:`,
-    req.headers.get("authorization") ? "present" : "missing",
-  );
-  console.log(`[requireAuth] Payload:`, payload);
   if (!payload) {
     return {
       ok: false,
@@ -113,9 +108,6 @@ export function requireAuth(req: Request, allowedRoles?: string[]) {
 
   if (allowedRoles && Array.isArray(allowedRoles)) {
     if (!allowedRoles.includes(payload.role)) {
-      console.log(
-        `[requireAuth] Role forbidden. Required: ${allowedRoles}, got: ${payload.role}`,
-      );
       return {
         ok: false,
         response: new Response(

@@ -12,25 +12,11 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlToken = params.get("token");
-
-    if (urlToken) {
-      localStorage.setItem("token", urlToken);
-      try {
-        window.dispatchEvent(new Event("authChanged"));
-      } catch {
-        /* ignore */
-      }
-      setToken(urlToken);
+    const stored = localStorage.getItem("token");
+    if (!stored) router.push("/signin");
+    else {
+      setToken(stored);
       setLoading(false);
-    } else {
-      const stored = localStorage.getItem("token");
-      if (!stored) router.push("/signin");
-      else {
-        setToken(stored);
-        setLoading(false);
-      }
     }
   }, [router]);
 

@@ -41,21 +41,22 @@ export async function handleGetConversations(req: Request): Promise<Response> {
       }
     }
 
-    const participantUsers = allOtherIds.size > 0
-      ? await prisma.user.findMany({
-          where: { id: { in: [...allOtherIds] } },
-          select: {
-            id: true,
-            name: true,
-            profile: {
-              select: {
-                profession: true,
-                location: true,
+    const participantUsers =
+      allOtherIds.size > 0
+        ? await prisma.user.findMany({
+            where: { id: { in: [...allOtherIds] } },
+            select: {
+              id: true,
+              name: true,
+              profile: {
+                select: {
+                  profession: true,
+                  location: true,
+                },
               },
             },
-          },
-        })
-      : [];
+          })
+        : [];
 
     const participantMap = new Map(participantUsers.map((u) => [u.id, u]));
 
@@ -70,7 +71,9 @@ export async function handleGetConversations(req: Request): Promise<Response> {
       _count: true,
     });
 
-    const unreadMap = new Map(unreadCounts.map((u) => [u.conversationId, u._count]));
+    const unreadMap = new Map(
+      unreadCounts.map((u) => [u.conversationId, u._count]),
+    );
 
     const conversationsWithDetails = conversations.map((conv) => {
       const otherParticipantIds = conv.participants.filter(
@@ -80,7 +83,9 @@ export async function handleGetConversations(req: Request): Promise<Response> {
         id: conv.id,
         lastMessageAt: conv.lastMessageAt,
         lastMessage: (conv as any).lastMessage,
-        participants: otherParticipantIds.map((pid: string) => participantMap.get(pid)).filter(Boolean),
+        participants: otherParticipantIds
+          .map((pid: string) => participantMap.get(pid))
+          .filter(Boolean),
         unreadCount: unreadMap.get(conv.id) ?? 0,
         latestMessage: conv.messages[0] ?? null,
       };
@@ -96,7 +101,9 @@ export async function handleGetConversations(req: Request): Promise<Response> {
  * POST /api/messages/conversations
  * Create or get existing conversation
  */
-export async function handleCreateConversation(req: Request): Promise<Response> {
+export async function handleCreateConversation(
+  req: Request,
+): Promise<Response> {
   const userId = getUserIdFromRequest(req);
   if (!userId) {
     return failure("Unauthorized", null, 401);
@@ -108,6 +115,10 @@ export async function handleCreateConversation(req: Request): Promise<Response> 
 
     if (!Array.isArray(participantIds) || participantIds.length === 0) {
       return failure("participantIds must be a non-empty array", null, 400);
+    }
+
+    if (participantIds.length > 50) {
+      return failure("Too many participants (max 50)", null, 400);
     }
 
     // Add current user to participants

@@ -2,41 +2,41 @@ import type { ServerWebSocket } from "bun";
 import { NotificationChannel } from "@prisma/client";
 
 export type WSData = {
-  userId: string;
-  lastSeen: number;
-  heartbeatId?: number;
-  authTimeoutId?: number;
-  authenticated?: boolean;
+    userId: string;
+    lastSeen: number;
+    heartbeatId?: number;
+    authTimeoutId?: number;
+    authenticated?: boolean;
 };
 
 export type NotificationEvent = {
-  eventId: string;
-  message: string;
-  type: string;
-  channels: NotificationChannel[];
-  subject?: string;
-  recipientIds: string[];
-  senderId: string;
-  priority: "low" | "normal" | "high" | "urgent";
-  timestamp: string;
+    eventId: string;
+    message: string;
+    type: string;
+    channels: NotificationChannel[];
+    subject?: string;
+    recipientIds: string[];
+    senderId: string;
+    priority: "low" | "normal" | "high" | "urgent";
+    timestamp: string;
 };
 
 export type ChatMessage = {
-  type: "chat";
-  messageId: string;
-  conversationId: string;
-  senderId: string;
-  senderName: string;
-  content: string;
-  timestamp: string;
+    type: "chat";
+    messageId: string;
+    conversationId: string;
+    senderId: string;
+    senderName: string;
+    content: string;
+    timestamp: string;
 };
 
 export type IncomingMessage = {
-  type: "chat" | "typing" | "read";
-  conversationId?: string;
-  content?: string;
-  recipientIds?: string[];
-  messageIds?: string[];
+    type: "chat" | "typing" | "read";
+    conversationId?: string;
+    content?: string;
+    recipientIds?: string[];
+    messageIds?: string[];
 };
 
 export type WSMap = Map<string, Set<ServerWebSocket<WSData>>>;
