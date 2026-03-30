@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "bunx prisma generate --schema packages/db/schema.prisma",
     "build": "bunx turbo run build",
     "dev": "bunx turbo run dev",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
