@@ -10,35 +10,22 @@ interface DreamySunsetBackgroundProps {
   className?: string;
 }
 
-/**
- * Performs  dreamy sunset background operation.
- * @param {DreamySunsetBackgroundProps} {
- *   children,
- *   className = "",
- * } - Description of {
- *   children,
- *   className = "",
- * }
- * @returns {any} Description of return value
- */
 export function DreamySunsetBackground({
   children,
   className = "",
 }: DreamySunsetBackgroundProps) {
   return (
     <div className={`min-h-screen w-full relative ${className}`}>
-      {/* Pink Glow Background */}
       <div
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: `
-            radial-gradient(125% 125% at 50% 90%, #ffffff 40%, #ec4899 100%)
-          `,
-          backgroundSize: "100% 100%",
+          background: "linear-gradient(135deg, #fafaf5 0%, #f5f5e8 100%)",
         }}
       />
-      
-      {/* Content */}
+
+      <div className="absolute top-20 left-10 w-72 h-72 bg-jewel-gold/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-40 right-10 w-96 h-96 bg-jewel-emerald/10 rounded-full blur-3xl" />
+
       <div className="relative z-10">{children}</div>
     </div>
   );

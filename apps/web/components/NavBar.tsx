@@ -124,19 +124,19 @@ export default function NavBar() {
     <Link
       href={href}
       onClick={onClick}
-      className={`rounded-lg ${isActive(href) ? "bg-pink-100" : ""}`}
+      className={`rounded-lg ${isActive(href) ? "bg-jewel-100" : ""}`}
     >
       {hideLabel ? (
         <Tooltip text={title ?? href}>
           <div
-            className={`p-2 rounded ${isActive(href) ? "text-pink-700" : "text-gray-700 hover:text-pink-700"}`}
+            className={`p-2 rounded ${isActive(href) ? "text-jewel-700" : "text-jewel-700 hover:text-jewel-gold"}`}
           >
             {Icon && <Icon className="h-5 w-5" />}
           </div>
         </Tooltip>
       ) : (
         <div
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${isActive(href) ? "bg-pink-100 text-pink-700" : "text-gray-700 hover:text-pink-700 hover:bg-pink-50"}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${isActive(href) ? "bg-jewel-100 text-jewel-700" : "text-jewel-700 hover:text-jewel-gold hover:bg-jewel-50"}`}
         >
           {Icon && <Icon className="h-4 w-4" />}
           <span>{label}</span>
@@ -155,20 +155,20 @@ export default function NavBar() {
 
   // Role badge color
   const roleColors: Record<string, string> = {
-    COMMUNITY_HEAD: "bg-pink-600",
-    COMMUNITY_SUBHEAD: "bg-purple-600",
-    GOTRA_HEAD: "bg-yellow-500",
-    FAMILY_HEAD: "bg-blue-600",
-    MEMBER: "bg-green-600",
+    COMMUNITY_HEAD: "bg-jewel-gold",
+    COMMUNITY_SUBHEAD: "bg-jewel-600",
+    GOTRA_HEAD: "bg-jewel-emerald",
+    FAMILY_HEAD: "bg-jewel-500",
+    MEMBER: "bg-jewel-400",
   };
 
   // Status chip
   const statusChip = user?.status ? (
-    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700 border border-green-200">
+    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-jewel-emerald/20 text-jewel-emerald border border-jewel-emerald/30">
       Active
     </span>
   ) : (
-    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-500 border border-gray-200">
+    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-jewel-200/50 text-jewel-600 border border-jewel-400/20">
       Inactive
     </span>
   );
@@ -176,14 +176,17 @@ export default function NavBar() {
   /* ================= JSX ================= */
 
   return (
-    <nav className="fixed top-0 z-50 h-16 w-full bg-gradient-to-r from-pink-50/95 via-white/95 to-rose-50/95 backdrop-blur-xl border-b border-pink-200 shadow-lg shadow-pink-500/10">
+    <nav className="fixed top-0 z-50 h-16 w-full bg-jewel-50/90 backdrop-blur-xl border-b border-jewel-400/20 shadow-sm">
       <div className="mx-auto max-w-7xl h-full px-6 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-pink-600 to-rose-600 flex items-center justify-center text-white text-sm shadow-lg shadow-pink-500/30">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-display font-bold text-lg"
+        >
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-jewel-gold to-jewel-500 flex items-center justify-center text-jewel-deep text-sm shadow-lg shadow-jewel-gold/30">
             M
           </div>
-          <span className="text-gray-900">Modheshwari</span>
+          <span className="text-jewel-900">Modheshwari</span>
         </Link>
 
         {/* Desktop */}
@@ -206,14 +209,14 @@ export default function NavBar() {
 
             <Link
               href="/search"
-              className="ml-1 h-9 w-9 rounded-lg flex items-center justify-center hover:bg-pink-100"
+              className="ml-1 h-9 w-9 rounded-lg flex items-center justify-center hover:bg-jewel-100"
             >
-              <Search className="h-4 w-4 text-gray-700" />
+              <Search className="h-4 w-4 text-jewel-700" />
             </Link>
 
             {user ? (
               <>
-                <div className="mx-2 h-6 w-px bg-pink-200" />
+                <div className="mx-2 h-6 w-px bg-jewel-400/30" />
                 <NavItem
                   href="/family"
                   label="Family"
@@ -266,35 +269,34 @@ export default function NavBar() {
                 <div className="relative group">
                   <button
                     onClick={() => router.push("/me")}
-                    className="ml-2 h-9 w-9 rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-lg"
-                    style={{ background: roleColors[user.role] || "#444" }}
+                    className="ml-2 h-9 w-9 rounded-lg flex items-center justify-center text-xs font-bold text-jewel-deep shadow-lg"
+                    style={{ background: roleColors[user.role] || "#78716c" }}
                     title="Profile"
                   >
                     {initials}
                     {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white bg-pink-600 rounded-full">
+                      <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white bg-jewel-ruby rounded-full">
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
                   </button>
-                  {/* User dropdown on hover */}
-                  <div className="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white border border-pink-200 rounded-lg shadow-lg z-50">
-                    <div className="px-4 py-3 border-b">
+                  <div className="hidden group-hover:block absolute right-0 mt-2 w-48 bg-jewel-50 border border-jewel-400/20 rounded-lg shadow-jewel z-50">
+                    <div className="px-4 py-3 border-b border-jewel-400/20">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`px-2 py-1 rounded text-xs font-semibold text-white ${roleColors[user.role] || "bg-gray-600"}`}
+                          className={`px-2 py-1 rounded text-xs font-semibold text-jewel-deep ${roleColors[user.role] || "bg-jewel-400"}`}
                         >
                           {user.role ? user.role.replace(/_/g, " ") : "Unknown"}
                         </span>
                         {statusChip}
                       </div>
-                      <div className="mt-1 text-xs text-neutral-500">
+                      <div className="mt-1 text-xs text-jewel-500">
                         {user.email}
                       </div>
                     </div>
                     <button
                       onClick={() => router.push("/me/edit")}
-                      className="w-full text-left px-4 py-2 hover:bg-pink-50 text-sm"
+                      className="w-full text-left px-4 py-2 hover:bg-jewel-100 text-sm text-jewel-700"
                     >
                       Edit profile
                     </button>
@@ -303,7 +305,7 @@ export default function NavBar() {
                         localStorage.removeItem("token");
                         router.push("/signin");
                       }}
-                      className="w-full text-left px-4 py-2 hover:bg-pink-50 text-sm"
+                      className="w-full text-left px-4 py-2 hover:bg-jewel-100 text-sm text-jewel-700"
                     >
                       Sign out
                     </button>
@@ -313,7 +315,7 @@ export default function NavBar() {
             ) : (
               <Link
                 href="/signin"
-                className="ml-4 px-5 py-2 rounded-lg bg-gradient-to-r from-pink-600 to-rose-600 text-white text-sm font-semibold"
+                className="ml-4 px-5 py-2 rounded-lg bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep text-sm font-semibold"
               >
                 Sign in
               </Link>
@@ -324,19 +326,19 @@ export default function NavBar() {
         {/* Mobile toggle */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden h-9 w-9 flex items-center justify-center rounded-lg hover:bg-pink-100"
+          className="md:hidden h-9 w-9 flex items-center justify-center rounded-lg hover:bg-jewel-100"
         >
           {mobileMenuOpen ? (
-            <X className="h-5 w-5 text-gray-900" />
+            <X className="h-5 w-5 text-jewel-900" />
           ) : (
-            <Menu className="h-5 w-5 text-gray-900" />
+            <Menu className="h-5 w-5 text-jewel-900" />
           )}
         </button>
       </div>
 
       {/* Mobile menu */}
       {mobileMenuOpen && !loading && (
-        <div className="md:hidden bg-white/95 border-t border-pink-200 px-4 py-4">
+        <div className="md:hidden bg-jewel-50/95 border-t border-jewel-400/20 px-4 py-4">
           <div className="mb-2">
             <NavItem href="/" label="Home" Icon={Home} />
             <NavItem href="/contact" label="Contact" Icon={Phone} />
@@ -344,7 +346,7 @@ export default function NavBar() {
           </div>
           {user ? (
             <>
-              <div className="h-px bg-pink-200 my-2" />
+              <div className="h-px bg-jewel-400/30 my-2" />
               <div className="mb-2">
                 <NavItem href="/family" label="Family" Icon={Users} />
                 <NavItem href="/medical" label="Medical" Icon={Stethoscope} />
@@ -357,7 +359,7 @@ export default function NavBar() {
                 />
                 <NavItem href="/chat" label="Chat" Icon={MessageSquare} />
               </div>
-              <div className="h-px bg-pink-200 my-2" />
+              <div className="h-px bg-jewel-400/30 my-2" />
               <Link
                 href="/notifications"
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"
@@ -365,7 +367,7 @@ export default function NavBar() {
                 <div className="relative">
                   <BellPlus className="h-4 w-4" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white bg-pink-600 rounded-full">
+                    <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white bg-jewel-ruby rounded-full">
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
@@ -378,7 +380,7 @@ export default function NavBar() {
                   localStorage.removeItem("token");
                   router.push("/signin");
                 }}
-                className="block w-full mt-3 py-2 rounded-lg bg-gradient-to-r from-pink-600 to-rose-600 text-white"
+                className="block w-full mt-3 py-2 rounded-lg bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep"
               >
                 Sign out
               </button>
@@ -386,7 +388,7 @@ export default function NavBar() {
           ) : (
             <Link
               href="/signin"
-              className="block text-center mt-3 py-2 rounded-lg bg-gradient-to-r from-pink-600 to-rose-600 text-white"
+              className="block text-center mt-3 py-2 rounded-lg bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep"
             >
               Sign in
             </Link>

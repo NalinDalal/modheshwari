@@ -1,26 +1,21 @@
-// Color tokens following a 60-30-10 approach and semantic usage.
-// These are exported as raw hex strings so callers can use them in CSS-in-JS
-// or inline styles if desired. Tailwind utility classes remain the primary
-// styling mechanism in the repo, but tokens make it easier to keep colors
-// consistent across components.
-
 const colors = {
-  // Dominant (60%) - Neutral base
-  neutral100: "#F9FAFB",
-  neutral900: "#0B0F19",
+  neutral100: "#fafaf5",
+  neutral900: "#1c1917",
 
-  // Brand (30%)
-  brand500: "#3B82F6", // blue-500
-  brand600: "#2563EB", // blue-600
-  brand700: "#1D4ED8", // blue-700
+  brand500: "#c9a227",
+  brand600: "#a88420",
+  brand700: "#7d6549",
 
-  // Accent / Danger (10%) - CTAs, destructive
-  danger500: "#DC2626", // red-600
-  danger600: "#B91C1C", // red-700
+  danger500: "#be123c",
+  danger600: "#9f1239",
 
-  // Support
   white: "#FFFFFF",
   black: "#000000",
+
+  jewelGold: "#c9a227",
+  jewelEmerald: "#047857",
+  jewelRuby: "#be123c",
+  jewelSaffron: "#ea580c",
 };
 
 export default colors;

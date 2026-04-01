@@ -12,10 +12,6 @@ import {
   Calendar,
 } from "lucide-react";
 
-/**
- * Performs  home operation.
- * @returns {React.JSX.Element} Description of return value
- */
 export default function Home() {
   const router = useRouter();
 
@@ -66,69 +62,60 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Pink Glow Background */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: `
-            radial-gradient(125% 125% at 50% 90%, #ffffff 40%, #ec4899 100%)
-          `,
-          backgroundSize: "100% 100%",
-        }}
-      />
+      <div className="absolute inset-0 bg-jewel-50" />
 
-      <main className="relative z-10 flex flex-col items-center px-4 sm:px-6 py-12 sm:py-16">
-        {/* Badge */}
+      <div className="absolute top-20 left-10 w-72 h-72 bg-jewel-gold/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-40 right-10 w-96 h-96 bg-jewel-emerald/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-jewel-goldLight/5 rounded-full blur-2xl" />
+
+      <main className="relative z-10 flex flex-col items-center px-4 sm:px-6 py-16 sm:py-24">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-50 border border-pink-200 backdrop-blur-sm mb-8"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-jewel-100/60 border border-jewel-400/30 backdrop-blur-sm mb-10"
         >
-          <Sparkles className="w-4 h-4 text-pink-600" />
-          <span className="text-sm text-gray-700">
+          <Sparkles className="w-4 h-4 text-jewel-500" />
+          <span className="text-sm text-jewel-700 font-medium">
             Trusted by Modheshwari Community
           </span>
         </motion.div>
 
-        {/* Hero Section */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-5xl sm:text-7xl font-bold tracking-tight text-center max-w-5xl"
+          className="text-5xl sm:text-7xl font-display font-bold tracking-tight text-center max-w-5xl"
         >
-          <span className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-jewel-900 via-jewel-800 to-jewel-900 bg-clip-text text-transparent">
             Manage Your Family
           </span>
           <br />
-          <span className="bg-gradient-to-r from-pink-600 via-pink-500 to-rose-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-jewel-gold via-jewel-goldLight to-jewel-500 bg-clip-text text-transparent">
             Heritage, Digitally
           </span>
         </motion.h1>
 
-        {/* Subtext */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-6 max-w-2xl text-lg sm:text-xl text-gray-700 text-center leading-relaxed"
+          className="mt-6 max-w-2xl text-lg sm:text-xl text-jewel-700 text-center leading-relaxed"
         >
           A secure, private platform for community leaders and families to
           organize records, manage access, and stay connected across
           generations.
         </motion.p>
 
-        {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-10 flex flex-col sm:flex-row gap-4"
+          className="mt-12 flex flex-col sm:flex-row gap-4"
         >
           <button
             onClick={() => router.push("/signin")}
-            className="group relative px-8 py-4 bg-gradient-to-r from-pink-600 to-rose-600 rounded-xl font-semibold text-white shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all duration-300 hover:scale-105"
+            className="group relative px-8 py-4 bg-gradient-to-r from-jewel-gold to-jewel-500 rounded-xl font-semibold text-jewel-deep shadow-lg shadow-jewel-gold/25 hover:shadow-jewel-gold/40 transition-all duration-300 hover:scale-105"
           >
             <span className="flex items-center gap-2">
               Get Started
@@ -142,13 +129,12 @@ export default function Home() {
                 .getElementById("features")
                 ?.scrollIntoView({ behavior: "smooth" })
             }
-            className="px-8 py-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl font-semibold text-gray-900 hover:bg-white transition-all duration-300"
+            className="px-8 py-4 bg-jewel-100/60 backdrop-blur-sm border border-jewel-400/30 rounded-xl font-semibold text-jewel-deep hover:bg-jewel-100 transition-all duration-300"
           >
             Learn More
           </button>
         </motion.div>
 
-        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -157,15 +143,14 @@ export default function Home() {
         >
           {stats.map((stat, idx) => (
             <div key={idx} className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
+              <div className="text-3xl sm:text-4xl font-display font-bold bg-gradient-to-r from-jewel-gold to-jewel-500 bg-clip-text text-transparent">
                 {stat.value}
               </div>
-              <div className="mt-2 text-sm text-gray-600">{stat.label}</div>
+              <div className="mt-2 text-sm text-jewel-600">{stat.label}</div>
             </div>
           ))}
         </motion.div>
 
-        {/* Features Grid */}
         <section id="features" className="mt-32 w-full max-w-7xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -174,10 +159,10 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl sm:text-5xl font-display font-bold text-jewel-900 mb-4">
               Everything You Need
             </h2>
-            <p className="text-gray-700 text-lg">
+            <p className="text-jewel-600 text-lg">
               Powerful features designed for community and family management
             </p>
           </motion.div>
@@ -190,20 +175,20 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className="group relative p-6 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl hover:border-pink-300 hover:shadow-lg transition-all duration-300 hover:scale-105"
+                className="group relative p-6 bg-jewel-50/60 backdrop-blur-sm border border-jewel-400/20 rounded-2xl hover:border-jewel-gold/40 hover:shadow-jewel transition-all duration-300 hover:scale-[1.02]"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-br from-jewel-gold/5 to-jewel-emerald/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 <div className="relative">
-                  <div className="inline-flex p-3 bg-gradient-to-br from-pink-100 to-rose-100 rounded-xl mb-4">
-                    <feature.icon className="w-6 h-6 text-pink-600" />
+                  <div className="inline-flex p-3 bg-gradient-to-br from-jewel-200 to-jewel-100 rounded-xl mb-4">
+                    <feature.icon className="w-6 h-6 text-jewel-600" />
                   </div>
 
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-jewel-900 mb-2">
                     {feature.title}
                   </h3>
 
-                  <p className="text-gray-700 text-sm leading-relaxed">
+                  <p className="text-jewel-600 text-sm leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
@@ -212,58 +197,58 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Testimonial Section */}
         <section className="mt-32 w-full max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="relative p-8 sm:p-12 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-3xl shadow-lg"
+            className="relative p-8 sm:p-12 bg-jewel-50/60 backdrop-blur-sm border border-jewel-400/20 rounded-3xl shadow-jewel"
           >
             <div className="absolute -top-6 left-8">
-              <div className="text-6xl text-pink-300">&quot;</div>
+              <div className="text-6xl text-jewel-300">&quot;</div>
             </div>
 
-            <p className="text-lg sm:text-xl text-gray-800 leading-relaxed mb-6 italic">
+            <p className="text-lg sm:text-xl text-jewel-800 leading-relaxed mb-6 italic">
               This platform has transformed how we manage our community records.
               The role-based access and approval workflows make everything
               seamless and secure. Highly recommended for any community leader!
             </p>
 
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-rose-500" />
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-jewel-gold to-jewel-500" />
               <div>
-                <div className="font-semibold text-gray-900">Rajesh Sharma</div>
-                <div className="text-sm text-gray-600">Community Head</div>
+                <div className="font-semibold text-jewel-900">
+                  Rajesh Sharma
+                </div>
+                <div className="text-sm text-jewel-600">Community Head</div>
               </div>
             </div>
           </motion.div>
         </section>
 
-        {/* CTA Section */}
         <section className="mt-32 w-full max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="relative p-12 bg-gradient-to-br from-pink-100/80 to-rose-100/80 backdrop-blur-sm border border-pink-200 rounded-3xl text-center overflow-hidden shadow-lg"
+            className="relative p-12 bg-gradient-to-br from-jewel-100/80 to-jewel-200/80 backdrop-blur-sm border border-jewel-gold/30 rounded-3xl text-center overflow-hidden shadow-jewel"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-pink-200/20 to-rose-200/20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-jewel-gold/10 to-jewel-emerald/10" />
 
             <div className="relative">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl sm:text-4xl font-display font-bold text-jewel-900 mb-4">
                 Ready to Get Started?
               </h2>
-              <p className="text-gray-700 mb-8 max-w-2xl mx-auto">
+              <p className="text-jewel-700 mb-8 max-w-2xl mx-auto">
                 Join hundreds of families already managing their heritage with
                 our platform
               </p>
 
               <button
                 onClick={() => router.push("/signin")}
-                className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-pink-600 to-rose-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
               >
                 Sign In Now
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -272,8 +257,7 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Footer */}
-        <footer className="mt-24 text-center text-gray-600 text-sm pb-8">
+        <footer className="mt-24 text-center text-jewel-600 text-sm pb-8">
           <p>© 2026 Modheshwari Community Platform. All rights reserved.</p>
         </footer>
       </main>
