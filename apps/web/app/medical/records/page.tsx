@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { API_BASE } from "../../../lib/config";
 
 type MedicalRecord = {
   id: string;
@@ -49,7 +50,10 @@ export default function MedicalRecordsPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/medical-records");
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/medical-records`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!res.ok) throw new Error("Failed to load records");
 
       const json = await res.json();
@@ -60,7 +64,7 @@ export default function MedicalRecordsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [API_BASE]);
 
  
 useEffect(() => {
@@ -70,15 +74,20 @@ useEffect(() => {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    setSubmitting(true);
     try {
-      const res = await fetch("/api/medical-records", {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/medical-records`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(form),
       });
       if (!res.ok) {
         throw new Error("Failed to create record");
-      } 
+      }
 
       setForm(EMPTY_FORM);
       await loadRecords();

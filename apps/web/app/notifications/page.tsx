@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 
 import useNotifications from "../../hooks/useNotifications";
+import { API_BASE } from "../../lib/config";
 
 /**
  * Single notification item returned from backend.
@@ -38,9 +39,6 @@ type Me = {
 type Priority = "low" | "normal" | "high" | "urgent";
 type ReadFilter = "all" | "read" | "unread";
 type SortBy = "newest" | "oldest" | "unread-first";
-
-const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
 
 function getToken(): string | null {
     if (typeof window === "undefined") return null;

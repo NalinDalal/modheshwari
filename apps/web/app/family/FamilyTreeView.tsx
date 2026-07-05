@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, ChangeEvent } from "react";
 import { Network } from "vis-network";
 import { Plus, Loader } from "lucide-react";
+import { API_BASE } from "../../lib/config";
 
 interface GraphData {
   nodes: Array<{
@@ -42,9 +43,6 @@ export default function FamilyTreeView() {
     reciprocal: true,
   });
   const [showRelationshipForm, setShowRelationshipForm] = useState(false);
-
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
 
   // Fetch family tree
   const fetchFamilyTree = async () => {

@@ -12,7 +12,7 @@ export default function ProtectedPage() {
 
     useEffect(() => {
         const t = setTimeout(() => {
-            router.push("/login");
+            router.push("/signin");
         }, 2500);
 
         return () => clearTimeout(t);

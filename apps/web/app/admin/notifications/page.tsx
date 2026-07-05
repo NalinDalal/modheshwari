@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { API_BASE } from "../../../lib/config";
 
 const CHANNELS = ["IN_APP", "EMAIL", "SMS", "PUSH"] as const;
 const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
@@ -18,6 +20,31 @@ const ROLES = [
  * @returns {any} Description of return value
  */
 export default function AdminNotifications() {
+    const router = useRouter();
+    const [authorized, setAuthorized] = useState(false);
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            router.push("/signin");
+            return;
+        }
+        try {
+            const parts = token.split(".");
+            if (parts.length >= 2) {
+                const payload = JSON.parse(atob(parts[1]!));
+                const role = payload.role || payload.userRole;
+                if (["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"].includes(role)) {
+                    setAuthorized(true);
+                } else {
+                    router.push("/me");
+                }
+            }
+        } catch {
+            router.push("/signin");
+        }
+    }, [router]);
+
     const [message, setMessage] = useState("");
     const [subject, setSubject] = useState("");
     const [selectedChannels, setSelectedChannels] = useState<string[]>([
@@ -31,8 +58,6 @@ export default function AdminNotifications() {
         error?: string;
         message?: string;
     } | null>(null);
-
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
     const toggleChannel = (ch: string) => {
         setSelectedChannels((prev) =>
@@ -71,6 +96,8 @@ export default function AdminNotifications() {
             setSending(false);
         }
     };
+
+    if (!authorized) return null;
 
     return (
         <DreamySunsetBackground className="px-6 py-10">

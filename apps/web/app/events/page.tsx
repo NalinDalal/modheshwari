@@ -1,13 +1,7 @@
 import EventsListClient from "./EventsListClient";
 
-// Server component: fetch initial events for the current month (approved) and
-// pass as initial data to the client component which will use SWR for caching.
-/**
- * Performs  events page operation.
- * @returns {Promise<React.JSX.Element>} Description of return value
- */
 export default async function EventsPage() {
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
 
   // Fetch approved events as initial payload. Keep response shape similar to
   // the client-side API (pagination wrapper) so SWR can directly use it as fallback.

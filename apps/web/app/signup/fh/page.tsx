@@ -13,6 +13,7 @@ import {
   Shield,
 } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { API_BASE } from "../../../lib/config";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function SignupPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || "http://localhost:3001/api"}/signup/familyhead`,
+        `${API_BASE}/signup/familyhead`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -41,7 +42,6 @@ export default function SignupPage() {
       );
 
       const data = await res.json();
-      console.log("Signup response:", data);
 
       if (data.status === "success") {
         alert("Signup successful!");

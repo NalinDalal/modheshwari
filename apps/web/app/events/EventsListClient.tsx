@@ -16,6 +16,7 @@ import { motion } from "framer-motion";
 import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/notAuthenticated";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { API_BASE } from "../../lib/config";
 
 type Event = {
   id: string;
@@ -29,13 +30,11 @@ type Event = {
   createdAt: string;
 };
 
-const fetcher = /**
- * Executes fetcher operation.
- * @param {string} url - Description of url
- * @returns {Promise<any>} Description of return value
- */
-async (url: string) => {
-  const res = await fetch(url);
+const fetcher = async (url: string) => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
   if (!res.ok) throw new Error("Failed to fetch");
   return res.json();
 };
@@ -52,8 +51,6 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
   const [userRole, setUserRole] = useState<string | null>(null);
   const [moderatingId, setModeratingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "approved" | "pending">("approved");
-
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
 
   useEffect(() => {
     setHydrated(true);

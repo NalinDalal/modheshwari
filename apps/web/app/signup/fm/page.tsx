@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@repo/ui/button";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { API_BASE } from "../../../lib/config";
 
 /**
  * Performs  member signup page operation.
@@ -26,7 +27,7 @@ export default function MemberSignupPage() {
 
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/signup/member`,
+                `${API_BASE}/signup/member`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

@@ -5,6 +5,7 @@ import { Search, Loader2, X, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { API_BASE } from "../../lib/config";
 
 /**
  * Represents a single search result item.
@@ -61,11 +62,7 @@ export default function SearchInput({
   const cacheRef = useRef<Map<string, SearchResult[]>>(new Map());
 
   // Normalized API base
-  const base =
-    (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001").replace(
-      /\/$/,
-      "",
-    ) + "/api/search";
+  const base = API_BASE.replace(/\/$/, "") + "/search";
 
   // Build query string based on filter mode
   const buildQuery = (input: string, mode: FilterMode): string => {
@@ -116,8 +113,10 @@ export default function SearchInput({
 
     setLoading(true);
 
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     fetch(`${base}?q=${encodeURIComponent(query)}`, {
       signal: controller.signal,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then(async (res) => {
         if (!res.ok) throw new Error("Search failed");

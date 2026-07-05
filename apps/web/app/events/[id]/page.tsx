@@ -19,6 +19,7 @@ import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/notAuthenticated";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 import apiFetch from "../../../lib/api";
+import { API_BASE } from "../../../lib/config";
 
 interface EventDetails {
   id: string;
@@ -78,9 +79,6 @@ export default function EventDetailsPage() {
   const [isRegistered, setIsRegistered] = useState(false);
   const [moderating, setModerating] = useState(false);
   const [moderationRemarks, setModerationRemarks] = useState("");
-
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
 
   useEffect(() => {
     setHydrated(true);
@@ -571,8 +569,7 @@ export default function EventDetailsPage() {
 
                 <button
                   onClick={() => {
-                    const url = `/events/${event.id}/edit`;
-                    router.push(url);
+                    alert("Event editing coming soon. Contact an admin for changes.");
                   }}
                   className="px-4 py-2 bg-white/5 text-sm rounded-lg border border-white/10 text-gray-200 hover:bg-white/7"
                 >

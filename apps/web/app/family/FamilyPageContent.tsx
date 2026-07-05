@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/notAuthenticated";
 import { MemberCard } from "@repo/ui/memberCard";
+import { API_BASE } from "../../lib/config";
 
 /**
  * Type for a single family member.
@@ -46,9 +47,6 @@ export default function FamilyPageContent() {
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
-
   // Hydrate token from localStorage on client
   useEffect(() => {
     setHydrated(true);
@@ -71,7 +69,7 @@ export default function FamilyPageContent() {
         );
 
         if (res.status === 401) {
-          router.push(`/login?next=/family`);
+          router.push(`/signin?next=/family`);
           return;
         }
 

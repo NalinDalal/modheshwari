@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NotAuthenticated } from "@repo/ui/notAuthenticated";
+import { API_BASE } from "../../lib/config";
 
 type Conversation = {
   id: string;
@@ -39,9 +40,9 @@ export default function ChatPage() {
   const pendingAcks = useRef<Map<string, number>>(new Map());
   const typingTimer = useRef<number | null>(null);
   const pendingAckTimeoutMs = 8000;
-
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 5;
 
   function getToken() {
     if (typeof window === "undefined") return null;
@@ -81,27 +82,22 @@ export default function ChatPage() {
     setFamilyChat(js.data.familyChat || null);
   }, [API_BASE]);
 
-  useEffect(() => {
-    setHydrated(true);
-    getToken();
-  }, []);
-
-  useEffect(() => {
-    void fetchChats();
-    // connect WS
+  const connectWs = useCallback(() => {
     const token = getToken();
+    if (!token) return;
+
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = `${proto}://${window.location.hostname}:3002/`;
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
+
     ws.addEventListener("open", () => {
-      if (token) {
-        try {
-          ws.send(JSON.stringify({ type: "auth", token }));
-        } catch (e) {
-          console.error("Failed to send auth message", e);
-        }
+      reconnectAttempts.current = 0;
+      try {
+        ws.send(JSON.stringify({ type: "auth", token }));
+      } catch (e) {
+        console.error("Failed to send auth message", e);
       }
     });
 
@@ -110,7 +106,6 @@ export default function ChatPage() {
         const data = JSON.parse(ev.data);
         if (data.type === "chat_message") {
           setMessages((m) => {
-            // if incoming message has clientId that matches local optimistic, replace it
             if (data.message?.clientId) {
               return m.map((msg) =>
                 msg.clientId === data.message.clientId
@@ -120,10 +115,8 @@ export default function ChatPage() {
             }
             return [...m, data.message];
           });
-          // scroll
           setTimeout(() => scrollToBottom(), 50);
         } else if (data.type === "ack") {
-          // ack for sent message -> reconcile optimistic message using clientId
           if (data.clientId) {
             setMessages((ms) =>
               ms.map((msg) =>
@@ -142,7 +135,6 @@ export default function ChatPage() {
               clearTimeout(to);
               pendingAcks.current.delete(data.clientId);
             }
-            // scroll
             setTimeout(() => scrollToBottom(), 50);
           }
         } else if (data.type === "typing") {
@@ -162,11 +154,30 @@ export default function ChatPage() {
       }
     });
 
-    return () => {
+    ws.addEventListener("close", () => {
+      wsRef.current = null;
+      if (reconnectAttempts.current < maxReconnectAttempts) {
+        const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 30000);
+        reconnectAttempts.current++;
+        reconnectTimer.current = setTimeout(connectWs, delay);
+      }
+    });
+
+    ws.addEventListener("error", () => {
       ws.close();
+    });
+  }, []);
+
+  useEffect(() => {
+    void fetchChats();
+    connectWs();
+
+    return () => {
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      wsRef.current?.close();
       wsRef.current = null;
     };
-  }, [fetchChats]);
+  }, [fetchChats, connectWs]);
 
   async function loadConversation(conv: Conversation) {
     setSelected(conv);

@@ -10,6 +10,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { API_BASE } from "../../lib/config";
 
 interface User {
     id: string;
@@ -84,7 +85,7 @@ export default function Medical() {
         async function loadUserProfile() {
             try {
                 const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/me`,
+                    `${API_BASE}/me`,
                     {
                         headers: { Authorization: `Bearer ${token}` },
                     },
@@ -138,7 +139,7 @@ export default function Medical() {
             const enumFormat = convertToEnumFormat(query);
 
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api"}/medical/search?bloodGroup=${encodeURIComponent(enumFormat)}`,
+                `${API_BASE}/medical/search?bloodGroup=${encodeURIComponent(enumFormat)}`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 },
@@ -213,7 +214,7 @@ export default function Medical() {
                         </div>
                     </div>
                     <button
-                        onClick={() => router.push("/profile")}
+                        onClick={() => router.push("/me/edit")}
                         className="mt-4 text-sm text-blue-600 hover:text-blue-700 transition font-medium"
                     >
                         Update Medical Info →

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Package, Plus, Check, X, Loader2, AlertCircle } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { API_BASE } from "../../lib/config";
 
 /**
  * Represents a single resource request.
@@ -72,8 +73,6 @@ function getStatusColor(status: string): string {
     }
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
-
 /**
  * Resource Requests page component.
  * - Displays a form for creating resource requests.
@@ -99,11 +98,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
     async function loadCurrentUser(): Promise<void> {
         try {
             const token = getToken();
-            const url = API_BASE
-                ? `${API_BASE}/api/me`
-                : "http://localhost:3001/api/me";
-
-            const res = await fetch(url, {
+            const res = await fetch(`${API_BASE}/me`, {
                 headers: token ? { Authorization: `Bearer ${token}` } : undefined,
             });
             if (!res.ok) return;
@@ -121,7 +116,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
         setLoading(true);
         try {
             const token = getToken();
-            const res = await fetch("http://localhost:3001/api/resource-requests", {
+            const res = await fetch(`${API_BASE}/resource-requests`, {
                 headers: token ? { Authorization: `Bearer ${token}` } : undefined,
             });
             if (!res.ok) {
@@ -145,7 +140,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
         const token = getToken();
 
         try {
-            const res = await fetch("http://localhost:3001/api/resource-requests", {
+            const res = await fetch(`${API_BASE}/resource-requests`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -176,7 +171,7 @@ export default function ResourceRequestsPage(): React.JSX.Element {
         const token = getToken();
         try {
             const res = await fetch(
-                `http://localhost:3001/api/resource-requests/${id}/review`,
+                `${API_BASE}/resource-requests/${id}/review`,
                 {
                     method: "POST",
                     headers: {
