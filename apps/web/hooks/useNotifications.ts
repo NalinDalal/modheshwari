@@ -26,6 +26,9 @@ export default function useNotifications(): UseNotificationsHook {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [pulse, setPulse] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 5;
 
   const mergePersisted = (prev: Notification[], fetched: Notification[]) => {
     const next = [...fetched];
@@ -81,44 +84,58 @@ export default function useNotifications(): UseNotificationsHook {
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return;
 
-    const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${proto}://${window.location.hostname}:3002/`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    const connectWs = () => {
+      const proto = window.location.protocol === "https:" ? "wss" : "ws";
+      const wsUrl = `${proto}://${window.location.hostname}:3002/`;
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
-    ws.addEventListener("open", () => {
-      try {
-        ws.send(JSON.stringify({ type: "auth", token }));
-      } catch {
-        // ignore
-      }
-    });
-
-    ws.addEventListener("message", (ev) => {
-      try {
-        const data = JSON.parse(ev.data);
-        if (data?.type === "notification") {
-          const incoming: Notification = data.notification;
-          setNotifications((prev) => [incoming, ...prev]);
-          setUnreadCount((c) => c + 1);
-          setPulse(true);
-          setTimeout(() => setPulse(false), 700);
+      ws.addEventListener("open", () => {
+        reconnectAttempts.current = 0;
+        try {
+          ws.send(JSON.stringify({ type: "auth", token }));
+        } catch {
+          // ignore
         }
-        if (data?.type === "notification_read") {
-          // server may broadcast read events; refresh full list
-          void fetchNotifications();
-        }
-      } catch {
-        // ignore parse errors
-      }
-    });
+      });
 
-    ws.addEventListener("error", () => {
-      // ignore for now
-    });
+      ws.addEventListener("message", (ev) => {
+        try {
+          const data = JSON.parse(ev.data);
+          if (data?.type === "notification") {
+            const incoming: Notification = data.notification;
+            setNotifications((prev) => [incoming, ...prev]);
+            setUnreadCount((c) => c + 1);
+            setPulse(true);
+            setTimeout(() => setPulse(false), 700);
+          }
+          if (data?.type === "notification_read") {
+            void fetchNotifications();
+          }
+        } catch {
+          // ignore parse errors
+        }
+      });
+
+      ws.addEventListener("close", () => {
+        wsRef.current = null;
+        if (reconnectAttempts.current < maxReconnectAttempts) {
+          const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 30000);
+          reconnectAttempts.current++;
+          reconnectTimer.current = setTimeout(connectWs, delay);
+        }
+      });
+
+      ws.addEventListener("error", () => {
+        ws.close();
+      });
+    };
+
+    connectWs();
 
     return () => {
-      ws.close();
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      wsRef.current?.close();
       wsRef.current = null;
     };
   }, [fetchNotifications]);
