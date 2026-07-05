@@ -1,18 +1,11 @@
-import { readFileSync } from "fs";
+import { readFile } from "fs/promises";
 import { join } from "path";
 import yaml from "js-yaml";
 
-/**
- * Performs  g e t operation.
- * @returns {Promise<Response>} Description of return value
- */
 export async function GET() {
   try {
-    // Read the OpenAPI YAML file from the repo root
     const yamlPath = join(process.cwd(), "../../openapi.yaml");
-    const yamlContent = readFileSync(yamlPath, "utf-8");
-
-    // Parse YAML to JSON
+    const yamlContent = await readFile(yamlPath, "utf-8");
     const spec = yaml.load(yamlContent);
 
     return new Response(JSON.stringify(spec), {
