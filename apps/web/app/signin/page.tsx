@@ -197,12 +197,9 @@ export default function SigninPage() {
           </div>
 
           <div className="mt-4 text-center">
-            <a
-              href="/forgot-password"
-              className="text-xs text-jewel-500 hover:text-jewel-600 transition-colors"
-            >
-              Forgot your password?
-            </a>
+            <span className="text-xs text-jewel-400">
+              Forgot your password? Contact your admin.
+            </span>
           </div>
         </div>
 
