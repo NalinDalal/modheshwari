@@ -6,12 +6,16 @@ import { join } from "path";
 // Load .env from monorepo root if not already loaded
 config({ path: join(process.cwd(), "../../.env") });
 
-// Check for secret *after* loading .env
+// Check for secrets *after* loading .env
 if (!process.env.JWT_SECRET) {
   throw new Error("Missing JWT_SECRET in environment variables");
 }
+if (!process.env.JWT_REFRESH_SECRET) {
+  throw new Error("Missing JWT_REFRESH_SECRET in environment variables");
+}
 
 const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 
 export interface AuthPayload {
   userId?: string;
@@ -21,16 +25,16 @@ export interface AuthPayload {
 }
 
 /**
- * Signs a JWT token for the given payload.
+ * Signs an access JWT token for the given payload.
  * @param payload - The data to embed in the token.
- * @returns A signed JWT valid for 7 days.
+ * @returns A signed JWT valid for 15 minutes.
  */
 export function signJWT(payload: AuthPayload) {
   // Ensure compatibility: include both `userId` and `id` fields when possible.
   const p: Record<string, unknown> = { ...(payload as Record<string, unknown>) };
   if (payload.userId && !p.id) p.id = payload.userId;
   if (payload.id && !p.userId) p.userId = payload.id;
-  return jwt.sign(p, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(p, JWT_SECRET, { expiresIn: "15m" });
 }
 
 /**
@@ -65,7 +69,7 @@ export async function verifyAuth(req: Request): Promise<AuthPayload | null> {
  * @returns A signed JWT valid for 7 days (refresh token).
  */
 export function signRefreshJWT(payload: AuthPayload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: "7d" });
 }
 
 /**
@@ -75,7 +79,7 @@ export function signRefreshJWT(payload: AuthPayload) {
  */
 export function verifyRefreshJWT(token: string): AuthPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as AuthPayload;
+    return jwt.verify(token, JWT_REFRESH_SECRET) as AuthPayload;
   } catch {
     return null;
   }

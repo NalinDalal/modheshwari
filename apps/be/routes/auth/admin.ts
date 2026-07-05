@@ -107,7 +107,7 @@ export async function handleAdminSignup(
     });
     const refreshToken = signRefreshJWT({ userId: user.id });
     const headers = new Headers();
-    headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800`);
+    headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800; Secure`);
     return new Response(
       JSON.stringify({
         user: {
@@ -166,7 +166,7 @@ export async function handleAdminLogin(
     });
     const refreshToken = signRefreshJWT({ userId: user.id });
     const headers = new Headers();
-    headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800`);
+    headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800; Secure`);
     return new Response(
       JSON.stringify({
         token,

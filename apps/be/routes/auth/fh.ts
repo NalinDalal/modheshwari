@@ -87,7 +87,7 @@ export async function handleFHLogin(
     const token = signJWT({ userId: user.id, role: user.role });
     const refreshToken = signRefreshJWT({ userId: user.id });
     const headers = new Headers();
-    headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800`);
+    headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800; Secure`);
     return new Response(
       JSON.stringify({
         token,
@@ -208,7 +208,7 @@ export async function handleFHSignup(
     const token = signJWT({ userId: user.id, role: user.role });
     const refreshToken = signRefreshJWT({ userId: user.id });
     const headers = new Headers();
-    headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800`);
+    headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800; Secure`);
     console.log(
       `Signup successful: ${user.name} (${user.email}) — Family: ${family.name} (${family.id})`,
     );
