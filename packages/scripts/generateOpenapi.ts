@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync } from "fs";
+import { writeFileSync } from "fs";
 import { join } from "path";
-import { Project, SyntaxKind } from "ts-morph";
+import { Project, SyntaxKind, VariableDeclaration } from "ts-morph";
 
 const ROOT = process.cwd();
 
@@ -10,8 +10,8 @@ interface RouteDefinition {
   handler: string;
   summary?: string;
   description?: string;
-  requestBody?: any;
-  responses?: any;
+  requestBody?: Record<string, unknown>;
+  responses?: Record<string, unknown>;
   security?: boolean;
 }
 
@@ -33,7 +33,7 @@ const staticTable = indexFile.getVariableDeclaration("staticRouteTable");
  * @param {boolean} requireAuth - Description of requireAuth
  * @returns {void} Description of return value
  */
-function extractRoutesFromTable(tableDecl: any, requireAuth = true) {
+function extractRoutesFromTable(tableDecl: VariableDeclaration, requireAuth = true) {
   const initializer = tableDecl?.getInitializer();
   if (!initializer || initializer.getKind() !== SyntaxKind.ArrayLiteralExpression) {
     return;
@@ -191,7 +191,7 @@ const dynamicRoutes: RouteDefinition[] = [
 routes.push(...dynamicRoutes);
 
 // Generate OpenAPI paths
-const paths: any = {};
+const paths: Record<string, Record<string, Record<string, unknown>>> = {};
 
 for (const route of routes) {
   const { path, method, handler, security } = route;
@@ -332,7 +332,7 @@ const specTemplate = {
 };
 
 // Write updated spec
-const yaml = require("js-yaml");
+import yaml from "js-yaml";
 const specYaml = yaml.dump(specTemplate, { lineWidth: 120 });
 writeFileSync(join(ROOT, "openapi.yaml"), specYaml, "utf-8");
 
