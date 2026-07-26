@@ -1,10 +1,6 @@
 import EventsListClient from "./EventsListClient";
 
 export default async function EventsPage() {
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
-
-  // Fetch approved events as initial payload. Keep response shape similar to
-  // the client-side API (pagination wrapper) so SWR can directly use it as fallback.
   try {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -13,7 +9,7 @@ export default async function EventsPage() {
     const monthEnd = monthEndDate.toISOString();
 
     const res = await fetch(
-      `${API_BASE}/events?status=APPROVED&startDate=${encodeURIComponent(monthStart)}&endDate=${encodeURIComponent(monthEnd)}&limit=500`,
+      `/api/events?status=APPROVED&startDate=${encodeURIComponent(monthStart)}&endDate=${encodeURIComponent(monthEnd)}&limit=500`,
       { next: { revalidate: 60 } },
     );
 

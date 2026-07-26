@@ -26,8 +26,7 @@ export default function CreateEventPage() {
     venue: "",
   });
 
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL;
+  const API_BASE = "/api";
 
   useEffect(() => {
     setHydrated(true);

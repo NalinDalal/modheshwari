@@ -86,7 +86,7 @@ export default function useNotifications(): UseNotificationsHook {
 
     const connectWs = () => {
       const proto = window.location.protocol === "https:" ? "wss" : "ws";
-      const wsUrl = `${proto}://${window.location.hostname}:3002/`;
+      const wsUrl = `${proto}://${window.location.host}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 

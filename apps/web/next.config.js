@@ -47,8 +47,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  */
 const nextConfig = {
   reactStrictMode: true,
-  env: {
-    API_BASE_URL: "http://localhost:3001/api",
+  async rewrites() {
+    const backendUrl = process.env.API_BACKEND_URL || "http://localhost:3001";
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${backendUrl}/api/:path*`,
+      },
+    ];
   },
   turbopack: {
     root: path.resolve(__dirname, "..", ".."),
