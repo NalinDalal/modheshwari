@@ -1,4 +1,5 @@
 import prisma from "@modheshwari/db";
+
 import indexer from "./elasticIndexer";
 
 // Register Prisma middleware to index users and events asynchronously.

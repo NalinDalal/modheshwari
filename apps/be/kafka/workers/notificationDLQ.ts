@@ -1,5 +1,6 @@
 import type { RedisClientType } from 'redis';
 import prisma from '@modheshwari/db';
+
 import getRedisClient from '../../lib/redisClient';
 import { logger } from '../../lib/logger';
 import { notificationDlqSize, errorCounter } from '../../lib/metrics';
@@ -14,7 +15,7 @@ const BASE_DELAY_MS = Number(process.env.NOTIFICATION_DLQ_BASE_DELAY_MS || 60 * 
 async function parseEntry(raw: string) {
   try {
     return JSON.parse(raw);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }

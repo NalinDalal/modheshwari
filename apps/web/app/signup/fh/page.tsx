@@ -13,6 +13,7 @@ import {
   Shield,
 } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+
 import { API_BASE } from "../../../lib/config";
 
 export default function SignupPage() {

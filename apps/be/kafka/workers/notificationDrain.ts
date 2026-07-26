@@ -1,12 +1,12 @@
 import type { RedisClientType } from 'redis';
 import prisma from '@modheshwari/db';
+
 import getRedisClient from '../../lib/redisClient';
 import { errorCounter } from '../../lib/metrics';
 import { logger } from '../../lib/logger';
 
 const DLQ_KEY = 'notifications:dlq';
 const NOTIFICATION_KEY_PATTERN = 'notifications:*';
-const BATCH_SIZE = Number(process.env.NOTIFICATION_DRAIN_BATCH_SIZE || 500);
 const SCAN_COUNT = Number(process.env.NOTIFICATION_DRAIN_SCAN_COUNT || 100);
 
 async function parseCached(item: string) {
@@ -23,7 +23,7 @@ export async function drainOnce(redis?: RedisClientType | null) {
   try {
     // Use SCAN to iterate keys matching notifications:*
     // Note: scanIterator is supported by node-redis v4
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     // @ts-ignore - redis types for scanIterator can be complicated in this repo
     for await (const key of client.scanIterator({ MATCH: NOTIFICATION_KEY_PATTERN, COUNT: SCAN_COUNT })) {
       try {
@@ -36,8 +36,8 @@ export async function drainOnce(redis?: RedisClientType | null) {
           // nothing valid to persist; remove key to avoid infinite loop
           try {
             await client.del(key);
-          } catch (e) {
-            logger.warn('Failed to delete invalid notification key', { key, error: String(e) });
+} catch (err) {
+      logger.warn('Failed to delete invalid notification key', { key, error: String(err) });
           }
           continue;
         }

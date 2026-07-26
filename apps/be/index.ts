@@ -17,23 +17,21 @@ import { join } from "path";
 
 import { router } from "./server/router";
 import { logger } from "./lib/logger";
-// Initialize metrics (collectDefaultMetrics called on import)
 import "./lib/metrics";
-// Register prisma -> elasticsearch indexing hooks (if ES configured)
-try {
-    // import lazily so app can still start if dependencies not installed
-    // or environment variables not present during dev
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { registerPrismaIndexHooks } = require("./lib/prisma-index-hooks");
-    registerPrismaIndexHooks();
-    logger.info('Prisma index hooks registered');
-} catch (err) {
-    logger.warn('Prisma index hooks not registered (elastic client may be unavailable)', err);
-}
-
-// Workers
 import startNotificationDrain from "./kafka/workers/notificationDrain";
 import startDLQRetryWorker from "./kafka/workers/notificationDLQ";
+
+async function registerPrismaHooks() {
+    try {
+        const { registerPrismaIndexHooks } = await import("./lib/prisma-index-hooks");
+        registerPrismaIndexHooks();
+        logger.info('Prisma index hooks registered');
+    } catch (err) {
+        logger.warn('Prisma index hooks not registered (elastic client may be unavailable)', err);
+    }
+}
+
+registerPrismaHooks();
 
 // Load environment variables
 config({ path: join(process.cwd(), "../../.env") });

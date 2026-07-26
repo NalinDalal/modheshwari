@@ -64,7 +64,7 @@ export async function runFanoutConsumer() {
     process.on('SIGINT', async () => {
         try {
             if (redis) await redis.disconnect();
-        } catch (_) { }
+        } catch { void 0; }
         process.exit(0);
     });
 }

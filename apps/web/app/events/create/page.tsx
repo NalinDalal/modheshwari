@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import apiFetch from "../../../lib/api";
 import { useRouter } from "next/navigation";
 import { Calendar, MapPin, FileText, ArrowLeft, Loader } from "lucide-react";
 import { NotAuthenticated } from "@repo/ui/notAuthenticated";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+
+import apiFetch from "../../../lib/api";
 
 /**
  * Performs  create event page operation.

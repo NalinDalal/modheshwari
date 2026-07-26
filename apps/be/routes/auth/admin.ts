@@ -6,7 +6,7 @@
 import prisma from "@modheshwari/db";
 import { hashPassword, comparePassword } from "@modheshwari/utils/hash";
 import { signJWT, signRefreshJWT } from "@modheshwari/utils/jwt";
-import { success, failure } from "@modheshwari/utils/response";
+import { failure } from "@modheshwari/utils/response";
 import type { Role as PrismaRole } from "@prisma/client";
 
 import { logger } from "../../lib/logger";

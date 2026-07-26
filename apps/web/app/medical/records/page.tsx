@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+
 import { API_BASE } from "../../../lib/config";
 
 type MedicalRecord = {

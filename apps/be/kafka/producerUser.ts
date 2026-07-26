@@ -36,7 +36,7 @@ async function startUserProducer() {
 
     // Disconnect
     await producer.disconnect();
-  } catch (error) {
+  } catch (_error) {
     process.exit(1);
   }
 }

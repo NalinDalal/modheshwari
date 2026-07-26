@@ -36,22 +36,10 @@ async function getEmailTransporter() {
                 pass: smtpPass,
             },
         });
-    } catch (error) {
+} catch (_error) {
         return null;
     }
-}
-
-/**
- * Escape HTML special characters to prevent XSS
- */
-function escapeHtml(text: string): string {
-    const map: Record<string, string> = {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;",
-    };
+};
     return text.replace(/[&<>"']/g, (char) => map[char] || char);
 }
 
@@ -152,11 +140,11 @@ async function sendEmailWithRetry(
         return false;
     }
 
-    const recipientId = toEmailLogId(recipientEmail);
+    toEmailLogId(recipientEmail);
 
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-            const info = await transporter.sendMail({
+            await transporter.sendMail({
                 from: process.env.SENDER_EMAIL || process.env.SMTP_USER,
                 to: recipientEmail,
                 subject,
@@ -164,7 +152,7 @@ async function sendEmailWithRetry(
             });
 
             return true;
-        } catch (error) {
+        } catch (_error) {
             if (attempt < retries) {
                 // Exponential backoff: 2s, 4s, 8s
                 await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
@@ -190,7 +178,7 @@ export async function startEmailConsumer(): Promise<void> {
     // Verify transporter connection
     try {
         await transporter.verify();
-    } catch (error) {
+    } catch (_error) {
         // SMTP verification failed, continue anyway
     }
 
@@ -220,8 +208,8 @@ export async function startEmailConsumer(): Promise<void> {
                 const { subject, html } = template;
 
                 // Send email with retry logic
-                const success = await sendEmailWithRetry(transporter, event.recipientEmail, subject, html);
-            } catch (error) {
+                await sendEmailWithRetry(transporter, event.recipientEmail, subject, html);
+            } catch (_error) {
                 // Error processing message
             }
         },

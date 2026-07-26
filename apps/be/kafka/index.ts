@@ -26,7 +26,7 @@ async function startKafka() {
 
         // Start consuming messages
         consumer.run({
-            eachMessage: async ({ topic, partition, message }) => {
+            eachMessage: async ({ topic: _topic, partition: _partition, message: _message }) => {
             },
         });
 
@@ -64,7 +64,7 @@ async function startKafka() {
             await consumer.disconnect();
             process.exit(0);
         });
-    } catch (error) {
+    } catch (_error) {
         await producer.disconnect();
         await consumer.disconnect();
         process.exit(1);

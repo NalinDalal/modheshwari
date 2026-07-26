@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NotAuthenticated } from "@repo/ui/notAuthenticated";
+
 import { API_BASE } from "../../lib/config";
 
 type Conversation = {

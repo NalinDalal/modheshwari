@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import apiFetch from "../../lib/api";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 import { useRouter } from "next/navigation";
 import useSWR, { mutate } from "swr";
 import {
@@ -15,8 +15,10 @@ import {
 import { motion } from "framer-motion";
 import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/notAuthenticated";
-import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+
 import { API_BASE } from "../../lib/config";
+import apiFetch from "../../lib/api";
+import apiFetch from "../../lib/api";
 
 type Event = {
   id: string;

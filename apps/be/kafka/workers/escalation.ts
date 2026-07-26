@@ -88,7 +88,7 @@ async function processEscalation() {
 
             processedCount += readyDeliveries.length;
         }
-    } catch (error) {
+    } catch {
         // Error processing escalations
     }
 }
@@ -174,7 +174,7 @@ async function cancelEscalation(notificationId: string) {
                 updatedAt: new Date(),
             },
         });
-    } catch (error) {
+    } catch {
         // Error cancelling escalation
     }
 }
@@ -238,7 +238,7 @@ async function startReadEventConsumer() {
     await readConsumer.subscribe({ topic: "notification.read", fromBeginning: false });
 
     await readConsumer.run({
-        eachMessage: async ({ topic, partition, message }) => {
+        eachMessage: async ({ topic: _topic, partition: _partition, message }) => {
             try {
                 const value = message.value?.toString();
                 if (!value) return;
@@ -249,7 +249,8 @@ async function startReadEventConsumer() {
                 if (notificationId) {
                     await cancelEscalation(notificationId);
                 }
-            } catch (error) {
+            } catch {
+                void 0;
             }
         },
     });
@@ -267,12 +268,7 @@ let shouldRunEscalation = true;
  * @returns {Promise<void>} Description of return value
  */
 async function startEscalationWorker() {
-    try {
-        // Start the read event consumer
-        await startReadEventConsumer();
-    } catch (error) {
-        throw error;
-    }
+    await startReadEventConsumer();
 
     // Process escalations every 30 seconds and store the handle
     const scheduleNextRun = () => {
@@ -289,7 +285,7 @@ async function startEscalationWorker() {
 }
 
 // Start the worker
-startEscalationWorker().catch((error) => {
+startEscalationWorker().catch((_error) => {
     process.exit(1);
 });
 
@@ -307,7 +303,7 @@ process.on("SIGINT", async () => {
         try {
             await readConsumer.stop();
             await readConsumer.disconnect();
-        } catch (error) {
+        } catch (_error) {
             // Error disconnecting read consumer
         }
     }
@@ -331,7 +327,7 @@ process.on("SIGTERM", async () => {
         try {
             await readConsumer.stop();
             await readConsumer.disconnect();
-        } catch (error) {
+        } catch (_error) {
             // Error disconnecting read consumer
         }
     }

@@ -27,7 +27,7 @@ import {
 let elasticClient: any = null;
 try {
   // lazy require to avoid startup errors if client not configured
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+   
   elasticClient = require("../lib/elastic").default;
 } catch (_e) {
   elasticClient = null;
