@@ -1,5 +1,5 @@
-import type { EachMessagePayload } from "kafkajs";
 import { createHash } from "crypto";
+import type { EachMessagePayload } from "kafkajs";
 
 import { createConsumer, TOPICS } from "../config";
 import type { NotificationEvent } from "../notificationProducer";
@@ -20,7 +20,6 @@ async function getEmailTransporter() {
         const smtpPass = process.env.SMTP_PASS;
 
         if (!smtpHost || !smtpUser || !smtpPass) {
-            // Return a test transporter for development
             return nodemailer.default.createTransport({
                 host: "localhost",
                 port: 1025,
@@ -30,25 +29,16 @@ async function getEmailTransporter() {
         return nodemailer.default.createTransport({
             host: smtpHost,
             port: smtpPort,
-            secure: smtpPort === 465, // true for 465, false for other ports
+            secure: smtpPort === 465,
             auth: {
                 user: smtpUser,
                 pass: smtpPass,
             },
         });
-} catch (_error) {
+    } catch (_error) {
         return null;
     }
-};
-
-function escapeHtml(text: string): string {
-    const map: Record<string, string> = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-    };
+}
 
 function escapeHtml(text: string): string {
     const map: Record<string, string> = {

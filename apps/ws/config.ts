@@ -1,5 +1,6 @@
-import { config } from "dotenv";
 import { join } from "path";
+
+import { config } from "dotenv";
 
 // Load env from monorepo root
 config({ path: join(process.cwd(), "../../.env") });

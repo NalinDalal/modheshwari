@@ -1,5 +1,6 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
+
 import yaml from "js-yaml";
 
 export async function GET() {

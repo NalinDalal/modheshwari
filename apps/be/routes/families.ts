@@ -1,7 +1,8 @@
+import { randomBytes } from "crypto";
+
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import { hashPassword } from "@modheshwari/utils/hash";
-import { randomBytes } from "crypto";
 
 import { requireAuth } from "./authMiddleware";
 

@@ -11,9 +11,10 @@
  * - server/router.ts: Main request routing logic
  */
 
+import { join } from "path";
+
 import { serve } from "bun";
 import { config } from "dotenv";
-import { join } from "path";
 
 import { router } from "./server/router";
 import { logger } from "./lib/logger";

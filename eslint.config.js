@@ -19,6 +19,7 @@ export default [
       "**/*.config.*",
       "**/jest.config.*",
       "**/apps/web/nextEnv.d.ts",
+      "**/apps/web/next-env.d.ts",
       "**/packages/scripts/**",
       "**/packages/db/seed.ts",
       "**/scripts/test-auth.js",

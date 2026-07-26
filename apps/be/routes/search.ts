@@ -23,7 +23,6 @@ import {
   buildWhereClause,
   buildSelectClause,
 } from "../utils/searchParser";
-
 import elasticClient from "../lib/elastic";
 
 type CacheEntry = { ts: number; data: any };

@@ -1,5 +1,6 @@
-import { NotificationType, NotificationChannel } from "@prisma/client";
 import { randomUUID } from "crypto";
+
+import { NotificationType, NotificationChannel } from "@prisma/client";
 
 import { producer, TOPICS } from "./config";
 

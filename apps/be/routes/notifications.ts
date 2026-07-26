@@ -1,7 +1,8 @@
+import { randomUUID } from "crypto";
+
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import { Role, NotificationType, NotificationChannel } from "@prisma/client";
-import { randomUUID } from "crypto";
 
 import { requireAuth } from "./authMiddleware";
 import { broadcastNotification } from "../kafka/notificationProducer";
