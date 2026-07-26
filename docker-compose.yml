@@ -80,7 +80,7 @@ services:
     ports:
       - "3001:3001"
     working_dir: /app
-    command: ["bun", "run", "apps/be/src/index.ts"]
+    command: ["bun", "run", "apps/be/index.ts"]
     depends_on:
       db:
         condition: service_healthy
