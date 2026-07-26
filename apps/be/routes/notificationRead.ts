@@ -132,7 +132,7 @@ export async function handleMarkAsRead(req: Request, id: string): Promise<Respon
         headers: { "Content-Type": "application/json" },
       }
     );
-  } catch {
+  } catch (error) {
     // Check if error is Prisma record-not-found
     const isNotFound = 
       error && 
@@ -402,7 +402,7 @@ export async function handleGetDeliveryStatus(req: Request, id: string): Promise
         headers: { "Content-Type": "application/json" },
       }
     );
-  } catch {
+  } catch (error) {
     console.error("Error fetching delivery status:");
     return new Response(
       JSON.stringify({

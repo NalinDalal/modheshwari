@@ -6,6 +6,7 @@ import { Role, NotificationType, NotificationChannel } from "@prisma/client";
 
 import { requireAuth } from "./authMiddleware";
 import { broadcastNotification } from "../kafka/notificationProducer";
+import getRedisClient from "../lib/redisClient";
 
 /**
  * Shape of create notification request body

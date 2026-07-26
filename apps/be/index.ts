@@ -24,7 +24,7 @@ import startDLQRetryWorker from "./kafka/workers/notificationDLQ";
 
 async function registerPrismaHooks() {
     try {
-        const { registerPrismaIndexHooks } = await import("./lib/prisma-index-hooks");
+        const { registerPrismaIndexHooks } = await import("./lib/prismaIndexHooks");
         registerPrismaIndexHooks();
         logger.info('Prisma index hooks registered');
     } catch (err) {
