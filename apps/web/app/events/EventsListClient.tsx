@@ -18,7 +18,6 @@ import { NotAuthenticated } from "@repo/ui/notAuthenticated";
 
 import { API_BASE } from "../../lib/config";
 import apiFetch from "../../lib/api";
-import apiFetch from "../../lib/api";
 
 type Event = {
   id: string;
