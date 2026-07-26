@@ -4,7 +4,16 @@ import React from "react";
 
 import { Button } from "./button";
 
-export function MemberCard({ member, onToggle }: any) {
+interface Member {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    status: boolean;
+  };
+}
+
+export function MemberCard({ member, onToggle }: { member: Member; onToggle: (id: string, alive: boolean) => void }) {
   const alive = member.user.status;
 
   return (
