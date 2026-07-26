@@ -2,11 +2,11 @@
 
 Paste these into your repository Settings → Secrets → Actions. Use the exact secret names.
 
-- **AWS_ACCESS_KEY_ID** — AWS access key for CI (or use OIDC instead; see note)
+- **AWS_ACCESS_KEY_ID** — AWS access key for CI
 - **AWS_SECRET_ACCESS_KEY** — AWS secret key for CI
-- **AWS_REGION** — e.g. `us-east-1`
-- **ECR_REGISTRY** — ECR registry, e.g. `123456789012.dkr.ecr.us-east-1.amazonaws.com`
-- **ECR_REPOSITORY** — repository name, e.g. `my-app-repo`
+- **AWS_REGION** — e.g. `ap-south-1`
+- **AWS_ACCOUNT_ID** — AWS account ID (e.g. `992382424661`)
+- **ECR_REPOSITORY** — ECR repository name, e.g. `modheshwari`
 - **ECS_CLUSTER** — ECS cluster name
 - **ECS_SERVICE** — ECS service name
 - **ECS_TASK_FAMILY** — task definition family name used in `.github/ecs/taskdef-template.json`

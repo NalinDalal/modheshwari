@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # PostgreSQL Database
   db:
@@ -68,9 +66,7 @@ services:
 
   # Backend API - Elysia + Bun
   be:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${ECR_REGISTRY:-}${ECR_REPOSITORY:-modheshwari}:latest
     container_name: modheshwari-be
     restart: unless-stopped
     env_file:
@@ -93,9 +89,7 @@ services:
 
   # Frontend - Next.js
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${ECR_REGISTRY:-}${ECR_REPOSITORY:-modheshwari}:latest
     container_name: modheshwari-web
     restart: unless-stopped
     env_file:
@@ -113,9 +107,7 @@ services:
 
   # WebSocket Server - Bun + ws
   ws:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${ECR_REGISTRY:-}${ECR_REPOSITORY:-modheshwari}:latest
     container_name: modheshwari-ws
     restart: unless-stopped
     env_file:
