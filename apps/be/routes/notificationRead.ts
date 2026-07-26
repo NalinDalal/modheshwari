@@ -30,7 +30,7 @@ async function ensureProducerConnected() {
     try {
       await producer.connect();
       producerReady = true;
-    } catch (error) {
+    } catch {
       throw new Error("Kafka producer connection failed");
     }
   })();

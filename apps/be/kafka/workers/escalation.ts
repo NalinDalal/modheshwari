@@ -27,7 +27,7 @@ const ESCALATION_DELAYS = {
  */
 async function processEscalation() {
     try {
-        let processedCount = 0;
+        let _processedCount = 0;
 
         while (true) {
             const readyDeliveries = await claimReadyDeliveries(100);
@@ -86,7 +86,7 @@ async function processEscalation() {
                 }
             }
 
-            processedCount += readyDeliveries.length;
+            _processedCount += readyDeliveries.length;
         }
     } catch {
         // Error processing escalations

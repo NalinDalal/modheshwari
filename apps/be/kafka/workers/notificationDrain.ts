@@ -9,7 +9,7 @@ const DLQ_KEY = 'notifications:dlq';
 const NOTIFICATION_KEY_PATTERN = 'notifications:*';
 const SCAN_COUNT = Number(process.env.NOTIFICATION_DRAIN_SCAN_COUNT || 100);
 
-async function parseCached(item: string) {
+async function parseCached(_item: string) {
   try {
     return JSON.parse(raw);
   } catch {

@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+
 import type { EachMessagePayload } from "kafkajs";
 
 import { createConsumer, TOPICS } from "../config";
@@ -35,11 +36,14 @@ async function getEmailTransporter() {
                 pass: smtpPass,
             },
         });
-    } catch (_error) {
+    } catch {
         return null;
     }
 }
 
+/**
+ * Escape HTML special characters to prevent XSS
+ */
 function escapeHtml(text: string): string {
     const map: Record<string, string> = {
         "&": "&amp;",
@@ -160,7 +164,7 @@ async function sendEmailWithRetry(
             });
 
             return true;
-        } catch (_error) {
+        } catch {
             if (attempt < retries) {
                 // Exponential backoff: 2s, 4s, 8s
                 await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
@@ -186,9 +190,9 @@ export async function startEmailConsumer(): Promise<void> {
     // Verify transporter connection
     try {
         await transporter.verify();
-    } catch (_error) {
-        // SMTP verification failed, continue anyway
-    }
+        } catch {
+            // SMTP verification failed, continue anyway
+        }
 
     await consumer.connect();
     await consumer.subscribe({
@@ -197,7 +201,7 @@ export async function startEmailConsumer(): Promise<void> {
     });
 
     await consumer.run({
-        eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
+        eachMessage: async ({ topic: _topic, partition: _partition, message }: EachMessagePayload) => {
             try {
                 if (!message.value) {
                     return;
@@ -217,7 +221,7 @@ export async function startEmailConsumer(): Promise<void> {
 
                 // Send email with retry logic
                 await sendEmailWithRetry(transporter, event.recipientEmail, subject, html);
-            } catch (_error) {
+            } catch {
                 // Error processing message
             }
         },

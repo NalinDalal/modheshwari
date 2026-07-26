@@ -242,7 +242,7 @@ export async function handleDeleteRelationship(
     });
 
     return success("Relationship deleted", {}, 200);
-  } catch (err) {
+  } catch {
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
