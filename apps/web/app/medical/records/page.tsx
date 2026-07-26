@@ -65,7 +65,7 @@ export default function MedicalRecordsPage() {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE]);
+  }, []);
 
  
 useEffect(() => {

@@ -81,7 +81,7 @@ export default function ChatPage() {
     const js = await res.json();
     setPersonal(js.data.personal || []);
     setFamilyChat(js.data.familyChat || null);
-  }, [API_BASE]);
+  }, []);
 
   const connectWs = useCallback(() => {
     const token = getToken();

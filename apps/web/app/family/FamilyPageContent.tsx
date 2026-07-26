@@ -87,7 +87,7 @@ export default function FamilyPageContent() {
         setLoading(false);
       }
     },
-    [token, API_BASE, router],
+    [token, router],
   );
 
   // Toggle member status

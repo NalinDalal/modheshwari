@@ -120,7 +120,7 @@ export default function EventDetailsPage() {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE, eventId, userId]);
+  }, [eventId, userId]);
 
   useEffect(() => {
     if (hydrated && eventId) {
