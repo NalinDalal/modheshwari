@@ -3,7 +3,8 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json package-lock.json* ./
-RUN bun install --frozen-lockfile
+COPY packages/db/schema.prisma ./packages/db/schema.prisma
+RUN bun install
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
