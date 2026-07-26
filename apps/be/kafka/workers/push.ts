@@ -65,15 +65,12 @@ async function sendPushNotification(message: FCMMessage): Promise<boolean> {
                 });
             }
 
-            const response = await admin.messaging().send(message);
+            const _response = await admin.messaging().send(message);
             return true;
-        } catch (error) {
-            if (error instanceof Error && error.message.includes("Cannot find module")) {
-                return false; // SDK not available, not sent
-            }
-            throw error;
+        } catch {
+            return false; // SDK not available, not sent
         }
-    } catch (error) {
+    } catch {
         return false;
     }
 }
@@ -113,7 +110,7 @@ export async function startPushConsumer(): Promise<void> {
     });
 
     await consumer.run({
-        eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
+        eachMessage: async ({ topic: _topic, partition: _partition, message }: EachMessagePayload) => {
             try {
                 if (!message.value) {
                     return;
@@ -133,8 +130,9 @@ export async function startPushConsumer(): Promise<void> {
                 const fcmMessage = buildFCMMessage(event);
 
                 // Send push notification
-                const success = await sendPushNotification(fcmMessage);
-            } catch (error) {
+                void await sendPushNotification(fcmMessage);
+            } catch {
+                // continue
             }
         },
     });

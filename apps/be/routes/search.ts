@@ -24,14 +24,7 @@ import {
   buildSelectClause,
 } from "../utils/searchParser";
 
-let elasticClient: any = null;
-try {
-  // lazy require to avoid startup errors if client not configured
-   
-  elasticClient = require("../lib/elastic").default;
-} catch (_e) {
-  elasticClient = null;
-}
+import elasticClient from "../lib/elastic";
 
 type CacheEntry = { ts: number; data: any };
 const CACHE_TTL = 60 * 1000; // 60 seconds

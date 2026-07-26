@@ -1,3 +1,4 @@
+/* global fetch, console, process */
 (async () => {
   try {
     const base = 'http://localhost:3001/api';

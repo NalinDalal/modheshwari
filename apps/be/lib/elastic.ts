@@ -10,7 +10,10 @@ const password = process.env.ELASTIC_PASSWORD;
 function buildClient() {
   const auth: any = {};
   if (apiKey) auth.apiKey = apiKey;
-  else if (username && password) auth.username = username, auth.password = password;
+  else if (username && password) {
+    auth.username = username;
+    auth.password = password;
+  }
 
   if (cloudId) {
     return new Client({ cloud: { id: cloudId }, auth: Object.keys(auth).length ? auth : undefined });

@@ -64,7 +64,7 @@ export async function handleGetMessages(
     });
 
     return success("Messages retrieved", messages.reverse());
-  } catch (err) {
+  } catch {
     return failure("Failed to fetch messages", null, 500);
   }
 }
@@ -139,7 +139,7 @@ export async function handleSendMessage(req: Request): Promise<Response> {
     });
 
     return success("Message sent", message, 201);
-  } catch (err) {
+  } catch {
     return failure("Failed to send message", null, 500);
   }
 }
@@ -189,7 +189,7 @@ export async function handleMarkMessagesRead(req: Request): Promise<Response> {
     });
 
     return success("Messages marked as read");
-  } catch (err) {
+  } catch {
     return failure("Failed to mark messages as read", null, 500);
   }
 }

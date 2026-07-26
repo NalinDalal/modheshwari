@@ -15,7 +15,7 @@ const BASE_DELAY_MS = Number(process.env.NOTIFICATION_DLQ_BASE_DELAY_MS || 60 * 
 async function parseEntry(raw: string) {
   try {
     return JSON.parse(raw);
-  } catch (_err) {
+  } catch {
     return null;
   }
 }

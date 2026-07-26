@@ -8,10 +8,6 @@ import { verifyJWT } from "@modheshwari/utils/jwt";
 import { extractAndVerifyToken } from "../utils/auth";
 import { logger } from "../lib/logger";
 
-interface HttpError extends Error {
-  status?: number;
-}
-
 /**
  * Validates JWT from the `Authorization` header and attaches user payload to context.
  *

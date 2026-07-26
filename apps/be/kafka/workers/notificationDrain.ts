@@ -11,8 +11,8 @@ const SCAN_COUNT = Number(process.env.NOTIFICATION_DRAIN_SCAN_COUNT || 100);
 
 async function parseCached(item: string) {
   try {
-    return JSON.parse(item);
-  } catch (err) {
+    return JSON.parse(raw);
+  } catch {
     return null;
   }
 }

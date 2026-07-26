@@ -71,7 +71,7 @@ export async function handleListUsers(req: Request): Promise<Response> {
       },
       200,
     );
-  } catch (err) {
+  } catch {
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -130,7 +130,7 @@ export async function handleGetUserDetails(
     }
 
     return success("User details fetched", { user }, 200);
-  } catch (err) {
+  } catch {
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

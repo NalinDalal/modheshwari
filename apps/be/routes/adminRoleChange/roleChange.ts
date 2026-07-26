@@ -100,7 +100,7 @@ export async function handleChangeUserRole(
     });
 
     return success("User role updated successfully", { user: updatedUser }, 200);
-  } catch (err) {
+  } catch {
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

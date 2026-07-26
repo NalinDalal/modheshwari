@@ -39,7 +39,7 @@ async function sendSMS(message: SMSMessage): Promise<boolean> {
 
             const client = twilio(accountSid, authToken);
 
-            const response = await client.messages.create({
+            const _response = await client.messages.create({
                 body: message.body,
                 from: fromNumber,
                 to: message.to,
@@ -55,7 +55,7 @@ async function sendSMS(message: SMSMessage): Promise<boolean> {
             }
             throw error;
         }
-    } catch (error) {
+    } catch {
         return false;
     }
 }
@@ -65,7 +65,7 @@ async function sendSMS(message: SMSMessage): Promise<boolean> {
  */
 function formatSMSBody(event: NotificationEvent): string {
     const prefix = event.type.includes("EVENT") ? "📅" : "📢";
-    const usesUnicode = /[^\u0000-\u007F]/.test(prefix);
+    const usesUnicode = /[^\p{ASCII}]/u.test(prefix);
     const SMS_LIMIT = usesUnicode ? 70 : 160;
     const subject = event.subject || event.type;
 
@@ -104,7 +104,7 @@ export async function startSmsConsumer(): Promise<void> {
     });
 
     await consumer.run({
-        eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
+        eachMessage: async ({ topic: _topic, partition: _partition, message }: EachMessagePayload) => {
             try {
                 if (!message.value) {
                     return;
@@ -132,8 +132,9 @@ export async function startSmsConsumer(): Promise<void> {
                     eventId: event.eventId,
                 };
 
-                const success = await sendSMS(smsMessage);
-            } catch (error) {
+                void await sendSMS(smsMessage);
+            } catch {
+                void 0;
             }
         },
     });

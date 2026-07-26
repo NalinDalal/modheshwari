@@ -22,7 +22,7 @@ export async function startRedisSubscriber(url = REDIS_URL) {
   // getRedisClient manages error handlers
 
   // subscribe to pattern inapp:* for user-specific channels
-  await sub.pSubscribe('inapp:*', (message: string, channel: string) => {
+  await sub.pSubscribe('inapp:*', (message: string, _channel: string) => {
     try {
       const parsed = JSON.parse(message);
       const recipientId = parsed.recipientId;

@@ -5,9 +5,6 @@ import { randomUUID } from "crypto";
 
 import { requireAuth } from "./authMiddleware";
 import { broadcastNotification } from "../kafka/notificationProducer";
-import getRedisClient from "../lib/redisClient";
-
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
 /**
  * Shape of create notification request body

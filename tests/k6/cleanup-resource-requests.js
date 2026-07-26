@@ -9,7 +9,7 @@
  * `@prisma/client` to be available and DATABASE_URL to be set.
  */
 
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "@prisma/client";
 
 async function main() {
   const runId = process.env.TEST_RUN_ID;

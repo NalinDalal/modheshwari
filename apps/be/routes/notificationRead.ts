@@ -67,13 +67,13 @@ async function publishReadEvent(notificationId: string, userId: string) {
         },
       ],
     });
-  } catch (error) {
-    // Don't fail the request if Kafka publish fails
+    } catch {
+      // Don't fail the request if Kafka publish fails
+    }
   }
-}
 
-/**
- * Mark a notification as read
+  /**
+   * Mark a notification as read
  * POST /api/notifications/:id/read
  */
 export async function handleMarkAsRead(req: Request, id: string): Promise<Response> {
@@ -132,7 +132,7 @@ export async function handleMarkAsRead(req: Request, id: string): Promise<Respon
         headers: { "Content-Type": "application/json" },
       }
     );
-  } catch (error) {
+  } catch {
     // Check if error is Prisma record-not-found
     const isNotFound = 
       error && 
@@ -298,7 +298,7 @@ export async function handleMarkAllAsRead(req: Request): Promise<Response> {
             }),
           })),
         });
-      } catch (error) {
+      } catch {
         // Don't fail the request if Kafka publish fails
       }
     }
@@ -313,10 +313,10 @@ export async function handleMarkAllAsRead(req: Request): Promise<Response> {
         headers: { "Content-Type": "application/json" },
       }
     );
-  } catch (error) {
+  } catch {
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to mark all notifications as read",
+        error: "Failed to mark all notifications as read",
       }),
       {
         status: 500,
@@ -402,8 +402,8 @@ export async function handleGetDeliveryStatus(req: Request, id: string): Promise
         headers: { "Content-Type": "application/json" },
       }
     );
-  } catch (error) {
-    console.error("Error fetching delivery status:", error);
+  } catch {
+    console.error("Error fetching delivery status:");
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : "Failed to fetch delivery status",

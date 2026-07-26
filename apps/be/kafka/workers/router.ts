@@ -30,11 +30,10 @@ async function getRecipientDetails(recipientId: string) {
                 boolean
             > | null,
         };
-    } catch (error) {
+    } catch {
         return null;
     }
 }
-
 /**
  * Check if recipient has enabled channel in their preferences
  */
@@ -68,7 +67,7 @@ export async function startRouterConsumer(): Promise<void> {
     });
 
     await consumer.run({
-        eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
+        eachMessage: async ({ topic: _topic, partition: _partition, message }: EachMessagePayload) => {
             try {
                 if (!message.value) {
                     return;
@@ -231,11 +230,12 @@ export async function startRouterConsumer(): Promise<void> {
                                 } as any);
                             }
                         }
-                    } catch (error) {
+                    } catch {
                         // Continue with next recipient even if one fails
+                        void 0;
                     }
                 }
-            } catch (error) { }
+            } catch { /* continue with next recipient */ }
         },
     });
 }

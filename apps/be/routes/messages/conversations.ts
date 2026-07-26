@@ -92,7 +92,7 @@ export async function handleGetConversations(req: Request): Promise<Response> {
     });
 
     return success("Conversations retrieved", conversationsWithDetails);
-  } catch (err) {
+  } catch {
     return failure("Failed to fetch conversations", null, 500);
   }
 }

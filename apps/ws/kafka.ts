@@ -11,7 +11,7 @@ export const kafka = new Kafka({
     brokers: [KAFKA_BROKER],
     logCreator:
         () =>
-            ({ namespace, level, label, log }) => {
+            ({ namespace, level, label: _label, log }) => {
                 try {
                     const lvl =
                         log && (log.level || log.levelName)
@@ -31,7 +31,7 @@ export const kafka = new Kafka({
                         text = msgParts.message
                             ? `${msgParts.message}`
                             : JSON.stringify(msgParts);
-                    } catch (_) {
+                    } catch {
                         text = String(msgParts);
                     }
 
@@ -40,7 +40,7 @@ export const kafka = new Kafka({
                     else if (lvl.includes("WARN")) logger.warn(text, msgParts);
                     else if (lvl.includes("DEBUG")) logger.debug(text, msgParts);
                     else logger.info(text, msgParts);
-                } catch (e) {
+                } catch {
                     // fallback
                     logger.info(String(log) || "kafkajs log", log);
                 }

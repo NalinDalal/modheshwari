@@ -56,7 +56,7 @@ export async function handleSearchUsersForChat(
         });
 
         return success("Users found", users);
-    } catch (err) {
+  } catch {
         return failure("Failed to search users", null, 500);
-    }
+      }
 }

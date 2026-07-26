@@ -9,7 +9,7 @@ async function ensureIndex(name: string, body: any) {
       console.log(`Index ${name} already exists`);
       return;
     }
-  } catch (e) {
+  } catch {
     // if we can't determine, fall through to creation attempt
   }
 

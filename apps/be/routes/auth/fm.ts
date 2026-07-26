@@ -128,7 +128,7 @@ export async function handleMemberSignup(req: Request) {
     const body: any = await req.json().catch(() => null);
     if (!body) return failure("Invalid JSON body", "Bad Request", 400);
 
-    const { name, email, password, familyId, relationWithFamilyHead } = body;
+    const { name, email, password, familyId } = body;
 
     // --- Step 1: Input validation ---
     if (!name || !email || !password || !familyId)

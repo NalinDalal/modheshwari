@@ -28,7 +28,7 @@ export async function runFanoutConsumer() {
     await consumer.subscribe({ topic: TOPICS.NOTIFICATION_EVENTS, fromBeginning: false });
 
     await consumer.run({
-        eachMessage: async ({ topic, partition, message }) => {
+        eachMessage: async ({ topic: _topic, partition: _partition, message }) => {
             try {
                 const raw = message.value?.toString();
                 if (!raw) return;

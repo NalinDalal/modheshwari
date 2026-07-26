@@ -43,7 +43,7 @@ export async function handleRefresh(req: Request): Promise<Response> {
       status: 200,
       headers,
     });
-  } catch (err) {
+  } catch {
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

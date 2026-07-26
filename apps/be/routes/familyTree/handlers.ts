@@ -80,7 +80,7 @@ export async function handleGetFamilyTree(req: Request): Promise<Response> {
     const data = format === "graph" ? buildGraphData(treeNode) : treeNode;
 
     return success("Family tree retrieved", { tree: data }, 200);
-  } catch (err) {
+  } catch {
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -195,7 +195,7 @@ export async function handleCreateRelationship(
       { relation, reciprocalRelation },
       201,
     );
-  } catch (err) {
+  } catch {
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

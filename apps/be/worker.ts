@@ -47,12 +47,12 @@ async function startWorkers() {
     process.on("SIGTERM", async () => {
       process.exit(0);
     });
-  } catch (error) {
+  } catch {
     process.exit(1);
   }
 }
 
 // Start the workers
-startWorkers().catch((error) => {
+startWorkers().catch(() => {
   process.exit(1);
 });

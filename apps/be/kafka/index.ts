@@ -64,7 +64,7 @@ async function startKafka() {
             await consumer.disconnect();
             process.exit(0);
         });
-    } catch (_error) {
+    } catch {
         await producer.disconnect();
         await consumer.disconnect();
         process.exit(1);

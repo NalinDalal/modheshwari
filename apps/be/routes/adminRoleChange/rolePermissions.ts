@@ -61,7 +61,7 @@ export async function handleGetRoleChangePermissions(
     }
 
     return success("Role change permissions fetched", permissions, 200);
-  } catch (err) {
+  } catch {
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
