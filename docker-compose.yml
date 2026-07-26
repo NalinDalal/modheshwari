@@ -66,7 +66,7 @@ services:
 
   # Backend API - Elysia + Bun
   be:
-    image: ${ECR_REGISTRY:-}${ECR_REPOSITORY:-modheshwari}:latest
+    image: ${ECR_REGISTRY:-}/${ECR_REPOSITORY:-modheshwari}:latest
     container_name: modheshwari-be
     restart: unless-stopped
     env_file:
@@ -89,7 +89,7 @@ services:
 
   # Frontend - Next.js
   web:
-    image: ${ECR_REGISTRY:-}${ECR_REPOSITORY:-modheshwari}:latest
+    image: ${ECR_REGISTRY:-}/${ECR_REPOSITORY:-modheshwari}:latest
     container_name: modheshwari-web
     restart: unless-stopped
     env_file:
@@ -107,7 +107,7 @@ services:
 
   # WebSocket Server - Bun + ws
   ws:
-    image: ${ECR_REGISTRY:-}${ECR_REPOSITORY:-modheshwari}:latest
+    image: ${ECR_REGISTRY:-}/${ECR_REPOSITORY:-modheshwari}:latest
     container_name: modheshwari-ws
     restart: unless-stopped
     env_file:
