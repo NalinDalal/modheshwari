@@ -13,6 +13,7 @@ COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 COPY packages/db/schema.prisma ./packages/db/schema.prisma
 RUN bun install --ignore-scripts
+RUN bunx prisma generate --schema packages/db/schema.prisma
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
