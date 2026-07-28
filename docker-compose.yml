@@ -28,6 +28,11 @@ services:
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Zookeeper (for Kafka) - optional, skip on small VMs
   zookeeper:
@@ -66,7 +71,9 @@ services:
 
   # Backend API - Elysia + Bun
   be:
-    image: ${ECR_REGISTRY:-}/${ECR_REPOSITORY:-modheshwari}:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: modheshwari-be
     restart: unless-stopped
     env_file:
@@ -89,7 +96,9 @@ services:
 
   # Frontend - Next.js
   web:
-    image: ${ECR_REGISTRY:-}/${ECR_REPOSITORY:-modheshwari}:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: modheshwari-web
     restart: unless-stopped
     env_file:
@@ -107,7 +116,9 @@ services:
 
   # WebSocket Server - Bun + ws
   ws:
-    image: ${ECR_REGISTRY:-}/${ECR_REPOSITORY:-modheshwari}:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: modheshwari-ws
     restart: unless-stopped
     env_file:
