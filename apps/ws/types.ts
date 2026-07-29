@@ -5,8 +5,6 @@ export type WSData = {
     userId: string;
     lastSeen: number;
     heartbeatId?: number;
-    authTimeoutId?: number;
-    authenticated?: boolean;
 };
 
 export type NotificationEvent = {
