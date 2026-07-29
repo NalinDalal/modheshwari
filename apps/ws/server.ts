@@ -17,7 +17,7 @@ export const server = serve<WSData>({
                 return new Response("Unauthorized", { status: 401 });
             }
             server.upgrade(req, {
-                data: { userId, lastSeen: Date.now(), authenticated: true } satisfies WSData,
+                data: { userId, lastSeen: Date.now() } satisfies WSData,
             });
             return;
         }
