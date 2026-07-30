@@ -332,16 +332,15 @@ export default function FamilyTreeView() {
                     <h3 className="text-lg font-display font-bold text-jewel-900 mb-4">Legend</h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         {[
-                            { color: "#FF6B6B", label: "Community Head" },
-                            { color: "#FFA500", label: "Community Subhead" },
-                            { color: "#4ECDC4", label: "Gotra Head" },
-                            { color: "#45B7D1", label: "Family Head" },
-                            { color: "#95E1D3", label: "Member" },
+                            { color: "bg-jewel-ruby", label: "Community Head" },
+                            { color: "bg-jewel-saffron", label: "Community Subhead" },
+                            { color: "bg-jewel-emerald", label: "Gotra Head" },
+                            { color: "bg-jewel-gold", label: "Family Head" },
+                            { color: "bg-jewel-400", label: "Member" },
                         ].map(({ color, label }) => (
                             <div key={label} className="flex items-center gap-2">
                                 <div
-                                    className="w-6 h-6 rounded"
-                                    style={{ backgroundColor: color }}
+                                    className={`w-6 h-6 rounded ${color}`}
                                 />
                                 <span className="text-sm text-jewel-700">{label}</span>
                             </div>
