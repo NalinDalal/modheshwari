@@ -193,12 +193,14 @@ export default function Medical() {
               </p>
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => router.push("/me/edit")}
-            className="mt-4 text-sm text-jewel-gold hover:text-jewel-500 transition font-medium"
+            className="mt-4 justify-start"
           >
             Update Medical Info →
-          </button>
+          </Button>
         </div>
 
         {/* Search Card */}

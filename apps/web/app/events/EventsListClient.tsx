@@ -218,22 +218,26 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
                     <div className="flex items-center gap-2">
                       {isAdmin && (
                         <div className="flex items-center gap-2">
-                          <button
+                          <Button
+                            variant="primary"
+                            size="sm"
                             onClick={(e) => handleCardModeration(e, event.id, "APPROVED")}
                             disabled={!!moderatingId}
                             aria-label={`Approve ${event.name}`}
-                            className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-md bg-jewel-emerald/10 hover:bg-jewel-emerald/20 text-jewel-emerald border border-jewel-emerald/20"
+                            className="px-2 py-1"
                           >
                             <CheckCircle className="w-3.5 h-3.5" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
                             onClick={(e) => handleCardModeration(e, event.id, "REJECTED")}
                             disabled={!!moderatingId}
                             aria-label={`Reject ${event.name}`}
-                            className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-md bg-jewel-ruby/10 hover:bg-jewel-ruby/20 text-jewel-ruby border border-jewel-ruby/20"
+                            className="px-2 py-1"
                           >
                             <XCircle className="w-3.5 h-3.5" />
-                          </button>
+                          </Button>
                         </div>
                       )}
                       <p className="text-xs text-jewel-400">{new Date(event.createdAt).toLocaleDateString()}</p>

@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { Button } from "@repo/ui/button";
 import {
   Users,
   Shield,
@@ -117,26 +118,23 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="mt-12 flex flex-col sm:flex-row gap-4"
         >
-          <button
-            onClick={() => router.push("/signin")}
-            className="group relative px-8 py-4 bg-gradient-to-r from-jewel-gold to-jewel-500 rounded-xl font-semibold text-jewel-deep shadow-lg shadow-jewel-gold/25 hover:shadow-jewel-gold/40 transition-all duration-300 hover:scale-105"
-          >
+          <Button onClick={() => router.push("/signin")}>
             <span className="flex items-center gap-2">
               Get Started
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </span>
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="secondary"
             onClick={() =>
               document
                 .getElementById("features")
                 ?.scrollIntoView({ behavior: "smooth" })
             }
-            className="px-8 py-4 bg-jewel-100/60 backdrop-blur-sm border border-jewel-400/30 rounded-xl font-semibold text-jewel-deep hover:bg-jewel-100 transition-all duration-300"
           >
             Learn More
-          </button>
+          </Button>
         </motion.div>
 
         <motion.div
@@ -250,13 +248,10 @@ export default function Home() {
                 our platform
               </p>
 
-              <button
-                onClick={() => router.push("/signin")}
-                className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-              >
+              <Button onClick={() => router.push("/signin")}>
                 Sign In Now
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Button>
             </div>
           </motion.div>
         </section>

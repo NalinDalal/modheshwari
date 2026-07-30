@@ -347,28 +347,34 @@ export default function ResourceRequestsPage(): React.JSX.Element {
 
                       <td className="px-6 py-4">
                         {isAdmin ? (
-                          <div className="flex gap-2">
-                            <button
+                           <div className="flex gap-2">
+                            <Button
+                              variant="primary"
+                              size="sm"
                               onClick={() => handleReview(r.id, "approve")}
-                              className="px-3 py-1.5 bg-jewel-emerald/10 hover:bg-jewel-emerald/20 text-jewel-emerald text-xs font-medium rounded-lg border border-jewel-emerald/20 transition-all duration-200 flex items-center gap-1"
+                              className="flex items-center gap-1"
                             >
                               <Check className="w-3 h-3" />
                               Approve
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
                               onClick={() => handleReview(r.id, "reject")}
-                              className="px-3 py-1.5 bg-jewel-ruby/10 hover:bg-jewel-ruby/20 text-jewel-ruby text-xs font-medium rounded-lg border border-jewel-ruby/20 transition-all duration-200 flex items-center gap-1"
+                              className="flex items-center gap-1"
                             >
                               <X className="w-3 h-3" />
                               Reject
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
                               onClick={() => handleReview(r.id, "changes")}
-                              className="px-3 py-1.5 bg-jewel-gold/10 hover:bg-jewel-gold/20 text-jewel-gold text-xs font-medium rounded-lg border border-jewel-gold/20 transition-all duration-200 flex items-center gap-1"
+                              className="flex items-center gap-1"
                             >
                               <AlertCircle className="w-3 h-3" />
                               Changes
-                            </button>
+                            </Button>
                           </div>
                         ) : (
                           <span className="text-xs text-jewel-400 italic">

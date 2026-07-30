@@ -154,7 +154,7 @@ export default function NearbyPage() {
                 </div>
 
                 <div className="flex-1">
-                  <h2 className="font-semibold text-jewel-900">{u.name}</h2>
+                  <h2 className="font-display font-semibold text-jewel-900">{u.name}</h2>
 
                   <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                     <Meta label="Distance" value={`${u.distanceKm} km`} />

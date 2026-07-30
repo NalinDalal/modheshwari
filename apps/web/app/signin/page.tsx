@@ -7,6 +7,7 @@ import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 
 import { useToast } from "@repo/ui/toast";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { Button } from "@repo/ui/button";
 
 import { apiPost } from "../../lib/api";
 import { API_BASE } from "../../lib/config";
@@ -165,29 +166,23 @@ export default function SigninPage() {
               </div>
             </div>
 
-            <button
+            <Button
               onClick={handleLogin}
               disabled={loading || !email || !password}
-              className="group relative w-full px-6 py-3 rounded-xl bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep font-semibold shadow-lg shadow-jewel-gold/25 hover:shadow-jewel-gold/40 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden"
+              className="w-full"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-jewel-goldLight to-jewel-gold opacity-0 group-hover:opacity-100 transition-opacity" />
-
               {loading ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="relative flex items-center justify-center gap-2"
-                >
+                <span className="flex items-center justify-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Signing In...</span>
-                </motion.div>
+                  Signing In...
+                </span>
               ) : (
-                <span className="relative flex items-center justify-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   Sign In
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </span>
               )}
-            </button>
+            </Button>
           </div>
 
           <div className="mt-6 pt-6 border-t border-jewel-400/20">

@@ -254,12 +254,9 @@ export default function EventDetailsPage() {
             <DreamySunsetBackground className="px-6 py-10 flex items-center justify-center">
                 <div className="text-center">
                     <h2 className="text-2xl font-display font-bold text-jewel-900 mb-2">Event not found</h2>
-                    <button
-                        onClick={() => router.push("/events")}
-                        className="text-jewel-gold hover:text-jewel-500 transition-colors"
-                    >
+                    <Button variant="ghost" onClick={() => router.push("/events")}>
                         Back to Events
-                    </button>
+                    </Button>
                 </div>
             </DreamySunsetBackground>
         );
@@ -270,13 +267,15 @@ export default function EventDetailsPage() {
             <div className="max-w-5xl mx-auto">
                 <div className="bg-jewel-50/80 backdrop-blur-xl rounded-3xl border border-jewel-400/20 shadow-jewel p-5 md:p-8">
                     {/* Header */}
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => router.back()}
-                        className="inline-flex items-center gap-2 text-jewel-600 hover:text-jewel-900 transition-colors mb-6 px-3 py-2 rounded-xl bg-jewel-100/60 border border-jewel-400/20 hover:bg-jewel-200/60"
+                        className="inline-flex items-center gap-2 mb-6"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         Back to Events
-                    </button>
+                    </Button>
 
                     {/* Event Card */}
                     <motion.div

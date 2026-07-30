@@ -65,13 +65,10 @@ export default function CreateEventPage() {
   return (
     <DreamySunsetBackground className="px-6 py-10">
       <div className="max-w-2xl mx-auto">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-jewel-600 hover:text-jewel-900 transition-colors mb-6"
-        >
+        <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="w-4 h-4" />
           Back
-        </button>
+        </Button>
 
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold text-jewel-900 tracking-tight">Create Event</h1>

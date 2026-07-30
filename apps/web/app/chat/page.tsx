@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NotAuthenticated } from "@repo/ui/notAuthenticated";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { Button } from "@repo/ui/button";
 
 import { API_BASE } from "../../lib/config";
 
@@ -515,12 +516,14 @@ export default function ChatPage() {
                                                     <div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-jewel-400">
                                                         <div>{new Date(m.createdAt).toLocaleString()}</div>
                                                         {m.clientId && m.status === "failed" && (
-                                                            <button
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
                                                                 onClick={() => retryMessage(m)}
-                                                                className="text-jewel-ruby hover:text-red-700 underline"
+                                                                className="text-xs px-2 py-0.5 text-jewel-ruby hover:text-red-700 underline h-auto"
                                                             >
                                                                 Retry
-                                                            </button>
+                                                            </Button>
                                                         )}
                                                     </div>
                                                 </div>
@@ -553,12 +556,11 @@ export default function ChatPage() {
                                                 if (e.key === "Enter") sendMessage();
                                             }}
                                         />
-                                        <button
+                                        <Button
                                             onClick={sendMessage}
-                                            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep font-semibold hover:shadow-jewel transition-all"
                                         >
                                             Send
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             )}
