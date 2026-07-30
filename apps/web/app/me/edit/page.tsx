@@ -3,13 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { Button } from "@repo/ui/button";
 import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../../lib/config";
-/**
- * Performs  edit profile page operation.
- * @returns {React.JSX.Element} Description of return value
- */
 
 interface Profile {
   phone?: string | null;
@@ -30,10 +28,6 @@ interface User {
   profile: Profile | null;
 }
 
-/**
- * Performs  edit profile page operation.
- * @returns {React.JSX.Element} Description of return value
- */
 export default function EditProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -45,7 +39,6 @@ export default function EditProfilePage() {
     profession: "",
   });
 
-  // Fetch current user data on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -56,18 +49,13 @@ export default function EditProfilePage() {
 
     async function loadUserProfile() {
       try {
-        const res = await fetch(
-          `${API_BASE}/me`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const res = await fetch(`${API_BASE}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         const data = await res.json();
         if (data.status === "success") {
           const user = data.data as User;
-
-          // Pre-populate form with existing data
           setFormData({
             bloodGroup: user.profile?.bloodGroup || "",
             gotra: user.profile?.gotra || "",
@@ -104,7 +92,6 @@ export default function EditProfilePage() {
       return;
     }
 
-    // Check if at least one field has a value
     if (!formData.bloodGroup && !formData.gotra && !formData.profession) {
       toast("Please fill in at least one field.", { variant: "warning" });
       return;
@@ -113,17 +100,14 @@ export default function EditProfilePage() {
     setSaving(true);
 
     try {
-      const res = await fetch(
-        `${API_BASE}/me`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(formData),
+      const res = await fetch(`${API_BASE}/me`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify(formData),
+      });
 
       const data = await res.json();
       if (data.status === "success") {
@@ -142,97 +126,85 @@ export default function EditProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <DreamySunsetBackground className="flex items-center justify-center min-h-screen">
         <LoaderFour text="Loading your profile..." />
-      </div>
+      </DreamySunsetBackground>
     );
   }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 pb-12">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/40 rounded-2xl p-8"
-      >
-        <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-6">
-          Edit Profile
-        </h1>
+    <DreamySunsetBackground className="px-6 py-10">
+      <div className="max-w-3xl mx-auto">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 shadow-jewel rounded-2xl p-8"
+        >
+          <h1 className="text-2xl font-display font-bold text-jewel-900 mb-6">
+            Edit Profile
+          </h1>
 
-        <div className="grid grid-cols-1 gap-6">
-          <div>
-            <label
-              htmlFor="bloodGroup"
-              className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-            >
-              Blood Group
-            </label>
-            <input
-              type="text"
-              id="bloodGroup"
-              name="bloodGroup"
-              value={formData.bloodGroup}
-              onChange={handleChange}
-              placeholder="e.g., O+, A-, AB+"
-              className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label htmlFor="bloodGroup" className="block text-sm font-medium text-jewel-700">
+                Blood Group
+              </label>
+              <input
+                type="text"
+                id="bloodGroup"
+                name="bloodGroup"
+                value={formData.bloodGroup}
+                onChange={handleChange}
+                placeholder="e.g., O+, A-, AB+"
+                className="mt-1 block w-full rounded-xl border border-jewel-400/30 bg-jewel-50/50 px-3 py-2 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="gotra" className="block text-sm font-medium text-jewel-700">
+                Gotra
+              </label>
+              <input
+                type="text"
+                id="gotra"
+                name="gotra"
+                value={formData.gotra}
+                onChange={handleChange}
+                placeholder="Enter your gotra"
+                className="mt-1 block w-full rounded-xl border border-jewel-400/30 bg-jewel-50/50 px-3 py-2 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="profession" className="block text-sm font-medium text-jewel-700">
+                Profession
+              </label>
+              <input
+                type="text"
+                id="profession"
+                name="profession"
+                value={formData.profession}
+                onChange={handleChange}
+                placeholder="e.g., Software Engineer"
+                className="mt-1 block w-full rounded-xl border border-jewel-400/30 bg-jewel-50/50 px-3 py-2 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50 focus:border-transparent"
+              />
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="gotra"
-              className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+          <div className="mt-6 flex gap-3">
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => router.push("/me")}
+              disabled={saving}
             >
-              Gotra
-            </label>
-            <input
-              type="text"
-              id="gotra"
-              name="gotra"
-              value={formData.gotra}
-              onChange={handleChange}
-              placeholder="Enter your gotra"
-              className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
+              Cancel
+            </Button>
           </div>
-
-          <div>
-            <label
-              htmlFor="profession"
-              className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-            >
-              Profession
-            </label>
-            <input
-              type="text"
-              id="profession"
-              name="profession"
-              value={formData.profession}
-              onChange={handleChange}
-              placeholder="e.g., Software Engineer"
-              className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            />
-          </div>
-        </div>
-
-        <div className="mt-6 flex gap-3">
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => router.push("/me")}
-            disabled={saving}
-            className="px-5 py-2.5 bg-transparent border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 text-sm font-medium rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </main>
+        </form>
+      </div>
+    </DreamySunsetBackground>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { Button } from "@repo/ui/button";
 import { useRouter } from "next/navigation";
 import useSWR, { mutate } from "swr";
 import {
@@ -32,12 +33,7 @@ type Event = {
   createdAt: string;
 };
 
-const fetcher = /**
- * Executes fetcher operation.
- * @param {string} url - Description of url
- * @returns {Promise<any>} Description of return value
- */
-async (url: string) => {
+const fetcher = async (url: string) => {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const res = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -46,11 +42,6 @@ async (url: string) => {
   return res.json();
 };
 
-/**
- * Performs  events list client operation.
- * @param {{ initialData: Event[]; }} { initialData } - Description of { initialData }
- * @returns {any} Description of return value
- */
 export default function EventsListClient({ initialData }: { initialData: Event[] }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -115,8 +106,6 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
         method: "POST",
         body: JSON.stringify({ status, remarks }),
       });
-
-      // Refresh list
       mutate(key);
       toast(`Moderation recorded: ${status}`, { variant: "success" });
     } catch (err: unknown) {
@@ -129,12 +118,12 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
 
   const getStatusConfig = (status: string) => {
     const map: Record<string, { label: string; classes: string }> = {
-      APPROVED: { label: "Approved", classes: "bg-green-500/20 text-green-400 border-green-500/30" },
-      PENDING: { label: "Pending", classes: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
-      REJECTED: { label: "Rejected", classes: "bg-red-500/20 text-red-400 border-red-500/30" },
-      CANCELLED: { label: "Cancelled", classes: "bg-gray-500/20 text-gray-400 border-gray-500/30" },
+      APPROVED: { label: "Approved", classes: "bg-jewel-emerald/15 text-jewel-emerald border-jewel-emerald/30" },
+      PENDING: { label: "Pending", classes: "bg-jewel-gold/15 text-jewel-gold border-jewel-gold/30" },
+      REJECTED: { label: "Rejected", classes: "bg-jewel-ruby/15 text-jewel-ruby border-jewel-ruby/30" },
+      CANCELLED: { label: "Cancelled", classes: "bg-jewel-400/15 text-jewel-600 border-jewel-400/30" },
     };
-    return map[status] || { label: status, classes: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
+    return map[status] || { label: status, classes: "bg-jewel-400/15 text-jewel-600 border-jewel-400/30" };
   };
 
   if (hydrated && !token) return <NotAuthenticated />;
@@ -145,25 +134,22 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Events</h1>
-            <p className="text-sm text-gray-400 mt-1">Browse and register for community events</p>
+            <h1 className="text-3xl font-display font-bold text-jewel-900 tracking-tight">Events</h1>
+            <p className="text-sm text-jewel-500 mt-1">Browse and register for community events</p>
           </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push("/events/calendar")}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm muted bg-white/4 hover:bg-white/6 transition-colors"
-              >
-                <Calendar className="w-4 h-4" />
-                Calendar
-              </button>
-              <button
-                onClick={() => router.push("/events/create")}
-                className="btn-primary flex items-center gap-2 px-4 py-2 font-semibold"
-              >
-                <Plus className="w-4 h-4" />
-                Create
-              </button>
-            </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => router.push("/events/calendar")}
+            >
+              <Calendar className="w-4 h-4" />
+              Calendar
+            </Button>
+            <Button onClick={() => router.push("/events/create")}>
+              <Plus className="w-4 h-4" />
+              Create
+            </Button>
+          </div>
         </div>
 
         <div className="flex gap-2 mb-6">
@@ -171,10 +157,10 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 filter === f.value
-                  ? "bg-rose-500 text-white shadow-glow"
-                  : "bg-white/4 muted hover:bg-white/6"
+                  ? "bg-jewel-gold/15 text-jewel-gold border border-jewel-gold/30"
+                  : "text-jewel-500 hover:text-jewel-gold border border-transparent"
               }`}
             >
               {f.label}
@@ -185,14 +171,14 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
         {isLoading || error ? (
           <LoaderOne />
         ) : events.length === 0 ? (
-          <div className="card p-12 text-center">
-            <Calendar className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold muted mb-2">No events found</h3>
-            <p className="text-sm muted mb-6">{filter === "approved" ? "No approved events at the moment. Check back later!" : "Try adjusting your filters or create a new event."}</p>
-            <button onClick={() => router.push("/events/create")} className="btn-primary inline-flex items-center gap-2 px-6 py-3 font-semibold">
+          <div className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 shadow-jewel rounded-2xl p-12 text-center">
+            <Calendar className="w-16 h-16 text-jewel-400 mx-auto mb-4" />
+            <h3 className="text-xl font-display font-bold text-jewel-900 mb-2">No events found</h3>
+            <p className="text-sm text-jewel-500 mb-6">{filter === "approved" ? "No approved events at the moment. Check back later!" : "Try adjusting your filters or create a new event."}</p>
+            <Button onClick={() => router.push("/events/create")}>
               <Plus className="w-4 h-4" />
               Create New Event
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -206,28 +192,28 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   onClick={() => router.push(`/events/${event.id}`)}
-                  className="card p-6 hover:shadow-glow transition-all cursor-pointer hover:scale-[1.02]"
+                  className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 shadow-jewel rounded-2xl p-6 hover:shadow-jewel-lg transition-all cursor-pointer hover:scale-[1.02]"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${status.classes}`}>
                       {status.label}
                     </span>
-                    <span className="flex items-center gap-1 text-xs text-gray-500"><Users className="w-3.5 h-3.5" />{event._count.registrations}</span>
+                    <span className="flex items-center gap-1 text-xs text-jewel-500"><Users className="w-3.5 h-3.5" />{event._count.registrations}</span>
                   </div>
 
-                  <h3 className="text-lg font-semibold mb-2 group-hover:text-rose-400 transition-colors line-clamp-2">{event.name}</h3>
+                  <h3 className="text-lg font-display font-bold text-jewel-900 mb-2 line-clamp-2">{event.name}</h3>
 
-                  {event.description && <p className="text-sm muted mb-4 line-clamp-2">{event.description}</p>}
+                  {event.description && <p className="text-sm text-jewel-600 mb-4 line-clamp-2">{event.description}</p>}
 
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs text-gray-500"><Calendar className="w-4 h-4 flex-shrink-0" /><span className="truncate">{formatDate(event.date)}</span></div>
-                    {event.venue && (<div className="flex items-center gap-2 text-xs text-gray-500"><MapPin className="w-4 h-4 flex-shrink-0" /><span className="truncate">{event.venue}</span></div>)}
+                    <div className="flex items-center gap-2 text-xs text-jewel-500"><Calendar className="w-4 h-4 flex-shrink-0" /><span className="truncate">{formatDate(event.date)}</span></div>
+                    {event.venue && (<div className="flex items-center gap-2 text-xs text-jewel-500"><MapPin className="w-4 h-4 flex-shrink-0" /><span className="truncate">{event.venue}</span></div>)}
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-white/8 flex items-center justify-between">
+                  <div className="mt-4 pt-4 border-t border-jewel-400/20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">{initial}</div>
-                      <p className="text-xs muted">Organized by <span className="text-gray-400 font-medium">{event.createdBy.name}</span></p>
+                      <div className="w-8 h-8 rounded-full bg-jewel-gold/15 border border-jewel-gold/25 flex items-center justify-center text-jewel-deep font-bold">{initial}</div>
+                      <p className="text-xs text-jewel-500">Organized by <span className="text-jewel-700 font-medium">{event.createdBy.name}</span></p>
                     </div>
                     <div className="flex items-center gap-2">
                       {isAdmin && (
@@ -236,7 +222,7 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
                             onClick={(e) => handleCardModeration(e, event.id, "APPROVED")}
                             disabled={!!moderatingId}
                             aria-label={`Approve ${event.name}`}
-                            className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-md bg-green-600 hover:bg-green-700 text-white"
+                            className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-md bg-jewel-emerald/10 hover:bg-jewel-emerald/20 text-jewel-emerald border border-jewel-emerald/20"
                           >
                             <CheckCircle className="w-3.5 h-3.5" />
                           </button>
@@ -244,13 +230,13 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
                             onClick={(e) => handleCardModeration(e, event.id, "REJECTED")}
                             disabled={!!moderatingId}
                             aria-label={`Reject ${event.name}`}
-                            className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-md bg-red-600 hover:bg-red-700 text-white"
+                            className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-md bg-jewel-ruby/10 hover:bg-jewel-ruby/20 text-jewel-ruby border border-jewel-ruby/20"
                           >
                             <XCircle className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       )}
-                      <p className="text-xs muted">{new Date(event.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-jewel-400">{new Date(event.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </motion.div>

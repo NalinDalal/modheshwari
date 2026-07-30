@@ -5,13 +5,10 @@ import { useRouter } from "next/navigation";
 import { Calendar, MapPin, FileText, ArrowLeft, Loader } from "lucide-react";
 import { NotAuthenticated } from "@repo/ui/notAuthenticated";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { Button } from "@repo/ui/button";
 
 import apiFetch from "../../../lib/api";
 
-/**
- * Performs  create event page operation.
- * @returns {React.JSX.Element} Description of return value
- */
 export default function CreateEventPage() {
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
@@ -44,8 +41,6 @@ export default function CreateEventPage() {
         method: "POST",
         body: JSON.stringify(formData),
       });
-
-      // Success - redirect to events list
       router.push("/events");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -70,35 +65,29 @@ export default function CreateEventPage() {
   return (
     <DreamySunsetBackground className="px-6 py-10">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
+          className="flex items-center gap-2 text-jewel-600 hover:text-jewel-900 transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Create Event</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <h1 className="text-3xl font-display font-bold text-jewel-900 tracking-tight">Create Event</h1>
+          <p className="text-sm text-jewel-500 mt-1">
             Create a new community event. It will require admin approval before
             being published.
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Event Name */}
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-300 mb-2"
-            >
+            <label htmlFor="name" className="block text-sm font-medium text-jewel-700 mb-2">
               Event Name *
             </label>
             <div className="relative">
-              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-jewel-400" />
               <input
                 type="text"
                 id="name"
@@ -107,17 +96,13 @@ export default function CreateEventPage() {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Annual Community Gathering"
-                className="w-full pl-11 pr-4 py-3 bg-[#0e1320]/70 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-4 py-3 bg-jewel-50/50 border border-jewel-400/30 rounded-xl text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50 focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          {/* Description */}
           <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-300 mb-2"
-            >
+            <label htmlFor="description" className="block text-sm font-medium text-jewel-700 mb-2">
               Description
             </label>
             <textarea
@@ -127,20 +112,16 @@ export default function CreateEventPage() {
               value={formData.description}
               onChange={handleChange}
               placeholder="Tell us about your event..."
-              className="w-full px-4 py-3 bg-[#0e1320]/70 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all resize-none"
+              className="w-full px-4 py-3 bg-jewel-50/50 border border-jewel-400/30 rounded-xl text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50 focus:border-transparent transition-all resize-none"
             />
           </div>
 
-          {/* Date & Time */}
           <div>
-            <label
-              htmlFor="date"
-              className="block text-sm font-medium text-gray-300 mb-2"
-            >
+            <label htmlFor="date" className="block text-sm font-medium text-jewel-700 mb-2">
               Date & Time *
             </label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-jewel-400" />
               <input
                 type="datetime-local"
                 id="date"
@@ -148,21 +129,17 @@ export default function CreateEventPage() {
                 required
                 value={formData.date}
                 onChange={handleChange}
-                className="w-full pl-11 pr-4 py-3 bg-[#0e1320]/70 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-4 py-3 bg-jewel-50/50 border border-jewel-400/30 rounded-xl text-jewel-900 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50 focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          {/* Venue */}
           <div>
-            <label
-              htmlFor="venue"
-              className="block text-sm font-medium text-gray-300 mb-2"
-            >
+            <label htmlFor="venue" className="block text-sm font-medium text-jewel-700 mb-2">
               Venue
             </label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-jewel-400" />
               <input
                 type="text"
                 id="venue"
@@ -170,49 +147,47 @@ export default function CreateEventPage() {
                 value={formData.venue}
                 onChange={handleChange}
                 placeholder="Community Hall, Main Street"
-                className="w-full pl-11 pr-4 py-3 bg-[#0e1320]/70 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-4 py-3 bg-jewel-50/50 border border-jewel-400/30 rounded-xl text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50 focus:border-transparent transition-all"
               />
             </div>
           </div>
 
-          {/* Error Message */}
           {error && (
-            <div className="p-4 bg-red-900/30 border border-red-500/50 rounded-lg text-red-300 text-sm">
+            <div className="p-4 bg-jewel-ruby/10 border border-jewel-ruby/30 rounded-xl text-jewel-ruby text-sm">
               {error}
             </div>
           )}
 
-          {/* Info Box */}
-          <div className="p-4 muted rounded-lg">
-            <p className="text-sm muted-text">
+          <div className="p-4 bg-jewel-gold/10 border border-jewel-gold/30 rounded-xl">
+            <p className="text-sm text-jewel-700">
               <strong>Note:</strong> Your event will be sent for approval to
               community admins. You&apos;ll be notified once it&apos;s reviewed.
             </p>
           </div>
 
-          {/* Submit Button */}
           <div className="flex gap-3">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => router.back()}
-              className="flex-1 px-6 py-3 muted rounded-lg font-medium"
+              className="flex-1"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={loading}
-              className="flex-1 px-6 py-3 btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1"
             >
               {loading ? (
-                <>
+                <span className="flex items-center justify-center gap-2">
                   <Loader className="w-4 h-4 animate-spin" />
                   Creating...
-                </>
+                </span>
               ) : (
                 "Create Event"
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
