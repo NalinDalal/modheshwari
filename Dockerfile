@@ -12,7 +12,7 @@ COPY packages/utils/package.json ./packages/utils/package.json
 COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 COPY packages/db/schema.prisma ./packages/db/schema.prisma
-RUN bun install --ignore-scripts
+RUN bun install --frozen-lockfile --ignore-scripts
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
@@ -22,11 +22,13 @@ RUN bun run build
 
 FROM base AS runner
 ENV NODE_ENV=production
-COPY --from=builder /app/apps/be ./apps/be
-COPY --from=builder /app/apps/ws ./apps/ws
-COPY --from=builder /app/apps/web ./apps/web
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/node_modules ./node_modules
+RUN addgroup --system app && adduser --system --ingroup app app
+COPY --from=builder --chown=app:app /app/apps/be ./apps/be
+COPY --from=builder --chown=app:app /app/apps/ws ./apps/ws
+COPY --from=builder --chown=app:app /app/apps/web ./apps/web
+COPY --from=builder --chown=app:app /app/packages ./packages
+COPY --from=builder --chown=app:app /app/node_modules ./node_modules
+USER app
 
 EXPOSE 3000 3001 3002
 CMD ["sh"]
