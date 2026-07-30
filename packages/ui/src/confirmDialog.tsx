@@ -16,9 +16,9 @@ interface ConfirmDialogProps {
 
 const VARIANT_BUTTON: Record<string, string> = {
   danger:
-    "bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-500 hover:to-red-600 focus:ring-red-500",
+    "bg-gradient-to-r from-jewel-ruby to-jewel-ruby/80 text-white hover:opacity-90 focus:ring-jewel-ruby",
   warning:
-    "bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500 focus:ring-amber-500",
+    "bg-gradient-to-r from-jewel-gold to-jewel-gold/80 text-jewel-deep hover:opacity-90 focus:ring-jewel-gold",
   info: "bg-gradient-to-r from-jewel-gold to-jewel-600 text-jewel-deep hover:from-jewel-goldLight hover:to-jewel-500 focus:ring-jewel-gold",
 };
 
@@ -109,7 +109,7 @@ export function ConfirmDialog({
             aria-modal="true"
             aria-labelledby="confirm-title"
             aria-describedby="confirm-desc"
-            className="relative z-10 w-full max-w-md rounded-2xl border border-jewel-200 bg-white p-6 shadow-xl dark:border-jewel-700 dark:bg-jewel-900"
+            className="relative z-10 w-full max-w-md rounded-2xl border border-jewel-200 bg-jewel-50 p-6 shadow-xl dark:border-jewel-700 dark:bg-jewel-900"
           >
             <h2
               id="confirm-title"
