@@ -39,45 +39,49 @@ import type { Role } from "@prisma/client";
  * }
  */
 export async function handleCreateStatusUpdateRequest(req: Request) {
-  const user = await verifyAuth(req);
-  if (!user) return failure("Unauthorized", null, 401);
+  try {
+    const user = await verifyAuth(req);
+    if (!user) return failure("Unauthorized", null, 401);
 
-  const userId = user.userId ?? user.id;
-  if (!userId) return failure("Unauthorized: missing userId", null, 401);
+    const userId = user.userId ?? user.id;
+    if (!userId) return failure("Unauthorized: missing userId", null, 401);
 
-  const body = (await req.json()) as {
-    targetUserId?: string;
-    reason?: string;
-  };
+    const body = (await req.json()) as {
+      targetUserId?: string;
+      reason?: string;
+    };
 
-  const { targetUserId, reason } = body;
-  if (!targetUserId) return failure("targetUserId is required", null, 400);
+    const { targetUserId, reason } = body;
+    if (!targetUserId) return failure("targetUserId is required", null, 400);
 
-  // Create request
-  const request = await prisma.statusUpdateRequest.create({
-    data: {
-      targetUserId,
-      requestedById: userId,
-      reason,
-      finalStatus: "deceased",
-      approvals: {
-        create: [
-          {
-            approverId: await findApprover("COMMUNITY_SUBHEAD"),
-            approverName: "Community Subhead",
-            role: "COMMUNITY_SUBHEAD" as Role,
-          },
-          {
-            approverId: await findApprover("GOTRA_HEAD"),
-            approverName: "Gotra Head",
-            role: "GOTRA_HEAD" as Role,
-          },
-        ],
+    // Create request
+    const request = await prisma.statusUpdateRequest.create({
+      data: {
+        targetUserId,
+        requestedById: userId,
+        reason,
+        finalStatus: "deceased",
+        approvals: {
+          create: [
+            {
+              approverId: await findApprover("COMMUNITY_SUBHEAD"),
+              approverName: "Community Subhead",
+              role: "COMMUNITY_SUBHEAD" as Role,
+            },
+            {
+              approverId: await findApprover("GOTRA_HEAD"),
+              approverName: "Gotra Head",
+              role: "GOTRA_HEAD" as Role,
+            },
+          ],
+        },
       },
-    },
-  });
+    });
 
-  return success("Request created", { request });
+    return success("Request created", { request });
+  } catch (err) {
+    return failure("Internal server error", "Unexpected Error", 500);
+  }
 }
 
 // ---------------- Helper — find approver ----------------
@@ -118,27 +122,31 @@ if (!approver) throw new Error(`No active approver found for role: ${role}`);
  *   update requests including their approvals and target user details.
  */
 export async function handleListStatusUpdateRequests(req: Request) {
-  const user = await verifyAuth(req);
-  if (!user) return failure("Unauthorized", null, 401);
+  try {
+    const user = await verifyAuth(req);
+    if (!user) return failure("Unauthorized", null, 401);
 
-  const requests = await prisma.statusUpdateRequest.findMany({
-    where: {
-      OR: [
-        { requestedById: user.id },
-        { approvals: { some: { approverId: user.id } } },
-      ],
-    },
-    include: {
-      targetUser: {
-        select: { id: true, name: true, email: true, role: true, status: true },
+    const requests = await prisma.statusUpdateRequest.findMany({
+      where: {
+        OR: [
+          { requestedById: user.id },
+          { approvals: { some: { approverId: user.id } } },
+        ],
       },
-      approvals: {
-        select: { id: true, status: true, approverName: true, role: true, reviewedAt: true, remarks: true },
+      include: {
+        targetUser: {
+          select: { id: true, name: true, email: true, role: true, status: true },
+        },
+        approvals: {
+          select: { id: true, status: true, approverName: true, role: true, reviewedAt: true, remarks: true },
+        },
       },
-    },
-  });
+    });
 
-  return success("Fetched status update requests", { requests });
+    return success("Fetched status update requests", { requests });
+  } catch (err) {
+    return failure("Internal server error", "Unexpected Error", 500);
+  }
 }
 
 // ---------------- REVIEW ----------------
@@ -182,51 +190,55 @@ export async function handleReviewStatusUpdateRequest(
   req: Request,
   id: string,
 ) {
-  const user = await verifyAuth(req);
-  if (!user) return failure("Unauthorized", null, 401);
+  try {
+    const user = await verifyAuth(req);
+    if (!user) return failure("Unauthorized", null, 401);
 
-  const body = (await req.json()) as {
-    status?: "APPROVED" | "REJECTED";
-    remarks?: string;
-  };
+    const body = (await req.json()) as {
+      status?: "APPROVED" | "REJECTED";
+      remarks?: string;
+    };
 
-  const { status, remarks } = body;
-  if (!status) return failure("Status field is required", null, 400);
+    const { status, remarks } = body;
+    if (!status) return failure("Status field is required", null, 400);
 
-  const approval = await prisma.statusUpdateApproval.updateMany({
-    where: {
-      requestId: id,
-      approverId: user.id,
-    },
-    data: { status, remarks, reviewedAt: new Date() },
-  });
-
-  // Check if all approvers have approved
-  const allApproved = await prisma.statusUpdateApproval.count({
-    where: { requestId: id, status: "APPROVED" },
-  });
-  const totalApprovers = await prisma.statusUpdateApproval.count({
-    where: { requestId: id },
-  });
-
-  if (allApproved === totalApprovers) {
-    await prisma.statusUpdateRequest.update({
-      where: { id },
-      data: { status: "APPROVED", reviewedAt: new Date() },
+    const approval = await prisma.statusUpdateApproval.updateMany({
+      where: {
+        requestId: id,
+        approverId: user.id,
+      },
+      data: { status, remarks, reviewedAt: new Date() },
     });
 
-    // Update the profile
-    const reqObj = await prisma.statusUpdateRequest.findUnique({
-      where: { id },
-      select: { targetUserId: true },
+    // Check if all approvers have approved
+    const allApproved = await prisma.statusUpdateApproval.count({
+      where: { requestId: id, status: "APPROVED" },
     });
-    if (reqObj?.targetUserId) {
-      await prisma.profile.updateMany({
-        where: { userId: reqObj.targetUserId },
-        data: { status: false },
+    const totalApprovers = await prisma.statusUpdateApproval.count({
+      where: { requestId: id },
+    });
+
+    if (allApproved === totalApprovers) {
+      await prisma.statusUpdateRequest.update({
+        where: { id },
+        data: { status: "APPROVED", reviewedAt: new Date() },
       });
-    }
-  }
 
-  return success("Review submitted", { approval });
+      // Update the profile
+      const reqObj = await prisma.statusUpdateRequest.findUnique({
+        where: { id },
+        select: { targetUserId: true },
+      });
+      if (reqObj?.targetUserId) {
+        await prisma.profile.updateMany({
+          where: { userId: reqObj.targetUserId },
+          data: { status: false },
+        });
+      }
+    }
+
+    return success("Review submitted", { approval });
+  } catch (err) {
+    return failure("Internal server error", "Unexpected Error", 500);
+  }
 }
