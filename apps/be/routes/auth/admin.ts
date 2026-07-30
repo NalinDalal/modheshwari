@@ -157,6 +157,10 @@ export async function handleAdminLogin(
     if (!user)
       return failure("User not found or role mismatch", "Unauthorized", 401);
 
+    if (user.status === false) {
+      return failure("Account is inactive", "Unauthorized", 401);
+    }
+
     const ok = await comparePassword(password, user.password);
     if (!ok) return failure("Invalid credentials", "Authentication Error", 401);
 
