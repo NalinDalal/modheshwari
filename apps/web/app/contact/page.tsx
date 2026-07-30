@@ -168,6 +168,11 @@ export default function ContactPage() {
     );
 }
 
+/**
+ * Performs  input operation.
+ * @param {React.InputHTMLAttributes<HTMLInputElement>} props - Description of props
+ * @returns {any} Description of return value
+ */
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     return (
         <input

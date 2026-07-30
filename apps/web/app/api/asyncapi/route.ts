@@ -1,6 +1,10 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
 
+/**
+ * Performs  g e t operation.
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function GET() {
   try {
     const yamlPath = join(process.cwd(), "../../asyncapi.yaml");

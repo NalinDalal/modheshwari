@@ -2,6 +2,19 @@
 
 import { ReactNode, useState, useRef } from "react";
 
+/**
+ * Performs  tooltip operation.
+ * @param {{ children: React.ReactNode; text: string; className?: string; }} {
+ *   children,
+ *   text,
+ *   className = "",
+ * } - Description of {
+ *   children,
+ *   text,
+ *   className = "",
+ * }
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function Tooltip({
   children,
   text,

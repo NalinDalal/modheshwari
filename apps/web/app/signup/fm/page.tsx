@@ -7,6 +7,10 @@ import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../../lib/config";
 
+/**
+ * Performs  member signup page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function MemberSignupPage() {
     const { toast } = useToast();
     const [form, setForm] = useState({
@@ -136,6 +140,17 @@ export default function MemberSignupPage() {
     );
 }
 
+/**
+ * Performs  input operation.
+ * @param {{ label: string; } & React.InputHTMLAttributes<HTMLInputElement>} {
+ *     label,
+ *     ...props
+ * } - Description of {
+ *     label,
+ *     ...props
+ * }
+ * @returns {React.JSX.Element} Description of return value
+ */
 function Input({
     label,
     ...props
@@ -154,6 +169,10 @@ function Input({
     );
 }
 
+/**
+ * Performs  success state operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 function SuccessState() {
     return (
         <div className="py-14 text-center">

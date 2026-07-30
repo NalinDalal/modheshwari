@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { Button } from "@repo/ui/button";
 import { useToast } from "@repo/ui/toast";
 
 import useNotifications from "../../hooks/useNotifications";
@@ -41,12 +42,21 @@ type Priority = "low" | "normal" | "high" | "urgent";
 type ReadFilter = "all" | "read" | "unread";
 type SortBy = "newest" | "oldest" | "unread-first";
 
+/**
+ * Performs get token operation.
+ * @returns {string} Description of return value
+ */
 function getToken(): string | null {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("token");
 }
 
 
+/**
+ * Performs is admin role operation.
+ * @param {Role} role - Description of role
+ * @returns {boolean} Description of return value
+ */
 function isAdminRole(role?: Role): boolean {
     return (
         role === "COMMUNITY_HEAD" ||
@@ -55,12 +65,21 @@ function isAdminRole(role?: Role): boolean {
     );
 }
 
+/**
+ * Performs dedupe key operation.
+ * @param {Notification} n - Description of n
+ * @returns {string} Description of return value
+ */
 function dedupeKey(n: Notification): string {
     if (n.id) return `id:${n.id}`;
     if (n.previewId) return `preview:${n.previewId}`;
     return `fallback:${n.message}:${n.createdAt}`;
 }
 
+/**
+ * Performs  notifications page operation.
+ * @returns {React.ReactElement} Description of return value
+ */
 export default function NotificationsPage(): React.ReactElement {
     const { notifications: hookNotifications, unreadCount, refresh, markRead, markAllRead, pulse } = useNotifications();
     const { toast } = useToast();
@@ -255,32 +274,32 @@ export default function NotificationsPage(): React.ReactElement {
 
 
     return (
-        <DreamySunsetBackground className="px-4 sm:px-6 py-10">
+        <DreamySunsetBackground className="px-6 py-10">
             <div className="max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="mb-10">
-                    <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-4xl sm:text-5xl font-display font-bold text-jewel-900 mb-2">
                         Notifications
                     </h1>
-                    <p className="text-lg text-gray-600">
+                    <p className="text-lg text-jewel-500">
                         Stay updated with system and community alerts
                     </p>
                 </div>
 
                 {/* Error */}
                 {error && (
-                    <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
+                    <div className="mb-6 rounded-xl border border-jewel-ruby/30 bg-jewel-ruby/10 px-4 py-3 text-sm text-jewel-ruby">
                         {error}
                     </div>
                 )}
 
                 {/* Admin Broadcast */}
                 {isAdmin && (
-                    <section className="bg-white/80 backdrop-blur-sm border border-pink-200 rounded-2xl p-8 mb-10 shadow-sm">
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                            📢 Broadcast Notification
+                    <section className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 shadow-jewel rounded-2xl p-8 mb-10">
+                        <h2 className="text-2xl font-display font-bold text-jewel-900 mb-2">
+                            Broadcast Notification
                         </h2>
-                        <p className="text-gray-600 mb-6">
+                        <p className="text-jewel-500 mb-6">
                             You can notify users within your permitted scope.
                         </p>
 
@@ -289,7 +308,7 @@ export default function NotificationsPage(): React.ReactElement {
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
                                 placeholder="Subject (optional)"
-                                className="w-full bg-pink-50 border border-pink-200 rounded-lg px-4 py-3"
+                                className="w-full bg-jewel-50/50 border border-jewel-400/30 rounded-xl px-4 py-3 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
                             />
 
                             <textarea
@@ -297,14 +316,14 @@ export default function NotificationsPage(): React.ReactElement {
                                 onChange={(e) => setMessage(e.target.value)}
                                 rows={3}
                                 placeholder="Write a message to broadcast..."
-                                className="w-full bg-pink-50 border border-pink-200 rounded-lg px-4 py-3 resize-none"
+                                className="w-full bg-jewel-50/50 border border-jewel-400/30 rounded-xl px-4 py-3 resize-none text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
                             />
 
                             <div className="flex flex-wrap items-center gap-3">
                                 <select
                                     value={targetRole}
                                     onChange={(e) => setTargetRole(e.target.value)}
-                                    className="bg-pink-50 border border-pink-200 rounded-lg px-4 py-3"
+                                    className="bg-jewel-50/50 border border-jewel-400/30 rounded-xl px-4 py-3 text-jewel-900 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
                                 >
                                     <option value="ALL">All users</option>
 
@@ -341,7 +360,7 @@ export default function NotificationsPage(): React.ReactElement {
                                 <select
                                     value={priority}
                                     onChange={(e) => setPriority(e.target.value as Priority)}
-                                    className="bg-pink-50 border border-pink-200 rounded-lg px-4 py-3"
+                                    className="bg-jewel-50/50 border border-jewel-400/30 rounded-xl px-4 py-3 text-jewel-900 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
                                 >
                                     <option value="low">Low Priority</option>
                                     <option value="normal">Normal Priority</option>
@@ -349,27 +368,27 @@ export default function NotificationsPage(): React.ReactElement {
                                     <option value="urgent">Urgent</option>
                                 </select>
 
-                                <button
+                                <Button
                                     type="submit"
                                     disabled={broadcasting || !message.trim()}
-                                    className="px-6 py-3 rounded-lg bg-pink-600 text-white disabled:opacity-50"
                                 >
                                     {broadcasting ? "Sending..." : "Send Notification"}
-                                </button>
+                                </Button>
                             </div>
 
                             {/* Channels */}
                             <div className="space-y-3">
-                                <label className="block text-sm font-medium text-gray-900">
+                                <label className="block text-sm font-medium text-jewel-700">
                                     Channels
                                 </label>
                                 <div className="flex gap-3">
                                     {["IN_APP", "EMAIL", "PUSH"].map((c) => (
-                                        <label key={c} className="flex items-center gap-2">
+                                        <label key={c} className="flex items-center gap-2 text-jewel-700">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedChannels.includes(c)}
                                                 onChange={() => toggleChannel(c)}
+                                                className="accent-jewel-gold"
                                             />
                                             {c}
                                         </label>
@@ -379,9 +398,9 @@ export default function NotificationsPage(): React.ReactElement {
 
                             {/* Preview */}
                             {(subject.trim() || message.trim()) && (
-                                <div className="border rounded-lg p-4">
-                                    <p className="font-semibold">{subject.trim() || "—"}</p>
-                                    <p>{message.trim()}</p>
+                                <div className="border border-jewel-400/20 rounded-xl p-4 bg-jewel-50/50">
+                                    <p className="font-semibold text-jewel-900">{subject.trim() || "\u2014"}</p>
+                                    <p className="text-jewel-700">{message.trim()}</p>
                                 </div>
                             )}
                         </form>
@@ -389,13 +408,13 @@ export default function NotificationsPage(): React.ReactElement {
                 )}
 
                 {/* Notifications List */}
-                <section className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+                <section className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 shadow-jewel rounded-2xl overflow-hidden">
                     {/* Controls */}
-                    <div className="p-4 border-b flex flex-wrap gap-3 items-center">
+                    <div className="p-4 border-b border-jewel-400/20 flex flex-wrap gap-3 items-center">
                         <select
                             value={filterRead}
                             onChange={(e) => setFilterRead(e.target.value as ReadFilter)}
-                            className="border rounded-lg px-3 py-2 text-sm"
+                            className="border border-jewel-400/30 bg-jewel-50/50 rounded-xl px-3 py-2 text-sm text-jewel-900 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
                         >
                             <option value="all">All</option>
                             <option value="unread">Unread</option>
@@ -405,7 +424,7 @@ export default function NotificationsPage(): React.ReactElement {
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as SortBy)}
-                            className="border rounded-lg px-3 py-2 text-sm"
+                            className="border border-jewel-400/30 bg-jewel-50/50 rounded-xl px-3 py-2 text-sm text-jewel-900 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
                         >
                             <option value="newest">Newest</option>
                             <option value="oldest">Oldest</option>
@@ -415,7 +434,7 @@ export default function NotificationsPage(): React.ReactElement {
                         <select
                             value={selectedType}
                             onChange={(e) => setSelectedType(e.target.value)}
-                            className="border rounded-lg px-3 py-2 text-sm"
+                            className="border border-jewel-400/30 bg-jewel-50/50 rounded-xl px-3 py-2 text-sm text-jewel-900 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
                         >
                             <option value="all">All types</option>
                             {notificationTypes.map((t) => (
@@ -426,22 +445,21 @@ export default function NotificationsPage(): React.ReactElement {
                         </select>
 
                         <div className="ml-auto flex items-center gap-3">
-                            <button
+                            <Button
+                                variant="secondary"
                                 onClick={() => void fetchNotifications()}
-                                className="text-sm px-3 py-2 rounded-lg border"
                             >
                                 Refresh
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button
+                                variant="secondary"
                                 onClick={() => void handleMarkAllRead()}
-                                className="text-sm px-3 py-2 rounded-lg border"
-                                title="Mark all read"
                             >
                                 Mark all read
-                            </button>
+                            </Button>
 
-                            <div className="text-sm text-pink-600">
+                            <div className="text-sm text-jewel-gold">
                                 {unreadCount > 0 && (
                                     <span className={`${pulse ? "animate-pulse font-semibold" : "font-medium"}`}>
                                         Unread: {unreadCount > 99 ? "99+" : unreadCount}
@@ -453,9 +471,9 @@ export default function NotificationsPage(): React.ReactElement {
 
                     {/* Content */}
                     {loading ? (
-                        <p className="text-center py-12 text-gray-500">Loading...</p>
+                        <p className="text-center py-12 text-jewel-400">Loading...</p>
                     ) : filteredNotifications.length === 0 ? (
-                        <p className="text-center py-12 text-gray-500">📭 No notifications</p>
+                        <p className="text-center py-12 text-jewel-400">No notifications</p>
                     ) : (
                         <ul>
                             {filteredNotifications.map((n) => {
@@ -464,13 +482,13 @@ export default function NotificationsPage(): React.ReactElement {
                                 return (
                                     <li
                                         key={dedupeKey(n)}
-                                        className={`p-6 border-b last:border-b-0 ${n.read ? "bg-white" : "bg-pink-50/40"
+                                        className={`p-6 border-b border-jewel-400/15 last:border-b-0 ${n.read ? "bg-jewel-50/40" : "bg-jewel-gold/5"
                                             }`}
                                     >
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="space-y-1">
-                                                <p className="text-gray-900">{n.message}</p>
-                                                <p className="text-xs text-gray-500">
+                                                <p className="text-jewel-900">{n.message}</p>
+                                                <p className="text-xs text-jewel-400">
                                                     {new Date(n.createdAt).toLocaleString()}
                                                 </p>
                                             </div>
@@ -478,14 +496,14 @@ export default function NotificationsPage(): React.ReactElement {
                                             {canToggleRead && (
                                                 <button
                                                     onClick={() => void handleToggleRead(n.id!, !!n.read)}
-                                                    className="text-xs px-3 py-2 rounded-lg border flex items-center justify-center"
+                                                    className="text-xs px-3 py-2 rounded-xl border border-jewel-400/20 bg-jewel-50/50 flex items-center justify-center text-jewel-600 hover:bg-jewel-100 transition-colors"
                                                     title={n.read ? "Mark unread" : "Mark read"}
                                                     aria-label={n.read ? "Mark unread" : "Mark read"}
                                                 >
                                                     {n.read ? (
-                                                        <Eye className="w-4 h-4 text-gray-700" />
+                                                        <Eye className="w-4 h-4" />
                                                     ) : (
-                                                        <EyeOff className="w-4 h-4 text-gray-700" />
+                                                        <EyeOff className="w-4 h-4" />
                                                     )}
                                                 </button>
                                             )}

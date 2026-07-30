@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 
 import { useToast } from "@repo/ui/toast";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 
 import { apiPost } from "../../lib/api";
 import { API_BASE } from "../../lib/config";
@@ -18,6 +19,10 @@ const roles = [
   { label: "Community Subhead", value: "communitysubhead" },
 ];
 
+/**
+ * Performs  signin page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function SigninPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -64,11 +69,7 @@ export default function SigninPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="absolute inset-0 bg-jewel-50" />
-      <div className="absolute top-20 left-10 w-72 h-72 bg-jewel-gold/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-40 right-10 w-96 h-96 bg-jewel-emerald/10 rounded-full blur-3xl" />
-
+    <DreamySunsetBackground className="flex items-center justify-center min-h-screen px-4 py-12">
       <motion.main
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -219,6 +220,6 @@ export default function SigninPage() {
           </p>
         </motion.div>
       </motion.main>
-    </div>
+    </DreamySunsetBackground>
   );
 }

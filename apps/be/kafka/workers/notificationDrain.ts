@@ -9,6 +9,11 @@ const DLQ_KEY = 'notifications:dlq';
 const NOTIFICATION_KEY_PATTERN = 'notifications:*';
 const SCAN_COUNT = Number(process.env.NOTIFICATION_DRAIN_SCAN_COUNT || 100);
 
+/**
+ * Performs parse cached operation.
+ * @param {string} item - Description of item
+ * @returns {Promise<any>} Description of return value
+ */
 async function parseCached(item: string) {
   try {
     return JSON.parse(item);
@@ -17,6 +22,11 @@ async function parseCached(item: string) {
   }
 }
 
+/**
+ * Performs drain once operation.
+ * @param {import("/Users/nalindalal/modheshwari/node_modules/redis/dist/index").RedisClientType} redis - Description of redis
+ * @returns {Promise<number>} Description of return value
+ */
 export async function drainOnce(redis?: RedisClientType | null) {
   const client = redis || (await getRedisClient());
   let drained = 0;
@@ -85,6 +95,11 @@ export async function drainOnce(redis?: RedisClientType | null) {
   return drained;
 }
 
+/**
+ * Performs start notification drain operation.
+ * @param {number} intervalMs - Description of intervalMs
+ * @returns {{ stop(): void; }} Description of return value
+ */
 export function startNotificationDrain(intervalMs = Number(process.env.NOTIFICATION_DRAIN_INTERVAL_MS || 1000 * 60 * 5)) {
   let running = true;
   const redisPromise = getRedisClient();

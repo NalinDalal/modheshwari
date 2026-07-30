@@ -12,6 +12,11 @@ const BATCH_SIZE = Number(process.env.NOTIFICATION_DLQ_RETRY_BATCH || 50);
 const MAX_ATTEMPTS = Number(process.env.NOTIFICATION_DLQ_MAX_ATTEMPTS || 5);
 const BASE_DELAY_MS = Number(process.env.NOTIFICATION_DLQ_BASE_DELAY_MS || 60 * 1000); // 1min
 
+/**
+ * Performs parse entry operation.
+ * @param {string} raw - Description of raw
+ * @returns {Promise<any>} Description of return value
+ */
 async function parseEntry(raw: string) {
   try {
     return JSON.parse(raw);
@@ -20,6 +25,11 @@ async function parseEntry(raw: string) {
   }
 }
 
+/**
+ * Performs move due scheduled to dlq operation.
+ * @param {import("/Users/nalindalal/modheshwari/node_modules/redis/dist/index").RedisClientType} client - Description of client
+ * @returns {Promise<void>} Description of return value
+ */
 async function moveDueScheduledToDlq(client: RedisClientType) {
   const now = Date.now();
   try {
@@ -39,6 +49,11 @@ async function moveDueScheduledToDlq(client: RedisClientType) {
   }
 }
 
+/**
+ * Performs process dlq once operation.
+ * @param {import("/Users/nalindalal/modheshwari/node_modules/redis/dist/index").RedisClientType} client - Description of client
+ * @returns {Promise<number>} Description of return value
+ */
 export async function processDlqOnce(client?: RedisClientType) {
   const redis = client || (await getRedisClient());
   // first move any scheduled due items
@@ -120,6 +135,11 @@ export async function processDlqOnce(client?: RedisClientType) {
   return processed;
 }
 
+/**
+ * Performs start d l q retry worker operation.
+ * @param {number} intervalMs - Description of intervalMs
+ * @returns {{ stop(): void; }} Description of return value
+ */
 export function startDLQRetryWorker(intervalMs = Number(process.env.NOTIFICATION_DLQ_RETRY_INTERVAL_MS || 30 * 1000)) {
   let running = true;
   const redisPromise = getRedisClient();

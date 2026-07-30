@@ -4,6 +4,10 @@ import indexer from "./elasticIndexer";
 
 // Register Prisma middleware to index users and events asynchronously.
 // This is fire-and-forget: we don't block DB writes on indexing.
+/**
+ * Performs register prisma index hooks operation.
+ * @returns {void} Description of return value
+ */
 export function registerPrismaIndexHooks() {
     // Prisma types in this workspace might not expose $use correctly to TS here,
     // so cast to any to attach middleware at runtime.

@@ -48,6 +48,12 @@ export async function handleRefresh(req: Request): Promise<Response> {
   }
 }
 
+/**
+ * Performs get cookie operation.
+ * @param {string} cookieHeader - Description of cookieHeader
+ * @param {string} name - Description of name
+ * @returns {string} Description of return value
+ */
 function getCookie(cookieHeader: string, name: string): string | null {
   const match = cookieHeader.match(new RegExp(`(^|; )${name}=([^;]*)`));
   if (match && typeof match[2] === "string" && match[2] !== undefined) {

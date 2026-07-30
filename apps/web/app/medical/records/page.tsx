@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { Button } from "@repo/ui/button";
 
 import { API_BASE } from "../../../lib/config";
 
@@ -67,11 +69,9 @@ export default function MedicalRecordsPage() {
     }
   }, []);
 
- 
-useEffect(() => {
+  useEffect(() => {
     void loadRecords();
   }, [loadRecords]);
-
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -103,98 +103,111 @@ useEffect(() => {
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
+
   return (
-    <div className="p-4 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Medical Records</h1>
+    <DreamySunsetBackground className="px-6 py-10">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-2xl font-display font-bold text-jewel-900 mb-4">Medical Records</h1>
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
-          {error}
-        </div>
-      )}
+        {error && (
+          <div className="mb-4 rounded-xl border border-jewel-ruby/30 bg-jewel-ruby/10 px-4 py-3 text-sm text-jewel-ruby">
+            {error}
+          </div>
+        )}
 
-      <form onSubmit={handleCreate} className="mb-8 space-y-4">
-        <Field label="Blood Type">
-          <input
-            value={form.bloodType}
-            onChange={(e) => updateField("bloodType", e.target.value)}
-            className="w-full rounded-md border px-3 py-2"
-            placeholder="e.g. O+"
-          />
-        </Field>
+        <form onSubmit={handleCreate} className="mb-8 space-y-4">
+          <Field label="Blood Type">
+            <input
+              value={form.bloodType}
+              onChange={(e) => updateField("bloodType", e.target.value)}
+              className="w-full rounded-xl border border-jewel-400/30 bg-jewel-50/50 px-3 py-2 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
+              placeholder="e.g. O+"
+            />
+          </Field>
 
-        <Field label="Allergies">
-          <input
-            value={form.allergies}
-            onChange={(e) => updateField("allergies", e.target.value)}
-            className="w-full rounded-md border px-3 py-2"
-            placeholder="e.g. peanuts, dust"
-          />
-        </Field>
+          <Field label="Allergies">
+            <input
+              value={form.allergies}
+              onChange={(e) => updateField("allergies", e.target.value)}
+              className="w-full rounded-xl border border-jewel-400/30 bg-jewel-50/50 px-3 py-2 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
+              placeholder="e.g. peanuts, dust"
+            />
+          </Field>
 
-        <Field label="Conditions">
-          <input
-            value={form.conditions}
-            onChange={(e) => updateField("conditions", e.target.value)}
-            className="w-full rounded-md border px-3 py-2"
-            placeholder="e.g. asthma"
-          />
-        </Field>
+          <Field label="Conditions">
+            <input
+              value={form.conditions}
+              onChange={(e) => updateField("conditions", e.target.value)}
+              className="w-full rounded-xl border border-jewel-400/30 bg-jewel-50/50 px-3 py-2 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
+              placeholder="e.g. asthma"
+            />
+          </Field>
 
-        <Field label="Medications">
-          <input
-            value={form.medications}
-            onChange={(e) => updateField("medications", e.target.value)}
-            className="w-full rounded-md border px-3 py-2"
-            placeholder="e.g. cetirizine"
-          />
-        </Field>
+          <Field label="Medications">
+            <input
+              value={form.medications}
+              onChange={(e) => updateField("medications", e.target.value)}
+              className="w-full rounded-xl border border-jewel-400/30 bg-jewel-50/50 px-3 py-2 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
+              placeholder="e.g. cetirizine"
+            />
+          </Field>
 
-        <Field label="Notes">
-          <textarea
-            value={form.notes}
-            onChange={(e) => updateField("notes", e.target.value)}
-            className="w-full rounded-md border px-3 py-2 min-h-[100px]"
-            placeholder="Anything important..."
-          />
-        </Field>
+          <Field label="Notes">
+            <textarea
+              value={form.notes}
+              onChange={(e) => updateField("notes", e.target.value)}
+              className="w-full rounded-xl border border-jewel-400/30 bg-jewel-50/50 px-3 py-2 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50 min-h-[100px] resize-none"
+              placeholder="Anything important..."
+            />
+          </Field>
 
-        <button
-          type="submit"
-          disabled={submitting || !hasAnyFormValue}
-          className="rounded-md bg-black px-4 py-2 text-white disabled:opacity-50"
-        >
-          {submitting ? "Creating..." : "Create"}
-        </button>
-      </form>
+          <Button
+            type="submit"
+            disabled={submitting || !hasAnyFormValue}
+          >
+            {submitting ? "Creating..." : "Create"}
+          </Button>
+        </form>
 
-      <h2 className="text-lg font-semibold mb-3">Your Records</h2>
+        <h2 className="text-lg font-display font-bold text-jewel-900 mb-3">Your Records</h2>
 
-      {loading ? (
-        <p className="text-sm text-gray-500">Loading...</p>
-      ) : records.length === 0 ? (
-        <p className="text-sm text-gray-500">No records yet.</p>
-      ) : (
-        <ul className="space-y-4">
-          {records.map((r) => (
-            <li key={r.id} className="rounded-lg border p-4">
-              <Row label="Blood" value={r.bloodType} />
-              <Row label="Allergies" value={r.allergies} />
-              <Row label="Conditions" value={r.conditions} />
-              <Row label="Medications" value={r.medications} />
-              {r.notes && <Row label="Notes" value={r.notes} />}
+        {loading ? (
+          <p className="text-sm text-jewel-400">Loading...</p>
+        ) : records.length === 0 ? (
+          <p className="text-sm text-jewel-400">No records yet.</p>
+        ) : (
+          <ul className="space-y-4">
+            {records.map((r) => (
+              <li key={r.id} className="rounded-xl border border-jewel-400/20 bg-jewel-50/60 p-4">
+                <Row label="Blood" value={r.bloodType} />
+                <Row label="Allergies" value={r.allergies} />
+                <Row label="Conditions" value={r.conditions} />
+                <Row label="Medications" value={r.medications} />
+                {r.notes && <Row label="Notes" value={r.notes} />}
 
-              <div className="mt-3 text-xs text-gray-500">
-                {new Date(r.createdAt).toLocaleString()}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+                <div className="mt-3 text-xs text-jewel-400">
+                  {new Date(r.createdAt).toLocaleString()}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </DreamySunsetBackground>
   );
 }
 
+/**
+ * Performs  field operation.
+ * @param {{ label: string; children: React.ReactNode; }} {
+ *   label,
+ *   children,
+ * } - Description of {
+ *   label,
+ *   children,
+ * }
+ * @returns {any} Description of return value
+ */
 function Field({
   label,
   children,
@@ -204,24 +217,22 @@ function Field({
 }) {
   return (
     <div className="space-y-1">
-      <label className="text-sm font-medium">{label}</label>
+      <label className="text-sm font-medium text-jewel-700">{label}</label>
       {children}
     </div>
   );
 }
 
+/**
+ * Performs  row operation.
+ * @param {{ label: string; value?: string; }} { label, value } - Description of { label, value }
+ * @returns {any} Description of return value
+ */
 function Row({ label, value }: { label: string; value?: string }) {
   return (
     <div className="text-sm">
-      <span className="font-semibold">{label}:</span>{" "}
-      <span className="text-gray-700">{value?.trim() || "—"}</span>
+      <span className="font-semibold text-jewel-800">{label}:</span>{" "}
+      <span className="text-jewel-600">{value?.trim() || "\u2014"}</span>
     </div>
   );
 }
-
-
-
-
-
-
-

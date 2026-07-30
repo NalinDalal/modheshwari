@@ -17,6 +17,10 @@ import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../../lib/config";
 
+/**
+ * Performs  signup page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();

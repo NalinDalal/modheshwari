@@ -7,6 +7,10 @@ const apiKey = process.env.elastic_api_key;
 const username = process.env.ELASTIC_USERNAME;
 const password = process.env.ELASTIC_PASSWORD;
 
+/**
+ * Performs build client operation.
+ * @returns {import("/Users/nalindalal/modheshwari/node_modules/@elastic/elasticsearch/lib/client").default} Description of return value
+ */
 function buildClient() {
   const auth: any = {};
   if (apiKey) auth.apiKey = apiKey;

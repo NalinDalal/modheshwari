@@ -63,6 +63,10 @@ interface EventDetails {
     createdAt: string;
 }
 
+/**
+ * Performs  event details page operation.
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function EventDetailsPage() {
     const router = useRouter();
     const params = useParams();

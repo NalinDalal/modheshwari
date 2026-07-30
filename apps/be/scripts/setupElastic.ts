@@ -1,6 +1,12 @@
 #!/usr/bin/env bun
 import elasticClient from "../lib/elastic";
 
+/**
+ * Performs ensure index operation.
+ * @param {string} name - Description of name
+ * @param {any} body - Description of body
+ * @returns {Promise<void>} Description of return value
+ */
 async function ensureIndex(name: string, body: any) {
   try {
     const existsResp: any = await elasticClient.indices.exists({ index: name });
@@ -18,6 +24,10 @@ async function ensureIndex(name: string, body: any) {
   console.log(`Created ${name}`);
 }
 
+/**
+ * Performs run operation.
+ * @returns {Promise<void>} Description of return value
+ */
 async function run() {
   console.log("Setting up Elasticsearch indices...");
 

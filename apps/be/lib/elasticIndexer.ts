@@ -1,5 +1,10 @@
 import elasticClient from "./elastic";
 
+/**
+ * Performs index user operation.
+ * @param {any} user - Description of user
+ * @returns {Promise<void>} Description of return value
+ */
 export async function indexUser(user: any) {
   if (!user || !user.id) return;
   try {
@@ -27,6 +32,11 @@ export async function indexUser(user: any) {
   }
 }
 
+/**
+ * Performs delete user operation.
+ * @param {string} userId - Description of userId
+ * @returns {Promise<void>} Description of return value
+ */
 export async function deleteUser(userId: string) {
   if (!userId) return;
   try {
@@ -38,6 +48,11 @@ export async function deleteUser(userId: string) {
   }
 }
 
+/**
+ * Performs index event operation.
+ * @param {any} ev - Description of ev
+ * @returns {Promise<void>} Description of return value
+ */
 export async function indexEvent(ev: any) {
   if (!ev || !ev.id) return;
   try {
@@ -60,6 +75,11 @@ export async function indexEvent(ev: any) {
   }
 }
 
+/**
+ * Performs delete event operation.
+ * @param {string} eventId - Description of eventId
+ * @returns {Promise<void>} Description of return value
+ */
 export async function deleteEvent(eventId: string) {
   if (!eventId) return;
   try {

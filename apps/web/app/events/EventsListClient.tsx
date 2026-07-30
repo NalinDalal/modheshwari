@@ -32,7 +32,12 @@ type Event = {
   createdAt: string;
 };
 
-const fetcher = async (url: string) => {
+const fetcher = /**
+ * Executes fetcher operation.
+ * @param {string} url - Description of url
+ * @returns {Promise<any>} Description of return value
+ */
+async (url: string) => {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const res = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},

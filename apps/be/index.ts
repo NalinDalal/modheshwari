@@ -26,6 +26,10 @@ import "./lib/metrics";
 import startNotificationDrain from "./kafka/workers/notificationDrain";
 import startDLQRetryWorker from "./kafka/workers/notificationDLQ";
 
+/**
+ * Performs register prisma hooks operation.
+ * @returns {Promise<void>} Description of return value
+ */
 async function registerPrismaHooks() {
     try {
         const { registerPrismaIndexHooks } = await import("./lib/prismaIndexHooks");
@@ -56,6 +60,11 @@ drainHandle = startNotificationDrain();
 dlqHandle = startDLQRetryWorker();
 
 // Graceful shutdown
+/**
+ * Performs shutdown operation.
+ * @param {string} signal - Description of signal
+ * @returns {Promise<void>} Description of return value
+ */
 async function shutdown(signal: string) {
     logger.info(`Shutting down gracefully (${signal})`);
     try {

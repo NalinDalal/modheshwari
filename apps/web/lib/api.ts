@@ -4,7 +4,11 @@ export type ApiFetchOptions = RequestInit & {
   throwOnError?: boolean;
 };
 
-const getToken = () => {
+const getToken = /**
+ * Executes get token operation.
+ * @returns {string} Description of return value
+ */
+() => {
   if (typeof window === "undefined") return null;
   try {
     return localStorage.getItem("token");
@@ -13,6 +17,11 @@ const getToken = () => {
   }
 };
 
+/**
+ * Performs parse json safe operation.
+ * @param {Response} res - Description of res
+ * @returns {Promise<any>} Description of return value
+ */
 async function parseJsonSafe(res: Response) {
   const text = await res.text();
   try {
@@ -22,6 +31,12 @@ async function parseJsonSafe(res: Response) {
   }
 }
 
+/**
+ * Performs api fetch operation.
+ * @param {RequestInfo} input - Description of input
+ * @param {import("/Users/nalindalal/modheshwari/apps/web/lib/api").ApiFetchOptions} init - Description of init
+ * @returns {Promise<any>} Description of return value
+ */
 export async function apiFetch(input: RequestInfo, init?: ApiFetchOptions) {
   const headers = new Headers((init?.headers as HeadersInit) || {});
   const token = getToken();
@@ -98,21 +113,47 @@ export async function apiFetch(input: RequestInfo, init?: ApiFetchOptions) {
   return data;
 }
 
-export const apiGet = (url: string, opts?: ApiFetchOptions) =>
+export const apiGet = /**
+ * Executes api get operation.
+ * @param {string} url - Description of url
+ * @param {import("/Users/nalindalal/modheshwari/apps/web/lib/api").ApiFetchOptions} opts - Description of opts
+ * @returns {Promise<any>} Description of return value
+ */
+(url: string, opts?: ApiFetchOptions) =>
   apiFetch(url, { ...opts, method: "GET" });
-export const apiPost = (url: string, body?: unknown, opts?: ApiFetchOptions) =>
+export const apiPost = /**
+ * Executes api post operation.
+ * @param {string} url - Description of url
+ * @param {unknown} body - Description of body
+ * @param {import("/Users/nalindalal/modheshwari/apps/web/lib/api").ApiFetchOptions} opts - Description of opts
+ * @returns {Promise<any>} Description of return value
+ */
+(url: string, body?: unknown, opts?: ApiFetchOptions) =>
   apiFetch(url, {
     ...opts,
     method: "POST",
     body: body && typeof body === "string" ? body : JSON.stringify(body),
   });
-export const apiPut = (url: string, body?: unknown, opts?: ApiFetchOptions) =>
+export const apiPut = /**
+ * Executes api put operation.
+ * @param {string} url - Description of url
+ * @param {unknown} body - Description of body
+ * @param {import("/Users/nalindalal/modheshwari/apps/web/lib/api").ApiFetchOptions} opts - Description of opts
+ * @returns {Promise<any>} Description of return value
+ */
+(url: string, body?: unknown, opts?: ApiFetchOptions) =>
   apiFetch(url, {
     ...opts,
     method: "PUT",
     body: body && typeof body === "string" ? body : JSON.stringify(body),
   });
-export const apiDelete = (url: string, opts?: ApiFetchOptions) =>
+export const apiDelete = /**
+ * Executes api delete operation.
+ * @param {string} url - Description of url
+ * @param {import("/Users/nalindalal/modheshwari/apps/web/lib/api").ApiFetchOptions} opts - Description of opts
+ * @returns {Promise<any>} Description of return value
+ */
+(url: string, opts?: ApiFetchOptions) =>
   apiFetch(url, { ...opts, method: "DELETE" });
 
 export default apiFetch;

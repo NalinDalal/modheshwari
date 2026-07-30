@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 
 import apiFetch from "../../lib/api";
 import { API_BASE } from "../../lib/config";
@@ -16,7 +17,6 @@ interface NearbyUser {
   distanceKm: number;
 }
 
-//Helper function
 /**
  * Performs  meta operation.
  * @param {{ label: string; value: string; }} { label, value } - Description of { label, value }
@@ -24,9 +24,9 @@ interface NearbyUser {
  */
 function Meta({ label, value }: { label: string; value: string }) {
   return (
-    <div className="p-3 border rounded-lg">
-      <div className="text-xs text-neutral-400">{label}</div>
-      <div className="font-medium">{value}</div>
+    <div className="p-3 border border-jewel-400/20 rounded-xl bg-jewel-50/50">
+      <div className="text-xs text-jewel-400">{label}</div>
+      <div className="font-medium text-jewel-800">{value}</div>
     </div>
   );
 }
@@ -58,20 +58,17 @@ export default function NearbyPage() {
         setLoading(true);
         setError(null);
 
-        // use centralized api helper which attaches Authorization header
         const resp = await apiFetch(
           `${API_BASE}/users/nearby?radiusKm=${radiusKm}`,
           { throwOnError: false },
         );
         const data = resp && (resp.ok === false ? resp.data : resp);
 
-        // Accept multiple shapes: direct array, { data: [...] }, or { status: 'success', data: [...] }
         if (Array.isArray(data)) {
           setUsers(data as NearbyUser[]);
         } else if (data && Array.isArray(data.data)) {
           setUsers(data.data as NearbyUser[]);
         } else {
-          // fall back to empty and surface message
           const msg =
             (data && (data.error || data.message)) ||
             "Failed to fetch nearby users";
@@ -90,86 +87,85 @@ export default function NearbyPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <DreamySunsetBackground className="flex items-center justify-center min-h-screen">
         <LoaderFour text="Finding nearby members..." />
-      </div>
+      </DreamySunsetBackground>
     );
   }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 pb-12">
-      {/* Header */}
-      <section className="bg-white dark:bg-neutral-900 border rounded-2xl p-6">
-        <h1 className="text-2xl font-semibold">Nearby Members</h1>
-        <p className="text-sm text-neutral-500 mt-1">
-          People around you based on location
-        </p>
+    <DreamySunsetBackground className="px-6 py-10">
+      <div className="max-w-3xl mx-auto">
+        {/* Header */}
+        <section className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 shadow-jewel rounded-2xl p-6">
+          <h1 className="text-2xl font-display font-bold text-jewel-900">Nearby Members</h1>
+          <p className="text-sm text-jewel-500 mt-1">
+            People around you based on location
+          </p>
 
-        {/* Radius Control */}
-        <div className="mt-6">
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-neutral-500">Search radius</span>
-            <span className="font-medium">{radiusKm} km</span>
+          <div className="mt-6">
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-jewel-500">Search radius</span>
+              <span className="font-medium text-jewel-800">{radiusKm} km</span>
+            </div>
+
+            <input
+              type="range"
+              min={1}
+              max={50}
+              value={radiusKm}
+              onChange={(e) => setRadiusKm(Number(e.target.value))}
+              className="w-full accent-jewel-gold"
+            />
           </div>
-
-          <input
-            type="range"
-            min={1}
-            max={50}
-            value={radiusKm}
-            onChange={(e) => setRadiusKm(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
-      </section>
-
-      {/* Error */}
-      {error && (
-        <section className="mt-6 border border-red-300 bg-red-50 text-red-700 rounded-xl p-4 text-sm">
-          {error}
         </section>
-      )}
 
-      {/* Empty */}
-      {!error && users.length === 0 && (
-        <section className="mt-6 border rounded-xl p-6 text-sm text-neutral-500 bg-white dark:bg-neutral-900">
-          No nearby members found.
-        </section>
-      )}
+        {/* Error */}
+        {error && (
+          <section className="mt-6 border border-jewel-ruby/30 bg-jewel-ruby/10 text-jewel-ruby rounded-xl p-4 text-sm">
+            {error}
+          </section>
+        )}
 
-      {/* List */}
-      <section className="mt-6 space-y-4">
-        {users.map((u) => {
-          const initials = u.name
-            .split(" ")
-            .map((n) => n[0])
-            .slice(0, 2)
-            .join("")
-            .toUpperCase();
+        {/* Empty */}
+        {!error && users.length === 0 && (
+          <section className="mt-6 border border-jewel-400/20 rounded-xl p-6 text-sm text-jewel-400 bg-jewel-50/60">
+            No nearby members found.
+          </section>
+        )}
 
-          return (
-            <div
-              key={u.id}
-              className="bg-white dark:bg-neutral-900 border rounded-2xl p-6 flex gap-4 items-center"
-            >
-              {/* Avatar */}
-              <div className="h-14 w-14 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
-                {initials}
-              </div>
+        {/* List */}
+        <section className="mt-6 space-y-4">
+          {users.map((u) => {
+            const initials = u.name
+              .split(" ")
+              .map((n) => n[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase();
 
-              {/* Info */}
-              <div className="flex-1">
-                <h2 className="font-semibold">{u.name}</h2>
+            return (
+              <div
+                key={u.id}
+                className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 shadow-jewel rounded-2xl p-6 flex gap-4 items-center"
+              >
+                <div className="h-14 w-14 rounded-full bg-jewel-gold/20 text-jewel-deep flex items-center justify-center font-semibold">
+                  {initials}
+                </div>
 
-                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                  <Meta label="Distance" value={`${u.distanceKm} km`} />
-                  {u.phone && <Meta label="Phone" value={u.phone} />}
+                <div className="flex-1">
+                  <h2 className="font-semibold text-jewel-900">{u.name}</h2>
+
+                  <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                    <Meta label="Distance" value={`${u.distanceKm} km`} />
+                    {u.phone && <Meta label="Phone" value={u.phone} />}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </section>
-    </main>
+            );
+          })}
+        </section>
+      </div>
+    </DreamySunsetBackground>
   );
 }

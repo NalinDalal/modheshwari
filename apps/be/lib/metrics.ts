@@ -28,6 +28,10 @@ export const notificationDlqSize = new client.Gauge({
   help: 'Number of items currently in notifications DLQ (Redis list)',
 });
 
+/**
+ * Performs metrics handler operation.
+ * @returns {Promise<Response>} Description of return value
+ */
 export async function metricsHandler(): Promise<Response> {
   const body = await client.register.metrics();
   return new Response(body, {

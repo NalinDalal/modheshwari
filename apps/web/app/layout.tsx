@@ -21,6 +21,15 @@ export const metadata: Metadata = {
   description: "Next app to take everything online",
 };
 
+/**
+ * Performs  root layout operation.
+ * @param {{ children: React.ReactNode; }} {
+ *   children,
+ * } - Description of {
+ *   children,
+ * }
+ * @returns {React.JSX.Element} Description of return value
+ */
 export default function RootLayout({
   children,
 }: {

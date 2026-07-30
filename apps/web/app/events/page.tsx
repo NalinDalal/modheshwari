@@ -1,5 +1,9 @@
 import EventsListClient from "./EventsListClient";
 
+/**
+ * Performs  events page operation.
+ * @returns {Promise<React.JSX.Element>} Description of return value
+ */
 export default async function EventsPage() {
   try {
     const now = new Date();

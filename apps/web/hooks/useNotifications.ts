@@ -21,6 +21,10 @@ export type UseNotificationsHook = {
   pulse: boolean;
 };
 
+/**
+ * Performs use notifications operation.
+ * @returns {import("/Users/nalindalal/modheshwari/apps/web/hooks/useNotifications").UseNotificationsHook} Description of return value
+ */
 export default function useNotifications(): UseNotificationsHook {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
