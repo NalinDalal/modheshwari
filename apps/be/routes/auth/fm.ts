@@ -53,13 +53,6 @@ export async function handleMemberLogin(req: Request) {
     });
     if (!user) return failure("User not found", "Not Found", 404);
 
-    if (user.role !== "MEMBER")
-      return failure(
-        "Unauthorized — only Family Members can login here",
-        "Access Denied",
-        403,
-      );
-
     // --- Block login if user is marked deceased/inactive ---
     // `status` is a boolean in the Prisma `User` model (true = alive, false = deceased)
     if (user.status === false) {

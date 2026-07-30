@@ -3,6 +3,8 @@
  * Validates credentials, checks role, and returns a signed JWT if successful.
  */
 
+import { randomUUID } from "crypto";
+
 import prisma from "@modheshwari/db";
 import { comparePassword, hashPassword } from "@modheshwari/utils/hash";
 import { signJWT, signRefreshJWT } from "@modheshwari/utils/jwt";
@@ -188,7 +190,7 @@ export async function handleFHSignup(
       const f = await tx.family.create({
         data: {
           name: familyName,
-          uniqueId: `FAM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+          uniqueId: `FAM-${randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`,
           headId: u.id,
         },
       });
@@ -210,7 +212,7 @@ export async function handleFHSignup(
     const refreshToken = signRefreshJWT({ userId: user.id });
     const headers = new Headers();
     headers.append("Set-Cookie", `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=604800; Secure`);
-    console.log(
+    logger.info(
       `Signup successful: ${user.name} (${user.email}) — Family: ${family.name} (${family.id})`,
     );
     return new Response(
@@ -231,7 +233,7 @@ export async function handleFHSignup(
       { status: 201, headers }
     );
   } catch (err) {
-    console.error("Signup Error:", err);
+    logger.error("Signup Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
