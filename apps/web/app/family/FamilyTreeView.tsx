@@ -3,366 +3,361 @@
 import { useEffect, useRef, useState, ChangeEvent } from "react";
 import { Network } from "vis-network";
 import { Plus, Loader } from "lucide-react";
+import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { Button } from "@repo/ui/button";
 
 import { API_BASE } from "../../lib/config";
 
 interface GraphData {
-  nodes: Array<{
-    id: string;
-    label: string;
-    title?: string;
-    color?: string;
-    shape?: string;
-  }>;
-  edges: Array<{
-    from: string;
-    to: string;
-    label: string;
-    arrows?: string;
-  }>;
+    nodes: Array<{
+        id: string;
+        label: string;
+        title?: string;
+        color?: string;
+        shape?: string;
+    }>;
+    edges: Array<{
+        from: string;
+        to: string;
+        label: string;
+        arrows?: string;
+    }>;
 }
 
 type ViewType = "ancestors" | "descendants" | "full";
 
-/**
- * Performs  family tree view operation.
- * @returns {React.JSX.Element} Description of return value
- */
 export default function FamilyTreeView() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const networkRef = useRef<Network | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const networkRef = useRef<Network | null>(null);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<ViewType>("full");
-  const [depth, setDepth] = useState(5);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [treeData, setTreeData] = useState<GraphData | null>(null);
-  const [relationshipForm, setRelationshipForm] = useState({
-    targetUserId: "",
-    relationType: "SPOUSE" as "SPOUSE" | "PARENT" | "CHILD" | "SIBLING",
-    reciprocal: true,
-  });
-  const [showRelationshipForm, setShowRelationshipForm] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [view, setView] = useState<ViewType>("full");
+    const [depth, setDepth] = useState(5);
+    const [userId, setUserId] = useState<string | null>(null);
+    const [treeData, setTreeData] = useState<GraphData | null>(null);
+    const [relationshipForm, setRelationshipForm] = useState({
+        targetUserId: "",
+        relationType: "SPOUSE" as "SPOUSE" | "PARENT" | "CHILD" | "SIBLING",
+        reciprocal: true,
+    });
+    const [showRelationshipForm, setShowRelationshipForm] = useState(false);
 
-  // Fetch family tree
-  const fetchFamilyTree = async () => {
-    if (!userId) {
-      setError("User ID not available");
-      return;
-    }
+    // Fetch family tree
+    const fetchFamilyTree = async () => {
+        if (!userId) {
+            setError("User ID not available");
+            return;
+        }
 
-    setLoading(true);
-    setError(null);
+        setLoading(true);
+        setError(null);
 
-    try {
-      const params = new URLSearchParams({
-        userId,
-        view,
-        depth: depth.toString(),
-        format: "graph",
-      });
+        try {
+            const params = new URLSearchParams({
+                userId,
+                view,
+                depth: depth.toString(),
+                format: "graph",
+            });
 
-      const response = await fetch(`${API_BASE}/family/tree?${params}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+            const response = await fetch(`${API_BASE}/family/tree?${params}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch family tree");
-      }
+            if (!response.ok) {
+                throw new Error("Failed to fetch family tree");
+            }
 
-      const data = await response.json();
-      setTreeData(data.data.tree);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Initialize network visualization
-  useEffect(() => {
-    if (!treeData || !containerRef.current) return;
-
-    const options = {
-      physics: {
-        enabled: true,
-        stabilization: {
-          iterations: 200,
-        },
-      },
-      layout: {
-        hierarchical: {
-          enabled: true,
-          levelSeparation: 200,
-          nodeSpacing: 150,
-          direction: "UD",
-        },
-      },
-      nodes: {
-        font: {
-          size: 14,
-          face: "Tahoma",
-        },
-        borderWidth: 2,
-        borderWidthSelected: 4,
-      },
-      edges: {
-        font: {
-          size: 12,
-          align: "middle",
-        },
-        smooth: {
-          enabled: true,
-          type: "continuous",
-          roundness: 0.5,
-        },
-        arrows: {
-          to: {
-            enabled: true,
-            scaleFactor: 0.5,
-          },
-        },
-      },
+            const data = await response.json();
+            setTreeData(data.data.tree);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Unknown error");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    networkRef.current = new Network(containerRef.current, treeData, options);
-  }, [treeData]);
+    useEffect(() => {
+        if (!treeData || !containerRef.current) return;
 
-  // Get userId on mount
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+        const options = {
+            physics: {
+                enabled: true,
+                stabilization: {
+                    iterations: 200,
+                },
+            },
+            layout: {
+                hierarchical: {
+                    enabled: true,
+                    levelSeparation: 200,
+                    nodeSpacing: 150,
+                    direction: "UD",
+                },
+            },
+            nodes: {
+                font: {
+                    size: 14,
+                    face: "Tahoma",
+                },
+                borderWidth: 2,
+                borderWidthSelected: 4,
+            },
+            edges: {
+                font: {
+                    size: 12,
+                    align: "middle",
+                },
+                smooth: {
+                    enabled: true,
+                    type: "continuous",
+                    roundness: 0.5,
+                },
+                arrows: {
+                    to: {
+                        enabled: true,
+                        scaleFactor: 0.5,
+                    },
+                },
+            },
+        };
 
-    try {
-      // Decode JWT to get user info
-      const parts = token.split(".");
-      if (parts.length < 2) return;
+        networkRef.current = new Network(containerRef.current, treeData, options);
+    }, [treeData]);
 
-      const payload = JSON.parse(atob(parts[1]!));
-      setUserId(payload.userId || payload.id);
-    } catch (err) {
-      console.error("Failed to decode token:", err);
-    }
-  }, []);
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-  // Create relationship
-  const handleCreateRelationship = async () => {
-    if (!relationshipForm.targetUserId) {
-      setError("Please enter target user ID");
-      return;
-    }
+        try {
+            const parts = token.split(".");
+            if (parts.length < 2) return;
 
-    setLoading(true);
-    setError(null);
+            const payload = JSON.parse(atob(parts[1]!));
+            setUserId(payload.userId || payload.id);
+        } catch (err) {
+            console.error("Failed to decode token:", err);
+        }
+    }, []);
 
-    try {
-      const response = await fetch(`${API_BASE}/family/tree/relations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(relationshipForm),
-      });
+    const handleCreateRelationship = async () => {
+        if (!relationshipForm.targetUserId) {
+            setError("Please enter target user ID");
+            return;
+        }
 
-      if (!response.ok) {
-        throw new Error("Failed to create relationship");
-      }
+        setLoading(true);
+        setError(null);
 
-      setRelationshipForm({
-        targetUserId: "",
-        relationType: "SPOUSE",
-        reciprocal: true,
-      });
-      setShowRelationshipForm(false);
+        try {
+            const response = await fetch(`${API_BASE}/family/tree/relations`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                body: JSON.stringify(relationshipForm),
+            });
 
-      // Refresh tree
-      await fetchFamilyTree();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
+            if (!response.ok) {
+                throw new Error("Failed to create relationship");
+            }
 
-  return (
-    <div className="space-y-6">
-      {/* Controls */}
-      <div className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          {/* View Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              View Type
-            </label>
-            <select
-              value={view}
-              onChange={(e) => setView(e.target.value as ViewType)}
-              className="w-full px-4 py-2 bg-[#1a1f2e] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="full">Full Tree</option>
-              <option value="ancestors">Ancestors</option>
-              <option value="descendants">Descendants</option>
-            </select>
-          </div>
+            setRelationshipForm({
+                targetUserId: "",
+                relationType: "SPOUSE",
+                reciprocal: true,
+            });
+            setShowRelationshipForm(false);
 
-          {/* Depth */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Depth: {depth}
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              value={depth}
-              onChange={(e) => setDepth(parseInt(e.target.value))}
-              className="w-full accent-blue-500"
-            />
-          </div>
+            await fetchFamilyTree();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Unknown error");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-          {/* Refresh Button */}
-          <div className="flex items-end">
-            <button
-              onClick={fetchFamilyTree}
-              disabled={loading || !userId}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(59,130,246,0.5)]"
-            >
-              {loading ? <Loader className="w-4 h-4 animate-spin" /> : null}
-              Refresh Tree
-            </button>
-          </div>
+    return (
+        <DreamySunsetBackground className="px-6 py-10">
+            <div className="max-w-7xl mx-auto space-y-6">
+                {/* Controls */}
+                <div className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 shadow-jewel rounded-2xl p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        {/* View Type */}
+                        <div>
+                            <label className="block text-sm font-medium text-jewel-600 mb-2">
+                                View Type
+                            </label>
+                            <select
+                                value={view}
+                                onChange={(e) => setView(e.target.value as ViewType)}
+                                className="w-full px-4 py-2 bg-jewel-50/50 border border-jewel-400/30 rounded-xl text-jewel-900 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
+                            >
+                                <option value="full">Full Tree</option>
+                                <option value="ancestors">Ancestors</option>
+                                <option value="descendants">Descendants</option>
+                            </select>
+                        </div>
 
-          {/* Add Relationship Button */}
-          <div className="flex items-end">
-            <button
-              onClick={() => setShowRelationshipForm(!showRelationshipForm)}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(34,197,94,0.5)]"
-            >
-              <Plus className="w-4 h-4" />
-              Add Relation
-            </button>
-          </div>
-        </div>
+                        {/* Depth */}
+                        <div>
+                            <label className="block text-sm font-medium text-jewel-600 mb-2">
+                                Depth: {depth}
+                            </label>
+                            <input
+                                type="range"
+                                min="1"
+                                max="10"
+                                value={depth}
+                                onChange={(e) => setDepth(parseInt(e.target.value))}
+                                className="w-full accent-jewel-gold"
+                            />
+                        </div>
 
-        {/* Add Relationship Form */}
-        {showRelationshipForm && (
-          <div className="border-t border-white/10 pt-4 mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Target User ID
-                </label>
-                <input
-                  type="text"
-                  value={relationshipForm.targetUserId}
-                  onChange={(e) =>
-                    setRelationshipForm({
-                      ...relationshipForm,
-                      targetUserId: e.target.value,
-                    })
-                  }
-                  placeholder="Enter user ID"
-                  className="w-full px-3 py-2 bg-[#1a1f2e] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+                        {/* Refresh Button */}
+                        <div className="flex items-end">
+                            <Button
+                                onClick={fetchFamilyTree}
+                                disabled={loading || !userId}
+                                className="w-full"
+                            >
+                                {loading ? <Loader className="w-4 h-4 animate-spin" /> : null}
+                                Refresh Tree
+                            </Button>
+                        </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Relationship Type
-                </label>
-                <select
-                  value={relationshipForm.relationType}
-                  onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                    setRelationshipForm({
-                      ...relationshipForm,
-                      relationType: e.target.value as "SPOUSE" | "PARENT" | "CHILD" | "SIBLING",
-                    })
-                  }
-                  className="w-full px-3 py-2 bg-[#1a1f2e] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="SPOUSE">Spouse</option>
-                  <option value="PARENT">Parent</option>
-                  <option value="CHILD">Child</option>
-                  <option value="SIBLING">Sibling</option>
-                </select>
-              </div>
+                        {/* Add Relationship Button */}
+                        <div className="flex items-end">
+                            <Button
+                                variant="secondary"
+                                onClick={() => setShowRelationshipForm(!showRelationshipForm)}
+                                className="w-full"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Add Relation
+                            </Button>
+                        </div>
+                    </div>
 
-              <div className="flex items-end gap-2">
-                <button
-                  onClick={handleCreateRelationship}
-                  disabled={loading}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                >
-                  Add
-                </button>
-                <button
-                  onClick={() => setShowRelationshipForm(false)}
-                  className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
+                    {/* Add Relationship Form */}
+                    {showRelationshipForm && (
+                        <div className="border-t border-jewel-400/20 pt-4 mt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-jewel-600 mb-2">
+                                        Target User ID
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={relationshipForm.targetUserId}
+                                        onChange={(e) =>
+                                            setRelationshipForm({
+                                                ...relationshipForm,
+                                                targetUserId: e.target.value,
+                                            })
+                                        }
+                                        placeholder="Enter user ID"
+                                        className="w-full px-3 py-2 bg-jewel-50/50 border border-jewel-400/30 rounded-xl text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-jewel-600 mb-2">
+                                        Relationship Type
+                                    </label>
+                                    <select
+                                        value={relationshipForm.relationType}
+                                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                                            setRelationshipForm({
+                                                ...relationshipForm,
+                                                relationType: e.target.value as "SPOUSE" | "PARENT" | "CHILD" | "SIBLING",
+                                            })
+                                        }
+                                        className="w-full px-3 py-2 bg-jewel-50/50 border border-jewel-400/30 rounded-xl text-jewel-900 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
+                                    >
+                                        <option value="SPOUSE">Spouse</option>
+                                        <option value="PARENT">Parent</option>
+                                        <option value="CHILD">Child</option>
+                                        <option value="SIBLING">Sibling</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex items-end gap-2">
+                                    <Button
+                                        onClick={handleCreateRelationship}
+                                        disabled={loading}
+                                        className="flex-1"
+                                    >
+                                        Add
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => setShowRelationshipForm(false)}
+                                        className="px-4"
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Error Message */}
+                    {error && (
+                        <div className="mt-4 p-3 bg-jewel-ruby/10 border border-jewel-ruby/30 rounded-xl text-jewel-ruby text-sm">
+                            {error}
+                        </div>
+                    )}
+                </div>
+
+                {/* Tree Visualization */}
+                <div className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 shadow-jewel rounded-2xl overflow-hidden">
+                    <div
+                        ref={containerRef}
+                        className="w-full bg-jewel-100/40"
+                        style={{ height: "600px", minHeight: "600px" }}
+                    />
+                </div>
+
+                {/* Legend */}
+                <div className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 shadow-jewel rounded-2xl p-6">
+                    <h3 className="text-lg font-display font-bold text-jewel-900 mb-4">Legend</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {[
+                            { color: "#FF6B6B", label: "Community Head" },
+                            { color: "#FFA500", label: "Community Subhead" },
+                            { color: "#4ECDC4", label: "Gotra Head" },
+                            { color: "#45B7D1", label: "Family Head" },
+                            { color: "#95E1D3", label: "Member" },
+                        ].map(({ color, label }) => (
+                            <div key={label} className="flex items-center gap-2">
+                                <div
+                                    className="w-6 h-6 rounded"
+                                    style={{ backgroundColor: color }}
+                                />
+                                <span className="text-sm text-jewel-700">{label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Instructions */}
+                <div className="bg-jewel-gold/10 border border-jewel-gold/30 rounded-2xl p-4">
+                    <h3 className="font-display font-bold text-jewel-800 mb-2">How to Use:</h3>
+                    <ul className="text-sm text-jewel-600 space-y-1 list-disc list-inside">
+                        <li>Click and drag to pan around the tree</li>
+                        <li>Scroll to zoom in and out</li>
+                        <li>Click a node to select it</li>
+                        <li>Use the View Type selector to switch between different tree views</li>
+                        <li>Adjust Depth to show more or fewer generations</li>
+                        <li>Add relationships using the Add Relation button</li>
+                    </ul>
+                </div>
             </div>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
-          <div className="mt-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-red-300">
-            {error}
-          </div>
-        )}
-      </div>
-
-      {/* Tree Visualization */}
-      <div className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden">
-        <div
-          ref={containerRef}
-          className="w-full"
-          style={{ height: "600px", minHeight: "600px" }}
-        />
-      </div>
-
-      {/* Legend */}
-      <div className="bg-[#0e1320]/70 backdrop-blur-md border border-white/5 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-gray-200 mb-4">Legend</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {[
-            { color: "#FF6B6B", label: "Community Head" },
-            { color: "#FFA500", label: "Community Subhead" },
-            { color: "#4ECDC4", label: "Gotra Head" },
-            { color: "#45B7D1", label: "Family Head" },
-            { color: "#95E1D3", label: "Member" },
-          ].map(({ color, label }) => (
-            <div key={label} className="flex items-center gap-2">
-              <div
-                className="w-6 h-6 rounded"
-                style={{ backgroundColor: color }}
-              />
-              <span className="text-sm text-gray-300">{label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Instructions */}
-      <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4">
-        <h3 className="font-semibold text-blue-300 mb-2">How to Use:</h3>
-        <ul className="text-sm text-blue-200 space-y-1 list-disc list-inside">
-          <li>Click and drag to pan around the tree</li>
-          <li>Scroll to zoom in and out</li>
-          <li>Click a node to select it</li>
-          <li>
-            Use the View Type selector to switch between different tree views
-          </li>
-          <li>Adjust Depth to show more or fewer generations</li>
-          <li>Add relationships using the Add Relation button</li>
-        </ul>
-      </div>
-    </div>
-  );
+        </DreamySunsetBackground>
+    );
 }

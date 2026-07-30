@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { Button } from "@repo/ui/button";
+import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../../lib/config";
 
@@ -17,11 +19,12 @@ const ROLES = [
 ] as const;
 
 /**
- * Performs  admin notifications operation.
- * @returns {any} Description of return value
- */
+ * Performs admin notifications operation.
+ * @returns Description of object
+*/
 export default function AdminNotifications() {
     const router = useRouter();
+    const { toast } = useToast();
     const [authorized, setAuthorized] = useState(false);
 
     useEffect(() => {
@@ -90,9 +93,13 @@ export default function AdminNotifications() {
             if (res.ok) {
                 setMessage("");
                 setSubject("");
+                toast("Notification sent", { variant: "success" });
+            } else {
+                toast(json.error || "Failed to send", { variant: "error" });
             }
         } catch (err) {
-            setResult({ error: String(err) });
+            const msg = err instanceof Error ? err.message : String(err);
+            toast(msg || "Failed to send", { variant: "error" });
         } finally {
             setSending(false);
         }
@@ -102,31 +109,31 @@ export default function AdminNotifications() {
 
     return (
         <DreamySunsetBackground className="px-6 py-10">
-            <div className="max-w-3xl mx-auto bg-[#0e1320]/60 p-6 rounded">
-                <h1 className="text-xl font-bold mb-4">Compose Notification</h1>
+            <div className="max-w-3xl mx-auto bg-jewel-50/80 backdrop-blur-xl p-6 rounded-3xl border border-jewel-400/20 shadow-jewel">
+                <h1 className="text-xl font-display font-bold text-jewel-900 mb-4">Compose Notification</h1>
 
                 <div className="mb-3">
-                    <label className="text-sm text-gray-400">Subject (optional)</label>
+                    <label className="text-sm text-jewel-500">Subject (optional)</label>
                     <input
                         value={subject}
                         onChange={(e) => setSubject(e.target.value)}
-                        className="w-full mt-1 p-2 rounded bg-black/20"
+                        className="w-full mt-1 p-2 rounded-xl bg-jewel-50/50 border border-jewel-400/30 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50"
                     />
                 </div>
 
                 <div className="mb-3">
-                    <label className="text-sm text-gray-400">Message</label>
+                    <label className="text-sm text-jewel-500">Message</label>
                     <textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         rows={4}
-                        className="w-full mt-1 p-2 rounded bg-black/20"
+                        className="w-full mt-1 p-2 rounded-xl bg-jewel-50/50 border border-jewel-400/30 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50 resize-none"
                     />
                 </div>
 
                 <div className="mb-3 flex gap-4">
                     <div>
-                        <div className="text-sm text-gray-400 mb-1">Channels</div>
+                        <div className="text-sm text-jewel-500 mb-1">Channels</div>
                         <div className="flex gap-2">
                             {CHANNELS.map((ch) => (
                                 <label key={ch} className="inline-flex items-center gap-2">
@@ -134,19 +141,20 @@ export default function AdminNotifications() {
                                         type="checkbox"
                                         checked={selectedChannels.includes(ch)}
                                         onChange={() => toggleChannel(ch)}
+                                        className="accent-jewel-gold"
                                     />
-                                    <span className="text-sm">{ch}</span>
+                                    <span className="text-sm text-jewel-700">{ch}</span>
                                 </label>
                             ))}
                         </div>
                     </div>
 
                     <div>
-                        <div className="text-sm text-gray-400 mb-1">Priority</div>
+                        <div className="text-sm text-jewel-500 mb-1">Priority</div>
                         <select
                             value={priority}
                             onChange={(e) => setPriority(e.target.value)}
-                            className="p-2 rounded bg-black/20"
+                            className="p-2 rounded-xl bg-jewel-50/50 border border-jewel-400/30 text-jewel-900"
                         >
                             {PRIORITIES.map((p) => (
                                 <option key={p} value={p}>
@@ -157,13 +165,11 @@ export default function AdminNotifications() {
                     </div>
 
                     <div>
-                        <div className="text-sm text-gray-400 mb-1">
-                            Target Role (optional)
-                        </div>
+                        <div className="text-sm text-jewel-500 mb-1">Target Role (optional)</div>
                         <select
                             value={targetRole}
                             onChange={(e) => setTargetRole(e.target.value || undefined)}
-                            className="p-2 rounded bg-black/20"
+                            className="p-2 rounded-xl bg-jewel-50/50 border border-jewel-400/30 text-jewel-900"
                         >
                             <option value="">All (scope applies)</option>
                             {ROLES.map((r) => (
@@ -176,52 +182,44 @@ export default function AdminNotifications() {
                 </div>
 
                 <div className="flex gap-2">
-                    <button
-                        onClick={() => setPreviewOpen(true)}
-                        className="px-4 py-2 bg-white/5 rounded"
-                    >
+                    <Button variant="secondary" onClick={() => setPreviewOpen(true)}>
                         Preview
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={send}
                         disabled={sending || !message.trim()}
-                        className="px-4 py-2 bg-blue-600 text-white rounded"
                     >
                         {sending ? "Sending..." : "Send"}
-                    </button>
+                    </Button>
                 </div>
 
                 {result && (
-                    <div className="mt-4 p-3 bg-white/5 rounded">
-                        <pre className="text-xs">{JSON.stringify(result, null, 2)}</pre>
+                    <div className="mt-4 p-3 bg-jewel-100/40 rounded-xl border border-jewel-400/20">
+                        <pre className="text-xs text-jewel-700 overflow-auto">{JSON.stringify(result, null, 2)}</pre>
                     </div>
                 )}
 
                 {previewOpen && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-                        <div className="bg-[#0b1220] p-6 rounded w-[min(800px,95%)]">
-                            <h2 className="text-lg font-semibold mb-2">Preview</h2>
-                            {subject && <div className="font-bold mb-1">{subject}</div>}
-                            <div className="mb-4">{message}</div>
-                            <div className="text-sm text-gray-400 mb-4">
+                    <div className="fixed inset-0 flex items-center justify-center bg-jewel-900/30 backdrop-blur-sm">
+                        <div className="bg-jewel-50 p-6 rounded-3xl border border-jewel-400/20 shadow-jewel w-[min(800px,95%)]">
+                            <h2 className="text-lg font-display font-bold text-jewel-900 mb-2">Preview</h2>
+                            {subject && <div className="font-bold text-jewel-900 mb-1">{subject}</div>}
+                            <div className="mb-4 text-jewel-800">{message}</div>
+                            <div className="text-sm text-jewel-500 mb-4">
                                 Channels: {selectedChannels.join(", ")} • Priority: {priority}
                             </div>
                             <div className="flex gap-2 justify-end">
-                                <button
-                                    onClick={() => setPreviewOpen(false)}
-                                    className="px-3 py-2 bg-white/5 rounded"
-                                >
+                                <Button variant="secondary" onClick={() => setPreviewOpen(false)}>
                                     Close
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     onClick={() => {
                                         setPreviewOpen(false);
                                         send();
                                     }}
-                                    className="px-3 py-2 bg-blue-600 text-white rounded"
                                 >
                                     Send
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>
