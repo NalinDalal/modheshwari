@@ -276,7 +276,7 @@ export default function NavBar() {
                   >
                     {initials}
                     {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white bg-jewel-ruby rounded-full">
+                      <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-jewel-50 bg-jewel-ruby rounded-full">
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
@@ -368,7 +368,7 @@ export default function NavBar() {
                 <div className="relative">
                   <BellPlus className="h-4 w-4" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white bg-jewel-ruby rounded-full">
+                    <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-jewel-50 bg-jewel-ruby rounded-full">
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
