@@ -103,13 +103,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 const VARIANT_STYLES: Record<ToastVariant, string> = {
   success:
-    "bg-emerald-50 border-emerald-300 text-emerald-800 dark:bg-emerald-950 dark:border-emerald-700 dark:text-emerald-200",
+    "bg-jewel-emerald/10 border-jewel-emerald/30 text-jewel-emerald",
   error:
-    "bg-red-50 border-red-300 text-red-800 dark:bg-red-950 dark:border-red-700 dark:text-red-200",
+    "bg-jewel-ruby/10 border-jewel-ruby/30 text-jewel-ruby",
   warning:
-    "bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-950 dark:border-amber-700 dark:text-amber-200",
+    "bg-jewel-gold/10 border-jewel-gold/30 text-jewel-gold",
   info:
-    "bg-jewel-50 border-jewel-300 text-jewel-800 dark:bg-jewel-900 dark:border-jewel-600 dark:text-jewel-200",
+    "bg-jewel-50 border-jewel-300 text-jewel-800",
 };
 
 const VARIANT_ICONS: Record<ToastVariant, string> = {
