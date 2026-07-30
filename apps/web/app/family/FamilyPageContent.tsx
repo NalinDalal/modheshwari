@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LoaderOne } from "@repo/ui/loading";
 import { NotAuthenticated } from "@repo/ui/notAuthenticated";
 import { MemberCard } from "@repo/ui/memberCard";
+import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../lib/config";
 
@@ -41,6 +42,7 @@ interface Member {
 
 export default function FamilyPageContent() {
   const router = useRouter();
+  const { toast } = useToast();
 
   const [hydrated, setHydrated] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -115,7 +117,7 @@ export default function FamilyPageContent() {
       );
     } catch (err) {
       console.error("Error toggling status:", err);
-      alert("Failed to update member status.");
+      toast("Failed to update member status.", { variant: "error" });
     }
   };
 

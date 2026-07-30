@@ -10,6 +10,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../lib/config";
 
@@ -66,6 +67,7 @@ const REVERSE_BLOOD_GROUP_MAP: Record<string, string> = {
  */
 export default function Medical() {
     const router = useRouter();
+    const { toast } = useToast();
 
     const [user, setUser] = useState<User | null>(null);
     const [myProfile, setMyProfile] = useState<Profile | null>(null);
@@ -96,13 +98,13 @@ export default function Medical() {
                     setUser(data.data);
                     setMyProfile(data.data.profile || null);
                 } else {
-                    alert("Auth expired, please log in again");
+                    toast("Auth expired, please log in again", { variant: "warning" });
                     localStorage.removeItem("token");
                     router.push("/signin");
                 }
             } catch (err) {
                 console.error("Failed to fetch /me", err);
-                alert("Failed to fetch user info");
+                toast("Failed to fetch user info", { variant: "error" });
             } finally {
                 setLoading(false);
             }
@@ -150,12 +152,12 @@ export default function Medical() {
                 setMedicalList(data.data || []);
             } else {
                 setMedicalList([]);
-                alert(data.message || "No users found");
+                toast(data.message || "No users found", { variant: "info" });
             }
         } catch (err) {
             console.error("Failed to fetch medical info:", err);
             setMedicalList([]);
-            alert("Failed to search medical records");
+            toast("Failed to search medical records", { variant: "error" });
         } finally {
             setSearchLoading(false);
         }

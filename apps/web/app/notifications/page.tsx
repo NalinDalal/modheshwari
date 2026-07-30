@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { useToast } from "@repo/ui/toast";
 
 import useNotifications from "../../hooks/useNotifications";
 import { API_BASE } from "../../lib/config";
@@ -62,6 +63,7 @@ function dedupeKey(n: Notification): string {
 
 export default function NotificationsPage(): React.ReactElement {
     const { notifications: hookNotifications, unreadCount, refresh, markRead, markAllRead, pulse } = useNotifications();
+    const { toast } = useToast();
     const [me, setMe] = useState<Me | null>(null);
 
     const [subject, setSubject] = useState("");
@@ -145,7 +147,7 @@ export default function NotificationsPage(): React.ReactElement {
 
         const token = getToken();
         if (!token) {
-            alert("Please login to broadcast notifications");
+            toast("Please login to broadcast notifications", { variant: "warning" });
             return;
         }
 
@@ -180,7 +182,7 @@ export default function NotificationsPage(): React.ReactElement {
 
             if (!res.ok) {
                 const js = await res.json().catch(() => null);
-                alert(js?.message || "Failed to broadcast");
+                toast(js?.message || "Failed to broadcast", { variant: "error" });
                 return;
             }
 
@@ -191,10 +193,10 @@ export default function NotificationsPage(): React.ReactElement {
             setSelectedChannels(["IN_APP"]);
 
             await fetchNotifications();
-            alert("Broadcast sent");
+            toast("Broadcast sent", { variant: "success" });
         } catch (err) {
             console.error("Broadcast error", err);
-            alert("Network error");
+            toast("Network error", { variant: "error" });
         } finally {
             setBroadcasting(false);
         }

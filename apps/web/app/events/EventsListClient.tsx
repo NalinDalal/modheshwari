@@ -18,6 +18,7 @@ import { NotAuthenticated } from "@repo/ui/notAuthenticated";
 
 import { API_BASE } from "../../lib/config";
 import apiFetch from "../../lib/api";
+import { useToast } from "@repo/ui/toast";
 
 type Event = {
   id: string;
@@ -47,6 +48,7 @@ const fetcher = async (url: string) => {
  */
 export default function EventsListClient({ initialData }: { initialData: Event[] }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [hydrated, setHydrated] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
     status: "APPROVED" | "REJECTED",
   ) => {
     e.stopPropagation();
-    if (!token || !isAdmin) return alert("Not authorized");
+    if (!token || !isAdmin) return toast("Not authorized", { variant: "warning" });
 
     const remarks = window.prompt("Optional remarks / suggested changes:", "") || undefined;
     setModeratingId(id);
@@ -111,10 +113,10 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
 
       // Refresh list
       mutate(key);
-      alert(`Moderation recorded: ${status}`);
+      toast(`Moderation recorded: ${status}`, { variant: "success" });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      alert(msg || "Moderation failed");
+      toast(msg || "Moderation failed", { variant: "error" });
     } finally {
       setModeratingId(null);
     }

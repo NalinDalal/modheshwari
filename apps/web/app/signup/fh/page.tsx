@@ -13,11 +13,13 @@ import {
   Shield,
 } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../../lib/config";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { toast } = useToast();
 
   const [form, setForm] = useState({
     name: "",
@@ -45,14 +47,14 @@ export default function SignupPage() {
       const data = await res.json();
 
       if (data.status === "success") {
-        alert("Signup successful!");
+        toast("Signup successful!", { variant: "success" });
         router.push("/me");
       } else {
-        alert("Signup failed: " + (data.message || "Unknown error"));
+        toast(data.message || "Signup failed", { variant: "error" });
       }
     } catch (err) {
       console.error("Signup error:", err);
-      alert("An error occurred during signup");
+      toast("An error occurred during signup", { variant: "error" });
     } finally {
       setLoading(false);
     }

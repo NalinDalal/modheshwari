@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Package, Plus, Check, X, Loader2, AlertCircle } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../lib/config";
 
@@ -83,6 +84,7 @@ function getStatusColor(status: string): string {
  * @returns {JSX.Element} The rendered component.
  */
 export default function ResourceRequestsPage(): React.JSX.Element {
+    const { toast } = useToast();
     const [resource, setResource] = useState("");
     const [requests, setRequests] = useState<ResourceRequest[]>([]);
     const [loading, setLoading] = useState(false);
@@ -155,10 +157,10 @@ export default function ResourceRequestsPage(): React.JSX.Element {
                 void fetchRequests();
             } else {
                 const js = await res.json();
-                alert(js.message || "Failed to create request");
+                toast(js.message || "Failed to create request", { variant: "error" });
             }
         } catch {
-            alert("Network error");
+            toast("Network error", { variant: "error" });
         }
     }
 
@@ -185,10 +187,10 @@ export default function ResourceRequestsPage(): React.JSX.Element {
             if (res.ok) void fetchRequests();
             else {
                 const js = await res.json();
-                alert(js.message || "Failed to review");
+                toast(js.message || "Failed to review", { variant: "error" });
             }
         } catch {
-            alert("Network error");
+            toast("Network error", { variant: "error" });
         }
     }
 

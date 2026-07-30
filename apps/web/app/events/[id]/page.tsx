@@ -21,6 +21,7 @@ import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 
 import apiFetch from "../../../lib/api";
 import { API_BASE } from "../../../lib/config";
+import { useToast } from "@repo/ui/toast";
 
 interface EventDetails {
   id: string;
@@ -68,6 +69,7 @@ interface EventDetails {
 export default function EventDetailsPage() {
   const router = useRouter();
   const params = useParams();
+  const { toast } = useToast();
   const eventId = params?.id as string;
 
   const [hydrated, setHydrated] = useState(false);
@@ -140,7 +142,7 @@ export default function EventDetailsPage() {
       fetchEvent(); // Refresh to get updated registration count
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
-      alert(msg || "Failed to register for event");
+      toast(msg || "Failed to register for event", { variant: "error" });
     } finally {
       setRegistering(false);
     }
@@ -158,7 +160,7 @@ export default function EventDetailsPage() {
       fetchEvent(); // Refresh to get updated registration count
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
-      alert(msg || "Failed to unregister from event");
+      toast(msg || "Failed to unregister from event", { variant: "error" });
     } finally {
       setRegistering(false);
     }
@@ -217,7 +219,7 @@ export default function EventDetailsPage() {
   };
 
   const handleModeration = async (status: "APPROVED" | "REJECTED") => {
-    if (!token) return alert("You must be signed in as an admin to moderate.");
+    if (!token) return toast("You must be signed in as an admin to moderate.", { variant: "warning" });
 
     setModerating(true);
     try {
@@ -229,10 +231,10 @@ export default function EventDetailsPage() {
       // Refresh event to reflect new status/approvals
       setModerationRemarks("");
       await fetchEvent();
-      alert(`Moderation recorded: ${status}`);
+      toast(`Moderation recorded: ${status}`, { variant: "success" });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      alert(msg || "Moderation failed");
+      toast(msg || "Moderation failed", { variant: "error" });
     } finally {
       setModerating(false);
     }
@@ -570,7 +572,7 @@ export default function EventDetailsPage() {
 
                 <button
                   onClick={() => {
-                    alert("Event editing coming soon. Contact an admin for changes.");
+                    toast("Event editing coming soon. Contact an admin for changes.", { variant: "info" });
                   }}
                   className="px-4 py-2 bg-white/5 text-sm rounded-lg border border-white/10 text-gray-200 hover:bg-white/7"
                 >

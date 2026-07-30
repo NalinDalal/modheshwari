@@ -3,14 +3,12 @@
 import { useState } from "react";
 import { Button } from "@repo/ui/button";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../../lib/config";
 
-/**
- * Performs  member signup page operation.
- * @returns {React.JSX.Element} Description of return value
- */
 export default function MemberSignupPage() {
+    const { toast } = useToast();
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -41,35 +39,33 @@ export default function MemberSignupPage() {
             if (data.status === "success") {
                 setSubmitted(true);
             } else {
-                alert(data.message || "Signup failed");
+                toast(data.message || "Signup failed", { variant: "error" });
             }
         } catch (err) {
             console.error(err);
-            alert("Something went wrong");
+            toast("Something went wrong", { variant: "error" });
         } finally {
             setLoading(false);
         }
     }
 
     return (
-        <DreamySunsetBackground className="flex items-center justify-center px-6">
+        <DreamySunsetBackground className="flex items-center justify-center px-6 py-10">
             <div className="w-full max-w-md">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-xl">
+                <div className="bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 rounded-2xl p-8 shadow-jewel">
                     {submitted ? (
                         <SuccessState />
                     ) : (
                         <>
-                            {/* Header */}
                             <div className="mb-8 text-center">
-                                <h1 className="text-3xl font-bold tracking-tight">
+                                <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-jewel-900 to-jewel-700 bg-clip-text text-transparent tracking-tight">
                                     Join a Family
                                 </h1>
-                                <p className="text-sm text-gray-400 mt-2">
+                                <p className="text-sm text-jewel-600 mt-2">
                                     Your request will be sent to the family head for approval
                                 </p>
                             </div>
 
-                            {/* Form */}
                             <form onSubmit={handleSubmit} className="space-y-5">
                                 <Input
                                     label="Full Name"
@@ -126,10 +122,9 @@ export default function MemberSignupPage() {
                                 </Button>
                             </form>
 
-                            {/* Footer */}
-                            <p className="text-xs text-gray-500 text-center mt-6">
+                            <p className="text-xs text-jewel-500 text-center mt-6">
                                 Already approved?{" "}
-                                <a href="/signin" className="text-blue-400 hover:underline">
+                                <a href="/signin" className="text-jewel-gold hover:text-jewel-500 font-medium transition-colors">
                                     Sign in
                                 </a>
                             </p>
@@ -141,19 +136,6 @@ export default function MemberSignupPage() {
     );
 }
 
-/* -------------------------------- */
-
-/**
- * Performs  input operation.
- * @param {{ label: string; } & React.InputHTMLAttributes<HTMLInputElement>} {
- *   label,
- *   ...props
- * } - Description of {
- *   label,
- *   ...props
- * }
- * @returns {React.JSX.Element} Description of return value
- */
 function Input({
     label,
     ...props
@@ -162,29 +144,27 @@ function Input({
 } & React.InputHTMLAttributes<HTMLInputElement>) {
     return (
         <div>
-            <label className="block text-xs text-gray-400 mb-1">{label}</label>
+            <label className="block text-xs font-medium text-jewel-700 mb-1">{label}</label>
             <input
                 {...props}
                 required={props.required !== false}
-                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 rounded-lg border border-jewel-400/30 bg-jewel-50/50 text-jewel-900 placeholder-jewel-400 focus:outline-none focus:ring-2 focus:ring-jewel-gold/50 focus:border-transparent transition-all"
             />
         </div>
     );
 }
 
-/**
- * Performs  success state operation.
- * @returns {React.JSX.Element} Description of return value
- */
 function SuccessState() {
     return (
         <div className="py-14 text-center">
-            <div className="text-green-400 text-4xl mb-4">✓</div>
-            <h2 className="text-2xl font-semibold">Request Sent</h2>
-            <p className="text-sm text-gray-400 mt-2">
+            <div className="w-14 h-14 mx-auto rounded-full bg-jewel-emerald/10 flex items-center justify-center mb-4">
+                <span className="text-jewel-emerald text-2xl">✓</span>
+            </div>
+            <h2 className="text-2xl font-display font-bold text-jewel-900">Request Sent</h2>
+            <p className="text-sm text-jewel-600 mt-2">
                 The family head will review your request.
                 <br />
-                You’ll be able to sign in once approved.
+                You&apos;ll be able to sign in once approved.
             </p>
         </div>
     );

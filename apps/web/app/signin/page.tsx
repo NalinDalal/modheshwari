@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 
+import { useToast } from "@repo/ui/toast";
+
 import { apiPost } from "../../lib/api";
 import { API_BASE } from "../../lib/config";
 
@@ -18,6 +20,7 @@ const roles = [
 
 export default function SigninPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("familyhead");
@@ -47,12 +50,13 @@ export default function SigninPage() {
       } else {
         const msg =
           (data && (data.message || data.error)) || "Invalid credentials";
-        alert("Login failed: " + msg);
+        toast(msg, { variant: "error" });
       }
     } catch (err) {
       console.error("Login error:", err);
-      alert(
+      toast(
         "Network error: " + (err instanceof Error ? err.message : String(err)),
+        { variant: "error" },
       );
     } finally {
       setLoading(false);

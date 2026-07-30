@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
+import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../../lib/config";
 /**
@@ -35,6 +36,7 @@ interface User {
  */
 export default function EditProfilePage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -47,7 +49,7 @@ export default function EditProfilePage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("You need to sign in first.");
+      toast("You need to sign in first.", { variant: "warning" });
       router.push("/signin");
       return;
     }
@@ -72,13 +74,13 @@ export default function EditProfilePage() {
             profession: user.profile?.profession || "",
           });
         } else {
-          alert("Auth expired, please log in again");
+          toast("Auth expired, please log in again", { variant: "warning" });
           localStorage.removeItem("token");
           router.push("/signin");
         }
       } catch (err) {
         console.error("Failed to fetch /me", err);
-        alert("Failed to fetch user info");
+        toast("Failed to fetch user info", { variant: "error" });
       } finally {
         setLoading(false);
       }
@@ -97,14 +99,14 @@ export default function EditProfilePage() {
 
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("You need to sign in first.");
+      toast("You need to sign in first.", { variant: "warning" });
       router.push("/signin");
       return;
     }
 
     // Check if at least one field has a value
     if (!formData.bloodGroup && !formData.gotra && !formData.profession) {
-      alert("Please fill in at least one field.");
+      toast("Please fill in at least one field.", { variant: "warning" });
       return;
     }
 
@@ -125,14 +127,14 @@ export default function EditProfilePage() {
 
       const data = await res.json();
       if (data.status === "success") {
-        alert("Profile updated successfully.");
+        toast("Profile updated successfully.", { variant: "success" });
         router.push("/me");
       } else {
-        alert(data.message || "Failed to update profile.");
+        toast(data.message || "Failed to update profile.", { variant: "error" });
       }
     } catch (err) {
       console.error("Failed to update profile", err);
-      alert("An error occurred while updating your profile.");
+      toast("An error occurred while updating your profile.", { variant: "error" });
     } finally {
       setSaving(false);
     }
