@@ -1,7 +1,7 @@
 "use client";
 import React, { useMemo, useRef, useState } from "react";
 
-import { cn } from "../src/utils";
+import { cn } from "./utils";
 
 type DivGridProps = {
   className?: string;
