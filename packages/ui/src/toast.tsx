@@ -35,6 +35,10 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+/**
+ * Performs use toast operation.
+ * @returns {ToastContextValue} Description of return value
+ */
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error("useToast must be used within a <ToastProvider>");
@@ -47,6 +51,11 @@ export function useToast(): ToastContextValue {
 
 const DEFAULT_DURATION = 4000;
 
+/**
+ * Performs  toast provider operation.
+ * @param {{ children: React.ReactNode; }} { children } - Description of { children }
+ * @returns {any} Description of return value
+ */
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const counterRef = useRef(0);
@@ -110,6 +119,17 @@ const VARIANT_ICONS: Record<ToastVariant, string> = {
   info: "\u2139",
 };
 
+/**
+ * Performs  toast item operation.
+ * @param {{ toast: Toast; onDismiss: (id: string) => void; }} {
+ *   toast,
+ *   onDismiss,
+ * } - Description of {
+ *   toast,
+ *   onDismiss,
+ * }
+ * @returns {any} Description of return value
+ */
 function ToastItem({
   toast,
   onDismiss,

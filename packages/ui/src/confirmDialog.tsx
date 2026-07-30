@@ -22,6 +22,29 @@ const VARIANT_BUTTON: Record<string, string> = {
   info: "bg-gradient-to-r from-jewel-gold to-jewel-600 text-jewel-deep hover:from-jewel-goldLight hover:to-jewel-500 focus:ring-jewel-gold",
 };
 
+/**
+ * Performs  confirm dialog operation.
+ * @param {ConfirmDialogProps} {
+ *   open,
+ *   title,
+ *   description,
+ *   confirmLabel = "Confirm",
+ *   cancelLabel = "Cancel",
+ *   variant = "danger",
+ *   onConfirm,
+ *   onCancel,
+ * } - Description of {
+ *   open,
+ *   title,
+ *   description,
+ *   confirmLabel = "Confirm",
+ *   cancelLabel = "Cancel",
+ *   variant = "danger",
+ *   onConfirm,
+ *   onCancel,
+ * }
+ * @returns {any} Description of return value
+ */
 export function ConfirmDialog({
   open,
   title,
