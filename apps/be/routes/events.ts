@@ -266,6 +266,9 @@ export async function handleGetEvent(
   id: string,
 ): Promise<Response> {
   try {
+    const auth = requireAuth(req);
+    if (!auth.ok) return auth.response as Response;
+
     const event = await prisma.event.findUnique({
       where: { id },
       include: {
