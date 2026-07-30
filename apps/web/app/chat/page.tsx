@@ -372,7 +372,8 @@ export default function ChatPage() {
                                     const isActive = selected?.id === c.id;
 
                                     return (
-                                        <button
+                                        <Button
+                                            variant="secondary"
                                             key={c.id}
                                             onClick={() => loadConversation(c)}
                                             className={`
@@ -397,40 +398,41 @@ export default function ChatPage() {
                                                         {c.unreadCount}
                                                     </span>
                                                 )}
-                                            </div>
-                                        </button>
-                                    );
-                                })}
+                                             </div>
+                                         </Button>
+                                     );
+                                 })}
 
-                                {familyChat && (
-                                    <button
-                                        key={familyChat.id}
-                                        onClick={() => loadConversation(familyChat)}
-                                        className={`
+                                 {familyChat && (
+                                     <Button
+                                         variant="secondary"
+                                         key={familyChat.id}
+                                         onClick={() => loadConversation(familyChat)}
+                                         className={`
                       w-full text-left px-4 py-3 rounded-2xl border transition
                       ${selected?.id === familyChat.id
-                                                ? "bg-jewel-gold/10 border-jewel-gold/30"
-                                                : "bg-transparent border-transparent hover:bg-jewel-100 hover:border-jewel-400/20"
-                                            }
+                                                 ? "bg-jewel-gold/10 border-jewel-gold/30"
+                                                 : "bg-transparent border-transparent hover:bg-jewel-100 hover:border-jewel-400/20"
+                                             }
                     `}
-                                    >
-                                        <div className="flex items-center justify-between gap-3">
-                                            <div className="min-w-0">
-                                                <div className="font-medium text-jewel-900 truncate">
-                                                    Family Chat
-                                                </div>
-                                                <div className="text-xs text-jewel-500 truncate mt-1">
-                                                    {familyChat.lastMessage || "No messages yet"}
-                                                </div>
-                                            </div>
-                                            {!!familyChat.unreadCount && familyChat.unreadCount > 0 && (
-                                                <span className="text-xs px-2 py-1 rounded-full bg-jewel-gold/20 border border-jewel-gold/30 text-jewel-800">
-                                                    {familyChat.unreadCount}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </button>
-                                )}
+                                     >
+                                         <div className="flex items-center justify-between gap-3">
+                                             <div className="min-w-0">
+                                                 <div className="font-medium text-jewel-900 truncate">
+                                                     Family Chat
+                                                 </div>
+                                                 <div className="text-xs text-jewel-500 truncate mt-1">
+                                                     {familyChat.lastMessage || "No messages yet"}
+                                                 </div>
+                                             </div>
+                                             {!!familyChat.unreadCount && familyChat.unreadCount > 0 && (
+                                                 <span className="text-xs px-2 py-1 rounded-full bg-jewel-gold/20 border border-jewel-gold/30 text-jewel-800">
+                                                     {familyChat.unreadCount}
+                                                 </span>
+                                             )}
+                                         </div>
+                                     </Button>
+                                 )}
                             </div>
                         </div>
 

@@ -2,7 +2,7 @@ import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 
 export default function Privacy() {
   return (
-    <DreamySunsetBackground className="px-6 py-12">
+    <DreamySunsetBackground className="px-6 py-10">
       <div className="max-w-4xl mx-auto">
         <div className="mb-12">
           <h1 className="text-4xl sm:text-5xl font-display font-bold text-jewel-900 mb-4">

@@ -88,8 +88,8 @@ export default function ContactPage() {
                         const Icon = t.icon;
                         const active = formData.type === t.value;
                         return (
-                            <button
-                                key={t.value}
+                            <Button
+                                variant="secondary"
                                 onClick={() => setFormData((p) => ({ ...p, type: t.value }))}
                                 className={`relative overflow-hidden rounded-2xl p-4 border transition-all
                   ${active
@@ -102,7 +102,7 @@ export default function ContactPage() {
                                     <Icon className="w-6 h-6" />
                                     <span className="text-sm font-semibold">{t.label}</span>
                                 </div>
-                            </button>
+                            </Button>
                         );
                     })}
                 </div>

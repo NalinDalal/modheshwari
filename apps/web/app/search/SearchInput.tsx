@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { API_BASE } from "../../lib/config";
+import { Button } from "@repo/ui/button";
 
 interface SearchResult {
   id?: string;
@@ -156,7 +157,9 @@ export default function SearchInput({
         />
 
         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setShowFilters(!showFilters)}
             className={`p-1 transition-colors rounded-lg ${
               showFilters
@@ -166,20 +169,22 @@ export default function SearchInput({
             title="Toggle filters"
           >
             <Filter className="w-4 h-4" />
-          </button>
+          </Button>
           {loading ? (
             <Loader2 className="w-4 h-4 text-jewel-gold animate-spin" />
           ) : q ? (
-            <button
-              onClick={() => {
-                setQ("");
-                setResults([]);
-                inputRef.current?.focus();
-              }}
-              className="text-jewel-400 hover:text-jewel-600 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setQ("");
+              setResults([]);
+              inputRef.current?.focus();
+            }}
+            className="text-jewel-400 hover:text-jewel-600 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </Button>
           ) : null}
         </div>
       </div>
@@ -194,8 +199,10 @@ export default function SearchInput({
             className="absolute top-full mt-2 left-0 right-0 flex flex-wrap gap-2 p-3 bg-jewel-50/80 backdrop-blur-xl border border-jewel-400/20 rounded-xl shadow-lg z-40"
           >
             {(["text", "gotra", "profession", "location", "blood", "role"] as FilterMode[]).map((mode) => (
-              <button
+              <Button
                 key={mode}
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   setFilterMode(mode);
                   setQ("");
@@ -266,7 +273,10 @@ export default function SearchInput({
                       animate={{ opacity: 1, x: 0 }}
                       className="group"
                     >
-                      <button className="w-full px-4 py-3 hover:bg-jewel-100/60 transition-all duration-150 text-left">
+                      <Button
+                        variant="ghost"
+                        className="w-full px-4 py-3 hover:bg-jewel-100/60 transition-all duration-150 text-left"
+                      >
                         <div className="flex items-start gap-3">
                           <div
                             className={`flex items-center justify-center w-11 h-11 rounded-xl ${getRoleBadgeColor(r.role)} text-jewel-deep font-bold shadow-sm flex-shrink-0`}

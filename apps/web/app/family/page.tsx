@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { LoaderOne } from "@repo/ui/loading";
 import { List, Network } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
+import { Button } from "@repo/ui/button";
 
 import FamilyPageContent from "./FamilyPageContent";
 import FamilyTreeView from "./FamilyTreeView";
@@ -20,7 +21,8 @@ export default function FamilyPage(): React.ReactElement {
 
       <div className="mb-6">
         <div className="flex gap-3">
-          <button
+          <Button
+            variant="secondary"
             onClick={() => setActiveTab("list")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               activeTab === "list"
@@ -30,8 +32,9 @@ export default function FamilyPage(): React.ReactElement {
           >
             <List className="w-4 h-4" />
             List View
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => setActiveTab("tree")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               activeTab === "tree"
@@ -41,7 +44,7 @@ export default function FamilyPage(): React.ReactElement {
           >
             <Network className="w-4 h-4" />
             Tree View
-          </button>
+          </Button>
         </div>
       </div>
 

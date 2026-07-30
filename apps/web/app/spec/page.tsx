@@ -47,7 +47,8 @@ export default function SpecPage() {
 
         <div className="mb-6 border-b border-jewel-400/20">
           <div className="flex gap-2">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => handleSpecChange("openapi")}
               className={`flex items-center gap-2 px-6 py-3 font-medium transition-all relative ${
                 specType === "openapi"
@@ -57,8 +58,9 @@ export default function SpecPage() {
             >
               <FileCode className="w-4 h-4" />
               OpenAPI (REST)
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               onClick={() => handleSpecChange("asyncapi")}
               className={`flex items-center gap-2 px-6 py-3 font-medium transition-all relative ${
                 specType === "asyncapi"
@@ -68,7 +70,7 @@ export default function SpecPage() {
             >
               <Webhook className="w-4 h-4" />
               AsyncAPI (WebSocket)
-            </button>
+            </Button>
           </div>
         </div>
 
