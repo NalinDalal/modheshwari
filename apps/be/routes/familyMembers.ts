@@ -16,6 +16,7 @@ import { extractAndVerifyToken } from "../utils/auth";
 export async function handleGetFamilyMembers(req: Request): Promise<Response> {
   try {
     const userId = extractAndVerifyToken(req);
+    if (!userId) return failure("Unauthorized", "Unauthorized", 401);
 
     // Find family headed by this user
     const family = await prisma.family.findFirst({
