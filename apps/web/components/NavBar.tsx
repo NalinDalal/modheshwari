@@ -18,6 +18,7 @@ import {
   MessageCircle,
   Stethoscope,
 } from "lucide-react";
+import { Button } from "@repo/ui/button";
 
 import { API_BASE } from "../lib/config";
 import apiFetch from "../lib/api";

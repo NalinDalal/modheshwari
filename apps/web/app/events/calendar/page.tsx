@@ -287,12 +287,14 @@ export default function EventsCalendar() {
                         })
                       : "Upcoming events"}
                   </h3>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => router.push("/events")}
                     className="text-xs text-jewel-gold hover:text-jewel-500 hover:underline"
                   >
                     View all
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="space-y-3 max-h-[60vh] overflow-auto">

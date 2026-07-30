@@ -494,7 +494,9 @@ export default function NotificationsPage(): React.ReactElement {
                                             </div>
 
                                             {canToggleRead && (
-                                                <button
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
                                                     onClick={() => void handleToggleRead(n.id!, !!n.read)}
                                                     className="text-xs px-3 py-2 rounded-xl border border-jewel-400/20 bg-jewel-50/50 flex items-center justify-center text-jewel-600 hover:bg-jewel-100 transition-colors"
                                                     title={n.read ? "Mark unread" : "Mark read"}
@@ -505,7 +507,7 @@ export default function NotificationsPage(): React.ReactElement {
                                                     ) : (
                                                         <EyeOff className="w-4 h-4" />
                                                     )}
-                                                </button>
+                                                </Button>
                                             )}
                                         </div>
                                     </li>
