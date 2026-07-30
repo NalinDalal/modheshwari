@@ -8,6 +8,7 @@ import { Button } from "@repo/ui/button";
 
 import apiFetch from "../../lib/api";
 import { API_BASE } from "../../lib/config";
+import { formatBloodGroup } from "@modheshwari/utils";
 
 interface User {
   id: string;
@@ -215,7 +216,7 @@ export default function MePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <ProfileField label="Profession" value={user.profile?.profession} />
               <ProfileField label="Gotra" value={user.profile?.gotra} />
-              <ProfileField label="Blood Group" value={user.profile?.bloodGroup} />
+              <ProfileField label="Blood Group" value={formatBloodGroup(user.profile?.bloodGroup)} />
               <ProfileField label="Location" value={user.profile?.location} />
               <ProfileField label="Phone" value={user.profile?.phone} />
               <ProfileField label="Address" value={user.profile?.address} />
