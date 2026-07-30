@@ -48,7 +48,7 @@ export function withCorsHeaders(res: Response, req?: Request): Response {
   
   // Use request origin if provided and allowed
   const origin = req?.headers.get("origin") || "";
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : (ALLOWED_ORIGINS[0] ?? "http://localhost:3000");
 
   headers.set("Access-Control-Allow-Origin", allowedOrigin);
   headers.set("Access-Control-Allow-Credentials", "true");
