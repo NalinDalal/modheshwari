@@ -186,7 +186,7 @@ export default function EventsCalendar() {
                 className="p-2 bg-jewel-50/50 border border-jewel-400/30 rounded-xl hover:bg-jewel-100 transition"
               >
                 <ChevronRight className="w-5 h-5 text-jewel-900" />
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -268,7 +268,7 @@ export default function EventsCalendar() {
                           )}
                         </div>
                       </div>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
