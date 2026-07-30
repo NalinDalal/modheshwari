@@ -16,6 +16,10 @@ import { join } from "path";
 import { serve } from "bun";
 import { config } from "dotenv";
 
+// Load environment variables first
+config({ path: join(process.cwd(), "../../.env") });
+
+import prisma from "@modheshwari/db";
 import { router } from "./server/router";
 import { logger } from "./lib/logger";
 import "./lib/metrics";
@@ -33,9 +37,6 @@ async function registerPrismaHooks() {
 }
 
 registerPrismaHooks();
-
-// Load environment variables
-config({ path: join(process.cwd(), "../../.env") });
 
 const PORT = parseInt(process.env.PORT || "3001");
 
@@ -55,13 +56,14 @@ drainHandle = startNotificationDrain();
 dlqHandle = startDLQRetryWorker();
 
 // Graceful shutdown
-function shutdown(signal: string) {
+async function shutdown(signal: string) {
     logger.info(`Shutting down gracefully (${signal})`);
     try {
         drainHandle?.stop?.();
         dlqHandle?.stop?.();
+        await prisma.$disconnect();
     } catch (e) {
-        logger.warn('Error stopping background workers', e);
+        logger.warn('Error during shutdown', e);
     }
     process.exit(0);
 };
