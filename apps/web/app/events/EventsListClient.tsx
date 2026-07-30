@@ -154,8 +154,10 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
 
         <div className="flex gap-2 mb-6">
           {[{ label: "Approved", value: "approved" as const }, { label: "Pending", value: "pending" as const }, { label: "All", value: "all" as const }].map((f) => (
-            <button
+            <Button
               key={f.value}
+              variant="secondary"
+              size="sm"
               onClick={() => setFilter(f.value)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 filter === f.value
@@ -164,7 +166,7 @@ export default function EventsListClient({ initialData }: { initialData: Event[]
               }`}
             >
               {f.label}
-            </button>
+            </Button>
           ))}
         </div>
 

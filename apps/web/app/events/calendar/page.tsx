@@ -153,7 +153,9 @@ export default function EventsCalendar() {
             </div>
 
             <div className="flex items-center gap-2">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 aria-label="Previous month"
                 onClick={() =>
                   setCurrent(
@@ -163,7 +165,7 @@ export default function EventsCalendar() {
                 className="p-2 bg-jewel-50/50 border border-jewel-400/30 rounded-xl hover:bg-jewel-100 transition"
               >
                 <ChevronLeft className="w-5 h-5 text-jewel-900" />
-              </button>
+              </Button>
 
               <div className="px-4 py-2 bg-jewel-50/50 border border-jewel-400/30 rounded-xl font-medium text-jewel-900">
                 {current.toLocaleString(undefined, {
@@ -172,7 +174,9 @@ export default function EventsCalendar() {
                 })}
               </div>
 
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 aria-label="Next month"
                 onClick={() =>
                   setCurrent(
@@ -203,8 +207,10 @@ export default function EventsCalendar() {
                   const isToday = key === todayKey;
 
                   return (
-                    <button
+                    <Button
                       key={idx}
+                      variant="secondary"
+                      size="sm"
                       type="button"
                       onClick={() => setSelectedDate(new Date(dayObj.date))}
                       className={`relative w-full h-full text-left rounded-xl border transition

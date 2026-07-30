@@ -41,7 +41,7 @@ export default function RootLayout({
         className="
           min-h-screen 
           bg-jewel-50
-          text-stone-900
+          text-jewel-900
           font-sans
           relative
         "

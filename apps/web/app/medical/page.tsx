@@ -234,8 +234,10 @@ export default function Medical() {
 
           <div className="flex flex-wrap gap-2 mt-3">
             {Object.keys(REVERSE_BLOOD_GROUP_MAP).map((bg) => (
-              <button
+              <Button
                 key={bg}
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   setSearchQuery(bg);
                   fetchMedicalInfo(bg);
@@ -243,7 +245,7 @@ export default function Medical() {
                 className="px-3 py-1 text-xs rounded-full bg-jewel-50/60 hover:bg-jewel-100 border border-jewel-400/20 transition text-jewel-700"
               >
                 {bg}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

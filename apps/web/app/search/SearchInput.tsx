@@ -215,7 +215,7 @@ export default function SearchInput({
                 }`}
               >
                 {mode.charAt(0).toUpperCase() + mode.slice(1)}
-              </button>
+              </Button>
             ))}
           </motion.div>
         )}
@@ -330,7 +330,7 @@ export default function SearchInput({
                             )}
                           </div>
                         </div>
-                      </button>
+                      </Button>
                     </motion.li>
                   ))}
                 </ul>

@@ -522,7 +522,7 @@ export default function ChatPage() {
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 onClick={() => retryMessage(m)}
-                                                                className="text-xs px-2 py-0.5 text-jewel-ruby hover:text-red-700 underline h-auto"
+                                                                className="text-xs px-2 py-0.5 text-jewel-ruby hover:text-jewel-ruby underline h-auto"
                                                             >
                                                                 Retry
                                                             </Button>
