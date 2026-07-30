@@ -2,6 +2,7 @@ import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 
 import { requireAuth } from "./authMiddleware";
+import { logger } from "../lib/logger";
 
 const ADMIN_ROLES = ["COMMUNITY_HEAD", "COMMUNITY_SUBHEAD", "GOTRA_HEAD"];
 
@@ -42,7 +43,7 @@ export async function handleListAllRequests(req: any): Promise<Response> {
 
     return success("Admin requests fetched", { resourceRequests, events }, 200);
   } catch (err) {
-    console.error("ListAllRequests Error:", err);
+    logger.error("ListAllRequests Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -87,7 +88,7 @@ export async function handleUpdateEventStatus(
 
     return success("Event status updated", { event: updated }, 200);
   } catch (err) {
-    console.error("UpdateEventStatus Error:", err);
+    logger.error("UpdateEventStatus Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
