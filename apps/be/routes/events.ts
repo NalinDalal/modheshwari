@@ -197,9 +197,18 @@ export async function handleListEvents(req: Request): Promise<Response> {
 }
 
 /**
- * GET /api/events/compact
- * Lightweight endpoint returning compact event objects for a date range.
- * Query params: startDate, endDate, status (optional), limit (optional)
+ * Lightweight endpoint returning compact event objects
+ * for a date range.
+ *
+ * @async
+ * @function handleListEventsCompact
+ * @route GET /api/events/compact
+ * @param {Request} req - The incoming HTTP request.
+ *   Supports query parameters `startDate`, `endDate`,
+ *   `status` (optional filter), and `limit` (max 2000).
+ * @returns {Promise<Response>} JSON response with a
+ *   compact list of events (id, name, date) on success,
+ *   or an error message with HTTP status code on failure.
  */
 export async function handleListEventsCompact(req: Request): Promise<Response> {
   const userId = extractAndVerifyToken(req);
