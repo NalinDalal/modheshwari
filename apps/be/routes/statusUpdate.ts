@@ -5,9 +5,38 @@ import type { Role } from "@prisma/client";
 
 // ---------------- CREATE ----------------
 /**
- * Performs handle create status update request operation.
- * @param {Request} req - Description of req
- * @returns {Promise<Response>} Description of return value
+ * Creates a status update request for a target user.
+ *
+ * This endpoint implements a multi-level approval workflow: the request is
+ * created with two pending approvals — one for a COMMUNITY_SUBHEAD and one
+ * for a GOTRA_HEAD. The target user's profile is set to `status: false`
+ * (deceased) only after both approvers have approved the request.
+ *
+ * The `finalStatus` is hardcoded to `"deceased"` because this endpoint is
+ * specifically for recording a death status update; the approval workflow
+ * ensures the change is reviewed before taking effect.
+ *
+ * @async
+ * @function handleCreateStatusUpdateRequest
+ * @route POST /api/status-updates
+ * @param {Request} req - The incoming HTTP request. The request body must
+ *   contain `targetUserId` (string, required) and an optional `reason` (string).
+ * @returns {Promise<Response>} JSON response with the created request object
+ *   on success, or an error message with HTTP status code on failure.
+ *
+ * @example
+ * // Request body
+ * POST /api/status-updates
+ * {
+ *   "targetUserId": "user-uuid-here",
+ *   "reason": "Passed away on 2026-07-30"
+ * }
+ *
+ * // Response (success)
+ * {
+ *   "message": "Request created",
+ *   "data": { "request": { "id": "...", "finalStatus": "deceased", ... } }
+ * }
  */
 export async function handleCreateStatusUpdateRequest(req: Request) {
   const user = await verifyAuth(req);
@@ -53,9 +82,15 @@ export async function handleCreateStatusUpdateRequest(req: Request) {
 
 // ---------------- Helper — find approver ----------------
 /**
- * Performs find approver operation.
- * @param {import("/Users/nalindalal/modheshwari/node_modules/.prisma/client/index").$Enums.Role} role - Description of role
- * @returns {Promise<string>} Description of return value
+ * Finds an active user with the given role to serve as an approver.
+ *
+ * @async
+ * @function findApprover
+ * @param {Role} role - The Prisma Role enum value to search for
+ *   (e.g., `"COMMUNITY_SUBHEAD"`, `"GOTRA_HEAD"`).
+ * @returns {Promise<string>} The `id` of the first active user with
+ *   the specified role.
+ * @throws {Error} If no active user with the given role exists.
  */
 async function findApprover(role: Role): Promise<string> {
   const approver = await prisma.user.findFirst({
@@ -68,9 +103,19 @@ if (!approver) throw new Error(`No active approver found for role: ${role}`);
 
 // ---------------- LIST ----------------
 /**
- * Performs handle list status update requests operation.
- * @param {Request} req - Description of req
- * @returns {Promise<Response>} Description of return value
+ * Lists status update requests visible to the authenticated user.
+ *
+ * The user can see requests they created (`requestedById`) and requests
+ * where they are listed as an approver. This supports the multi-level
+ * approval workflow by allowing each approver to view the requests
+ * assigned to them.
+ *
+ * @async
+ * @function handleListStatusUpdateRequests
+ * @route GET /api/status-updates
+ * @param {Request} req - The incoming HTTP request.
+ * @returns {Promise<Response>} JSON response with an array of status
+ *   update requests including their approvals and target user details.
  */
 export async function handleListStatusUpdateRequests(req: Request) {
   const user = await verifyAuth(req);
@@ -98,10 +143,40 @@ export async function handleListStatusUpdateRequests(req: Request) {
 
 // ---------------- REVIEW ----------------
 /**
- * Performs handle review status update request operation.
- * @param {Request} req - Description of req
- * @param {string} id - Description of id
- * @returns {Promise<Response>} Description of return value
+ * Reviews a status update request by recording the authenticated
+ * user's approval or rejection.
+ *
+ * Implements the second stage of the multi-level approval workflow:
+ * each request requires approvals from both a COMMUNITY_SUBHEAD and
+ * a GOTRA_HEAD. When all approvers have approved, the request status
+ * is set to `"APPROVED"` and the target user's profile is set to
+ * `status: false` (deceased). A single rejection from any approver
+ * blocks the request from being auto-approved; the request remains
+ * in PENDING status and requires further review.
+ *
+ * @async
+ * @function handleReviewStatusUpdateRequest
+ * @route POST /api/status-updates/:id/review
+ * @param {Request} req - The incoming HTTP request. The body must
+ *   contain `status` (`"APPROVED"` or `"REJECTED"`) and an optional
+ *   `remarks` string.
+ * @param {string} id - The UUID of the status update request to review.
+ * @returns {Promise<Response>} JSON response with the approval record
+ *   on success, or an error message with HTTP status code on failure.
+ *
+ * @example
+ * // Approve a status update request
+ * POST /api/status-updates/:id/review
+ * {
+ *   "status": "APPROVED",
+ *   "remarks": "Verified death certificate"
+ * }
+ *
+ * // Response (success)
+ * {
+ *   "message": "Review submitted",
+ *   "data": { "approval": { "id": "...", "status": "APPROVED", ... } }
+ * }
  */
 export async function handleReviewStatusUpdateRequest(
   req: Request,

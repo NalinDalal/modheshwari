@@ -5,8 +5,23 @@ import { parsePagination, buildPaginationResponse } from "@modheshwari/utils/pag
 import { requireAuth } from "./authMiddleware";
 
 /**
- * POST /api/medical-records
- * Create a medical record for the authenticated user (or admin for others)
+ * Creates a medical record for a user.
+ *
+ * Role-based permissions:
+ * - Any authenticated user can create a record for themselves.
+ * - Only COMMUNITY_HEAD and COMMUNITY_SUBHEAD can create
+ *   records for other users (by specifying `userId` in the body).
+ *
+ * @async
+ * @function handleCreateMedicalRecord
+ * @route POST /api/medical-records
+ * @param {Request} req - The incoming HTTP request. The body
+ *   may contain `userId` (string, optional — only admins can
+ *   set this), `bloodType`, `allergies`, `conditions`,
+ *   `medications`, and `notes` (all optional strings).
+ * @returns {Promise<Response>} JSON response with the created
+ *   medical record on success, or an error message with HTTP
+ *   status code on failure.
  */
 export async function handleCreateMedicalRecord(req: Request): Promise<Response> {
     try {
@@ -42,9 +57,23 @@ export async function handleCreateMedicalRecord(req: Request): Promise<Response>
 }
 
 /**
- * GET /api/medical-records
- * List medical records (admins see all; users see their own)
- * Supports pagination: ?page=1&limit=20
+ * Lists medical records with pagination.
+ *
+ * Role-based permissions:
+ * - COMMUNITY_HEAD and COMMUNITY_SUBHEAD can view all
+ *   records (optionally filtered by `userId` query param).
+ * - Other roles can only view their own records.
+ *
+ * @async
+ * @function handleListMedicalRecords
+ * @route GET /api/medical-records
+ * @param {Request} req - The incoming HTTP request. Supports
+ *   query parameters `userId` (admin-only filter),
+ *   `page` (pagination page), and `limit` (items per page,
+ *   max 100).
+ * @returns {Promise<Response>} JSON response with a
+ *   paginated list of medical records on success, or an
+ *   error message with HTTP status code on failure.
  */
 export async function handleListMedicalRecords(req: Request): Promise<Response> {
     try {
@@ -81,7 +110,22 @@ export async function handleListMedicalRecords(req: Request): Promise<Response> 
 }
 
 /**
- * GET /api/medical-records/:id
+ * Retrieves a single medical record by ID.
+ *
+ * Role-based permissions:
+ * - The record owner can view their own record.
+ * - COMMUNITY_HEAD and COMMUNITY_SUBHEAD can view
+ *   any record.
+ *
+ * @async
+ * @function handleGetMedicalRecord
+ * @route GET /api/medical-records/:id
+ * @param {Request} req - The incoming HTTP request.
+ * @param {string} id - The UUID of the medical record
+ *   to retrieve.
+ * @returns {Promise<Response>} JSON response with the
+ *   medical record on success, or an error message with
+ *   HTTP status code on failure.
  */
 export async function handleGetMedicalRecord(req: Request, id: string): Promise<Response> {
     try {
@@ -105,7 +149,25 @@ export async function handleGetMedicalRecord(req: Request, id: string): Promise<
 }
 
 /**
- * PATCH /api/medical-records/:id
+ * Updates a medical record by ID.
+ *
+ * Role-based permissions:
+ * - The record owner can update their own record.
+ * - COMMUNITY_HEAD and COMMUNITY_SUBHEAD can
+ *   update any record.
+ *
+ * @async
+ * @function handleUpdateMedicalRecord
+ * @route PATCH /api/medical-records/:id
+ * @param {Request} req - The incoming HTTP request.
+ *   The body may contain any subset of `bloodType`,
+ *   `allergies`, `conditions`, `medications`, and
+ *   `notes` (all optional strings).
+ * @param {string} id - The UUID of the medical record
+ *   to update.
+ * @returns {Promise<Response>} JSON response with the
+ *   updated medical record on success, or an error
+ *   message with HTTP status code on failure.
  */
 export async function handleUpdateMedicalRecord(req: Request, id: string): Promise<Response> {
     try {
@@ -142,7 +204,22 @@ export async function handleUpdateMedicalRecord(req: Request, id: string): Promi
 }
 
 /**
- * DELETE /api/medical-records/:id
+ * Deletes a medical record by ID.
+ *
+ * Role-based permissions:
+ * - The record owner can delete their own record.
+ * - COMMUNITY_HEAD and COMMUNITY_SUBHEAD can
+ *   delete any record.
+ *
+ * @async
+ * @function handleDeleteMedicalRecord
+ * @route DELETE /api/medical-records/:id
+ * @param {Request} req - The incoming HTTP request.
+ * @param {string} id - The UUID of the medical record
+ *   to delete.
+ * @returns {Promise<Response>} JSON response confirming
+ *   deletion on success, or an error message with HTTP
+ *   status code on failure.
  */
 export async function handleDeleteMedicalRecord(req: Request, id: string): Promise<Response> {
     try {

@@ -5,9 +5,23 @@ import { getUserIdFromRequest } from "./messages/auth";
 
 // GET /api/chat
 /**
- * Performs handle get chat operation.
- * @param {Request} req - Description of req
- * @returns {Promise<Response>} Description of return value
+ * Retrieves the authenticated user's chat list, including
+ * personal conversations and a family-wide conversation.
+ *
+ * The personal conversations are sorted by most recent message.
+ * The family conversation is found by looking up the user's
+ * active family membership, then either locating an existing
+ * conversation that includes all family members or creating a
+ * new one.
+ *
+ * @async
+ * @function handleGetChat
+ * @route GET /api/chat
+ * @param {Request} req - The incoming HTTP request.
+ * @returns {Promise<Response>} JSON response with `personal`
+ *   (array of personal conversations) and `familyChat`
+ *   (the family-wide conversation or null) on success, or
+ *   an error message with HTTP status code on failure.
  */
 export async function handleGetChat(req: Request) {
   const userId = getUserIdFromRequest(req);

@@ -231,9 +231,18 @@ export async function handleCreateNotification(req: Request) {
    ========================================================= */
 
 /**
- * Performs handle list notifications operation.
- * @param {Request} req - Description of req
- * @returns {Promise<Response>} Description of return value
+ * Lists notifications for the authenticated user with
+ * pagination support.
+ *
+ * @async
+ * @function handleListNotifications
+ * @route GET /api/notifications
+ * @param {Request} req - The incoming HTTP request. Supports
+ *   query parameters `page` (pagination page, default 1) and
+ *   `limit` (items per page, default 50, max 100).
+ * @returns {Promise<Response>} JSON response with an array of
+ *   notifications and pagination metadata on success, or an
+ *   error message with HTTP status code on failure.
  */
 export async function handleListNotifications(req: Request): Promise<Response> {
     try {

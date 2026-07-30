@@ -118,9 +118,37 @@ type UpdateProfileBody = {
 };
 
 /**
- * Performs handle update me operation.
- * @param {Request} req - Description of req
- * @returns {Promise<Response>} Description of return value
+ * Updates the authenticated user's profile details.
+ *
+ * Validates and normalizes blood group, phone number, and
+ * geographic coordinates. Partial updates are supported —
+ * only the provided fields are modified.
+ *
+ * @async
+ * @function handleUpdateMe
+ * @route PUT /api/me
+ * @param {Request} req - The incoming HTTP request. The body
+ *   may contain any subset of: `bloodGroup`, `gotra`,
+ *   `profession`, `location`, `locationLat`, `locationLng`,
+ *   `phone`, and `phoneCountry`.
+ * @returns {Promise<Response>} JSON response with the updated
+ *   profile on success, or an error message with HTTP status
+ *   code on failure.
+ *
+ * @example
+ * // Update profile with blood group and phone
+ * PUT /api/me
+ * {
+ *   "bloodGroup": "O+",
+ *   "phone": "+1234567890",
+ *   "phoneCountry": "US"
+ * }
+ *
+ * // Response (success)
+ * {
+ *   "message": "Profile updated successfully",
+ *   "data": { "phone": "+1234567890", "bloodGroup": "O_POS", ... }
+ * }
  */
 export async function handleUpdateMe(req: Request): Promise<Response> {
   try {

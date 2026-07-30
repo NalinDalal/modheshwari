@@ -1,10 +1,11 @@
-import { randomBytes } from "crypto";
+import { randomUUID } from "crypto";
 
 import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 import { hashPassword } from "@modheshwari/utils/hash";
 
 import { requireAuth } from "./authMiddleware";
+import { logger } from "../lib/logger";
 
 /**
  * Create a Family for the authenticated user and make them the head.
@@ -28,7 +29,7 @@ export async function handleCreateFamily(req: any): Promise<Response> {
         name,
         uniqueId: uniqueId
           ? uniqueId
-          : `FAM-${randomBytes(4).toString("hex").toUpperCase()}`,
+          : `FAM-${randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`,
         headId: userId,
       },
     });
@@ -44,7 +45,7 @@ export async function handleCreateFamily(req: any): Promise<Response> {
 
     return success("Family created", { family }, 201);
   } catch (err) {
-    console.error("Create Family Error:", err);
+    logger.error("Create Family Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
@@ -104,17 +105,26 @@ export async function handleAddMember(
 
     return success("Member added", { member: fm }, 201);
   } catch (err) {
-    console.error("Add Member Error:", err);
+    logger.error("Add Member Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
 
 // List pending invites for a family (family-head only)
 /**
- * Performs handle list invites operation.
- * @param {any} req - Description of req
- * @param {string} familyId - Description of familyId
- * @returns {Promise<Response>} Description of return value
+ * Lists pending member invites for a family.
+ *
+ * Only the family head can view pending invites.
+ *
+ * @async
+ * @function handleListInvites
+ * @route GET /api/families/:familyId/invites
+ * @param {any} req - The incoming HTTP request.
+ * @param {string} familyId - The UUID of the family whose
+ *   pending invites are to be listed.
+ * @returns {Promise<Response>} JSON response with an array of
+ *   pending invites including the invited user's details on
+ *   success, or an error message with HTTP status code on failure.
  */
 export async function handleListInvites(
   req: any,
@@ -140,19 +150,50 @@ export async function handleListInvites(
 
     return success("Invites fetched", { invites }, 200);
   } catch (err) {
-    console.error("List Invites Error:", err);
+    logger.error("List Invites Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }
 
 // Review (approve/reject) an invite
 /**
- * Performs handle review invite operation.
- * @param {any} req - Description of req
- * @param {string} familyId - Description of familyId
- * @param {string} inviteId - Description of inviteId
- * @param {string} action - Description of action
- * @returns {Promise<Response>} Description of return value
+ * Approves or rejects a pending member invite for a family.
+ *
+ * When approving an invite that was created for an email
+ * address (no existing user), a placeholder user account is
+ * created with a randomly generated password (a UUID-derived
+ * 16-character string). The password is hashed before storage.
+ * The invited user must set their own password on first login.
+ *
+ * Only the family head can review invites.
+ *
+ * @async
+ * @function handleReviewInvite
+ * @route POST /api/families/:familyId/invites/:inviteId
+ * @param {any} req - The incoming HTTP request. The body must
+ *   contain `action` (`"approve"` or `"reject"`) and an
+ *   optional `remarks` string.
+ * @param {string} familyId - The UUID of the family the
+ *   invite belongs to.
+ * @param {string} inviteId - The UUID of the invite to review.
+ * @param {string} _action - Unused route parameter; the
+ *   action is read from the request body instead.
+ * @returns {Promise<Response>} JSON response confirming the
+ *   invite was approved or rejected, or an error message with
+ *   HTTP status code on failure.
+ *
+ * @example
+ * // Approve an invite
+ * POST /api/families/:familyId/invites/:inviteId
+ * {
+ *   "action": "approve"
+ * }
+ *
+ * // Response (success)
+ * {
+ *   "message": "Invite approved and member added",
+ *   "data": null
+ * }
  */
 export async function handleReviewInvite(
   req: any,
@@ -203,8 +244,10 @@ export async function handleReviewInvite(
         let invitedUserId = invite.invitedUserId;
 
         // If invite was created for an email (no user exists yet), create a placeholder user
+        // with a randomly generated password. The password is a UUID-derived 16-character
+        // string, hashed before storage. The user must set their own password on first login.
         if (!invitedUserId && invite.inviteEmail) {
-          const pw = randomBytes(8).toString("hex");
+          const pw = randomUUID().replace(/-/g, "").slice(0, 16);
           const hashed = await hashPassword(pw);
           const newUser = await tx.user.create({
             data: {
@@ -283,7 +326,7 @@ export async function handleReviewInvite(
 
     return failure("Invalid action", "Bad Request", 400);
   } catch (err) {
-    console.error("Review Invite Error:", err);
+    logger.error("Review Invite Error:", err);
     return failure("Internal server error", "Unexpected Error", 500);
   }
 }

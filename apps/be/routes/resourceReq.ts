@@ -16,9 +16,41 @@ import { broadcastNotification } from "../kafka/notificationProducer";
    ========================================================= */
 
 /**
- * Performs handle create resource request operation.
- * @param {Request} req - Description of req
- * @returns {Promise<Response>} Description of return value
+ * Creates a new resource request with a multi-level approval workflow.
+ *
+ * The request is created in `PENDING` status and approval records
+ * are generated for all applicable approvers: COMMUNITY_HEAD,
+ * COMMUNITY_SUBHEAD, and the GOTRA_HEAD matching the requester's
+ * gotra. The request is approved only when all approvers have
+ * approved; any rejection or changes_requested prevents auto-approval.
+ *
+ * Role-based permissions:
+ * - Any authenticated user can create a resource request.
+ * - Only COMMUNITY_HEAD, COMMUNITY_SUBHEAD, and GOTRA_HEAD can
+ *   review and approve/reject requests.
+ *
+ * @async
+ * @function handleCreateResourceRequest
+ * @route POST /api/resource-requests
+ * @param {Request} req - The incoming HTTP request. The body must
+ *   contain `resource` (string, required) identifying the resource
+ *   being requested.
+ * @returns {Promise<Response>} JSON response with the created
+ *   resource request including its approvals on success, or an
+ *   error message with HTTP status code on failure.
+ *
+ * @example
+ * // Create a resource request
+ * POST /api/resource-requests
+ * {
+ *   "resource": "Medical supplies for community event"
+ * }
+ *
+ * // Response (success)
+ * {
+ *   "message": "Resource request created",
+ *   "data": { "request": { "id": "...", "status": "PENDING", ... } }
+ * }
  */
 export async function handleCreateResourceRequest(
     req: Request,
@@ -148,9 +180,22 @@ export async function handleCreateResourceRequest(
    ========================================================= */
 
 /**
- * Performs handle list resource requests operation.
- * @param {Request} req - Description of req
- * @returns {Promise<Response>} Description of return value
+ * Lists resource requests with pagination and optional status filtering.
+ *
+ * Role-based permissions:
+ * - COMMUNITY_HEAD, COMMUNITY_SUBHEAD, and GOTRA_HEAD can view
+ *   all requests (admin scope).
+ * - Other roles can only view their own requests.
+ *
+ * @async
+ * @function handleListResourceRequests
+ * @route GET /api/resource-requests
+ * @param {Request} req - The incoming HTTP request. Supports
+ *   query parameters `status` (filter by approval status),
+ *   `page` (pagination page), and `limit` (items per page, max 100).
+ * @returns {Promise<Response>} JSON response with a paginated
+ *   list of resource requests and their approvals on success, or
+ *   an error message with HTTP status code on failure.
  */
 export async function handleListResourceRequests(
     req: Request,
@@ -216,10 +261,21 @@ export async function handleListResourceRequests(
    ========================================================= */
 
 /**
- * Performs handle get resource request operation.
- * @param {Request} req - Description of req
- * @param {string} id - Description of id
- * @returns {Promise<Response>} Description of return value
+ * Retrieves a single resource request by ID with its approvals.
+ *
+ * Role-based permissions:
+ * - COMMUNITY_HEAD, COMMUNITY_SUBHEAD, and GOTRA_HEAD can
+ *   view any request.
+ * - Other roles can only view their own requests.
+ *
+ * @async
+ * @function handleGetResourceRequest
+ * @route GET /api/resource-requests/:id
+ * @param {Request} req - The incoming HTTP request.
+ * @param {string} id - The UUID of the resource request to retrieve.
+ * @returns {Promise<Response>} JSON response with the resource
+ *   request and its approvals on success, or an error message
+ *   with HTTP status code on failure.
  */
 export async function handleGetResourceRequest(
     req: Request,
@@ -266,10 +322,49 @@ export async function handleGetResourceRequest(
    ========================================================= */
 
 /**
- * Performs handle review resource request operation.
- * @param {Request} req - Description of req
- * @param {string} id - Description of id
- * @returns {Promise<Response>} Description of return value
+ * Reviews a resource request by recording the authenticated
+ * reviewer's decision.
+ *
+ * Implements the multi-level approval workflow: the request
+ * transitions through PENDING → APPROVED/REJECTED/CHANGES_REQUESTED
+ * based on the collective decisions of all approvers. The overall
+ * status is determined as follows:
+ * - If any approver sets REJECTED, the overall status becomes REJECTED.
+ * - If all approvers set APPROVED, the overall status becomes APPROVED.
+ * - If any approver sets CHANGES_REQUESTED (and none have rejected),
+ *   the overall status becomes CHANGES_REQUESTED.
+ * - Otherwise, the status remains PENDING.
+ *
+ * When the request is fully approved, an email notification is
+ * broadcast via Kafka.
+ *
+ * Role-based permissions:
+ * - Only COMMUNITY_HEAD, COMMUNITY_SUBHEAD, and GOTRA_HEAD can
+ *   review resource requests.
+ *
+ * @async
+ * @function handleReviewResourceRequest
+ * @route POST /api/resource-requests/:id/review
+ * @param {Request} req - The incoming HTTP request. The body must
+ *   contain `action` (`"approve"`, `"reject"`, or `"changes"`)
+ *   and an optional `remarks` string.
+ * @param {string} id - The UUID of the resource request to review.
+ * @returns {Promise<Response>} JSON response confirming the
+ *   review was recorded, or an error message with HTTP status code.
+ *
+ * @example
+ * // Approve a resource request
+ * POST /api/resource-requests/:id/review
+ * {
+ *   "action": "approve",
+ *   "remarks": "All checks passed"
+ * }
+ *
+ * // Response (success)
+ * {
+ *   "message": "Review recorded",
+ *   "data": null
+ * }
  */
 export async function handleReviewResourceRequest(
     req: Request,

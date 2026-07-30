@@ -14,9 +14,22 @@ import { requireAuth } from "./authMiddleware";
 import { extractAndVerifyToken } from "../utils/auth";
 
 /**
- * POST /api/events
- * Create a new event (requires authentication)
- * Body: { name, description, date, venue }
+ * Creates a new event with a multi-level approval workflow.
+ *
+ * The event is created in `PENDING` status. Approval records
+ * are generated for all admins (COMMUNITY_HEAD, COMMUNITY_SUBHEAD,
+ * GOTRA_HEAD). The event is approved only when all approvers
+ * have approved; any rejection prevents auto-approval.
+ *
+ * @async
+ * @function handleCreateEvent
+ * @route POST /api/events
+ * @param {Request} req - The incoming HTTP request. The body
+ *   must contain `name` (string) and `date` (ISO date string).
+ *   Optional fields include `description` and `venue`.
+ * @returns {Promise<Response>} JSON response with the created
+ *   event on success, or an error message with HTTP status
+ *   code on failure.
  */
 export async function handleCreateEvent(req: Request): Promise<Response> {
   try {
@@ -85,9 +98,26 @@ export async function handleCreateEvent(req: Request): Promise<Response> {
 }
 
 /**
- * GET /api/events
- * List all approved events (public)
- * Query params: status (optional filter), page, limit (pagination)
+ * Lists events with optional status filtering and
+ * pagination.
+ *
+ * By default, only `APPROVED` events are shown to
+ * public callers. Admins can filter by any status
+ * including `PENDING`, `REJECTED`, and `CANCELLED`.
+ * Supports optional date range filtering via
+ * `startDate`/`endDate` query parameters.
+ *
+ * @async
+ * @function handleListEvents
+ * @route GET /api/events
+ * @param {Request} req - The incoming HTTP request.
+ *   Supports query parameters `status` (filter by
+ *   event status), `startDate`/`endDate` (date range
+ *   filter), `page` (pagination page), and `limit`
+ *   (items per page, max 100).
+ * @returns {Promise<Response>} JSON response with a
+ *   paginated list of events on success, or an error
+ *   message with HTTP status code on failure.
  */
 export async function handleListEvents(req: Request): Promise<Response> {
   try {

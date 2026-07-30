@@ -2,6 +2,8 @@ import prisma from "@modheshwari/db";
 import { verifyAuth } from "@modheshwari/utils/jwt";
 import { success, failure } from "@modheshwari/utils/index";
 
+import { logger } from "../lib/logger";
+
 /**
  * Handles transferring a user to a new family (e.g., due to marriage).
  * Adds the user as a member of the new family without ending existing memberships.
@@ -40,7 +42,7 @@ export async function handleFamilyTransfer(req: Request) {
 
     return success("Family transfer completed", { membership });
   } catch (err) {
-    console.error("Family transfer failed:", err);
+    logger.error("Family transfer failed:", err);
     return failure("Internal server error", null, 500);
   }
 }
