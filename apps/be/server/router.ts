@@ -18,6 +18,7 @@ export async function router(req: Request): Promise<Response> {
 
   const url = new URL(req.url);
   const method = req.method;
+  const pathname = url.pathname.toLowerCase();
 
   // Rate limiting check
   if (isRateLimited(req, { max: 100, windowMs: 60000 })) {
@@ -32,20 +33,20 @@ export async function router(req: Request): Promise<Response> {
   try {
     // 1. Try auth routes (signup/login)
     for (const route of authRoutes) {
-      if (route.path === url.pathname && route.method === method) {
+      if (route.path === pathname && route.method === method) {
         return withCorsHeaders(await route.handler(req), req);
       }
     }
 
     // 2. Try static routes
     for (const route of staticRoutes) {
-      if (route.path === url.pathname && route.method === method) {
+      if (route.path === pathname && route.method === method) {
         return withCorsHeaders(await route.handler(req), req);
       }
     }
 
     // 3. Try parameterized routes (with :id, etc.)
-    const paramMatch = matchParameterizedRoute(url.pathname, method);
+    const paramMatch = matchParameterizedRoute(pathname, method);
     if (paramMatch) {
       const { route, params } = paramMatch;
 

@@ -11,7 +11,7 @@ let client: RedisClientType | null = null;
 export async function getRedisClient(url?: string): Promise<RedisClientType> {
   if (client) return client;
   const redisUrl = url || process.env.REDIS_URL || 'redis://localhost:6379';
-  client = createClient({ url: redisUrl });
+  client = createClient({ url: redisUrl, socket: { reconnectStrategy: false } });
   client.on('error', (err: Error) => {
     console.error('Redis client error', err instanceof Error ? err.message : String(err));
   });

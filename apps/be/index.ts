@@ -52,12 +52,21 @@ serve({
 
 logger.info(`Server running on http://localhost:${PORT}`);
 
-// Start background workers after server is up
+// Start background workers after server is up (graceful if Redis/Kafka unavailable)
 let drainHandle: { stop?: () => void } | null = null;
 let dlqHandle: { stop?: () => void } | null = null;
 
-drainHandle = startNotificationDrain();
-dlqHandle = startDLQRetryWorker();
+try {
+  drainHandle = startNotificationDrain();
+} catch (err) {
+  logger.warn('Notification drain worker not started (Redis may be unavailable)', err);
+}
+
+try {
+  dlqHandle = startDLQRetryWorker();
+} catch (err) {
+  logger.warn('DLQ retry worker not started (Redis may be unavailable)', err);
+}
 
 // Graceful shutdown
 /**

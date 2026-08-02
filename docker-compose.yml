@@ -61,7 +61,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -80,8 +80,8 @@ services:
       - .env
     environment:
       - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKER=kafka:9092
       - NODE_ENV=production
       - PORT=3001
     ports:
@@ -124,8 +124,8 @@ services:
     env_file:
       - .env
     environment:
-      - REDIS_URL=${REDIS_URL}
-      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKER=kafka:9092
       - NODE_ENV=production
       - PORT=3002
     expose:

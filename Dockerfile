@@ -11,6 +11,7 @@ COPY packages/ui/package.json ./packages/ui/package.json
 COPY packages/utils/package.json ./packages/utils/package.json
 COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
+COPY packages/db/package.json ./packages/db/package.json
 COPY packages/db/schema.prisma ./packages/db/schema.prisma
 RUN bun install --frozen-lockfile --ignore-scripts
 
@@ -22,7 +23,7 @@ RUN bun run build
 
 FROM base AS runner
 ENV NODE_ENV=production
-RUN addgroup --system app && adduser --system --ingroup app app
+RUN groupadd --system app && useradd --system --gid app app
 COPY --from=builder --chown=app:app /app/apps/be ./apps/be
 COPY --from=builder --chown=app:app /app/apps/ws ./apps/ws
 COPY --from=builder --chown=app:app /app/apps/web ./apps/web
