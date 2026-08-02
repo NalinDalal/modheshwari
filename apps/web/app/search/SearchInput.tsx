@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { API_BASE } from "../../lib/config";
 import { Button } from "@repo/ui/button";
+import { formatBloodGroup } from "@modheshwari/utils";
 
 interface SearchResult {
   id?: string;
@@ -318,7 +319,7 @@ export default function SearchInput({
                               )}
                               {r.profile?.bloodGroup && (
                                 <span className="px-2 py-0.5 bg-jewel-ruby/10 text-jewel-ruby rounded-md border border-jewel-ruby/20">
-                                  {r.profile.bloodGroup}
+                                  {formatBloodGroup(r.profile.bloodGroup)}
                                 </span>
                               )}
                             </div>

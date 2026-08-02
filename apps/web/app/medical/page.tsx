@@ -6,6 +6,7 @@ import { Button } from "@repo/ui/button";
 import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../lib/config";
+import { formatBloodGroup, toBloodGroupEnum, BLOOD_GROUPS } from "@modheshwari/utils";
 
 interface User {
   id: string;
@@ -29,32 +30,6 @@ interface MedicalInfo {
   medicalNotes?: string;
 }
 
-const BLOOD_GROUP_MAP: Record<string, string> = {
-  A_POS: "A+",
-  A_NEG: "A-",
-  B_POS: "B+",
-  B_NEG: "B-",
-  AB_POS: "AB+",
-  AB_NEG: "AB-",
-  O_POS: "O+",
-  O_NEG: "O-",
-};
-
-const REVERSE_BLOOD_GROUP_MAP: Record<string, string> = {
-  "A+": "A_POS",
-  "A-": "A_NEG",
-  "B+": "B_POS",
-  "B-": "B_NEG",
-  "AB+": "AB_POS",
-  "AB-": "AB_NEG",
-  "O+": "O_POS",
-  "O-": "O_NEG",
-};
-
-/**
- * Performs  medical operation.
- * @returns {any} Description of return value
- */
 export default function Medical() {
   const router = useRouter();
   const { toast } = useToast();
@@ -99,16 +74,6 @@ export default function Medical() {
     loadUserProfile();
   }, [router]);
 
-  function convertToEnumFormat(input: string): string {
-    const normalized = input.trim().toUpperCase();
-    return REVERSE_BLOOD_GROUP_MAP[normalized] || input;
-  }
-
-  function formatBloodGroup(enumValue: string | undefined): string {
-    if (!enumValue) return "-";
-    return BLOOD_GROUP_MAP[enumValue] || enumValue;
-  }
-
   async function fetchMedicalInfo(query: string) {
     if (!query.trim()) {
       setMedicalList([]);
@@ -121,7 +86,7 @@ export default function Medical() {
     setSearchLoading(true);
 
     try {
-      const enumFormat = convertToEnumFormat(query);
+      const enumFormat = toBloodGroupEnum(query);
 
       const res = await fetch(
         `${API_BASE}/medical/search?bloodGroup=${encodeURIComponent(enumFormat)}`,
@@ -233,7 +198,7 @@ export default function Medical() {
           </div>
 
           <div className="flex flex-wrap gap-2 mt-3">
-            {Object.keys(REVERSE_BLOOD_GROUP_MAP).map((bg) => (
+            {BLOOD_GROUPS.map((bg) => (
               <Button
                 key={bg}
                 variant="secondary"
