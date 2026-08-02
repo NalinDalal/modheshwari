@@ -37,7 +37,7 @@ export default function SigninPage() {
     setLoading(true);
     try {
       const resp = await apiPost(
-        `${API_BASE}/login/${role.toUpperCase()}`,
+        `${API_BASE}/login/${role}`,
         { email, password },
         { throwOnError: false },
       );
