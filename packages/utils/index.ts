@@ -6,3 +6,4 @@ export * from "./rateLimit";
 export * from "./match";
 export * from "./pagination";
 export * from "./phone";
+export * from "./format";
