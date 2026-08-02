@@ -3,6 +3,7 @@
 import { useEffect, useState, type ComponentType } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   Menu,
@@ -18,8 +19,6 @@ import {
   MessageCircle,
   Stethoscope,
 } from "lucide-react";
-import { Button } from "@repo/ui/button";
-
 import { API_BASE } from "../lib/config";
 import apiFetch from "../lib/api";
 import Tooltip from "./Tooltip";
@@ -49,9 +48,6 @@ export default function NavBar() {
   /* ================= Auth ================= */
 
   useEffect(() => {
-    // Re-check auth whenever the pathname changes so NavBar reflects recent signin/signout.
-    // Also listen for storage events and a custom `authChanged` event so pages can notify NavBar
-    // when the token is updated without a pathname change.
     let mounted = true;
 
     const checkAuth = async () => {
@@ -70,7 +66,6 @@ export default function NavBar() {
           throwOnError: false,
         });
         if (result?.ok === false) {
-          // unauthenticated or missing resource
           localStorage.removeItem("token");
           if (mounted) setUser(null);
           return;
@@ -89,7 +84,6 @@ export default function NavBar() {
     checkAuth();
 
     const handler = () => {
-      // slight delay to let signin code finish writing token
       setTimeout(checkAuth, 10);
     };
 
@@ -107,42 +101,27 @@ export default function NavBar() {
 
   const isActive = (href: string) => pathname === href;
 
-  const NavItem = ({
+  const NavIcon = ({
     href,
-    label,
     Icon,
-    onClick,
-    hideLabel,
     title,
   }: {
     href: string;
-    label: string;
-    Icon?: ComponentType<{ className?: string }>;
-    onClick?: () => void;
-    hideLabel?: boolean;
-    title?: string;
+    Icon: ComponentType<{ className?: string }>;
+    title: string;
   }) => (
-    <Link
-      href={href}
-      onClick={onClick}
-      className={`rounded-lg ${isActive(href) ? "bg-jewel-100" : ""}`}
-    >
-      {hideLabel ? (
-        <Tooltip text={title ?? href}>
-          <div
-            className={`p-2 rounded ${isActive(href) ? "text-jewel-700" : "text-jewel-700 hover:text-jewel-gold"}`}
-          >
-            {Icon && <Icon className="h-5 w-5" />}
-          </div>
-        </Tooltip>
-      ) : (
+    <Link href={href}>
+      <Tooltip text={title}>
         <div
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${isActive(href) ? "bg-jewel-100 text-jewel-700" : "text-jewel-700 hover:text-jewel-gold hover:bg-jewel-50"}`}
+          className={`p-2.5 rounded-xl transition-all duration-200 ${
+            isActive(href)
+              ? "bg-jewel-gold/15 text-jewel-gold"
+              : "text-jewel-600 hover:text-jewel-gold hover:bg-jewel-100 dark:text-jewel-400 dark:hover:text-jewel-gold dark:hover:bg-jewel-800/50"
+          }`}
         >
-          {Icon && <Icon className="h-4 w-4" />}
-          <span>{label}</span>
+          <Icon className="h-[18px] w-[18px]" />
         </div>
-      )}
+      </Tooltip>
     </Link>
   );
 
@@ -154,7 +133,6 @@ export default function NavBar() {
       .join("")
       .toUpperCase() ?? "U";
 
-  // Role badge color
   const roleColors: Record<string, string> = {
     COMMUNITY_HEAD: "bg-jewel-gold",
     COMMUNITY_SUBHEAD: "bg-jewel-600",
@@ -163,141 +141,142 @@ export default function NavBar() {
     MEMBER: "bg-jewel-400",
   };
 
-  // Status chip
-  const statusChip = user?.status ? (
-    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-jewel-emerald/20 text-jewel-emerald border border-jewel-emerald/30">
-      Active
-    </span>
-  ) : (
-    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-jewel-200/50 text-jewel-600 border border-jewel-400/20">
-      Inactive
-    </span>
-  );
-
   /* ================= JSX ================= */
 
   return (
-    <nav className="fixed top-0 z-50 h-16 w-full bg-jewel-50/90 backdrop-blur-xl border-b border-jewel-400/20 shadow-sm">
-      <div className="mx-auto max-w-7xl h-full px-6 flex items-center justify-between">
+    <>
+      {/* Spacer to offset the floating nav */}
+      <div className="h-20" />
+
+      {/* Floating pill navbar */}
+      <motion.nav
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center h-14
+          rounded-full border border-jewel-400/20
+          bg-jewel-50/80 backdrop-blur-xl backdrop-saturate-150
+          shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_8px_32px_rgba(0,0,0,0.08)]
+          dark:bg-jewel-900/80 dark:border-jewel-400/10
+          dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_8px_32px_rgba(0,0,0,0.3)]
+          px-2"
+      >
         {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 font-display font-bold text-lg"
-        >
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-jewel-gold to-jewel-500 flex items-center justify-center text-jewel-deep text-sm shadow-lg shadow-jewel-gold/30">
+        <Link href="/" className="flex items-center gap-2 pl-3 pr-2 shrink-0">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-jewel-gold to-jewel-500 flex items-center justify-center text-jewel-deep text-sm font-bold shadow-lg shadow-jewel-gold/30">
             M
           </div>
-          <span className="text-jewel-900">Modheshwari</span>
+          <span className="hidden sm:block text-jewel-900 dark:text-jewel-100 font-display font-bold text-sm">
+            Modheshwari
+          </span>
         </Link>
 
-        {/* Desktop */}
+        {/* Divider */}
+        <div className="h-6 w-px bg-jewel-400/20 dark:bg-jewel-400/10 mx-1" />
+
+        {/* Desktop nav icons */}
         {!loading && (
-          <div className="hidden md:flex items-center gap-1">
-            <NavItem
-              href="/"
-              label="Home"
-              Icon={Home}
-              hideLabel
-              title="/home"
-            />
-            <NavItem
-              href="/contact"
-              label="Contact"
-              Icon={Phone}
-              hideLabel
-              title="/contact"
-            />
+          <div className="hidden md:flex items-center gap-0.5">
+            <NavIcon href="/" Icon={Home} title="Home" />
+            <NavIcon href="/contact" Icon={Phone} title="Contact" />
+            <NavIcon href="/search" Icon={Search} title="Search" />
 
-            <Link
-              href="/search"
-              className="ml-1 h-9 w-9 rounded-lg flex items-center justify-center hover:bg-jewel-100"
-            >
-              <Search className="h-4 w-4 text-jewel-700" />
-            </Link>
-
-            {user ? (
+            {user && (
               <>
-                <div className="mx-2 h-6 w-px bg-jewel-400/30" />
-                <NavItem
-                  href="/family"
-                  label="Family"
-                  Icon={Users}
-                  hideLabel
-                  title="/family"
-                />
-                <NavItem
-                  href="/medical"
-                  label="Medical"
-                  Icon={Stethoscope}
-                  hideLabel
-                  title="/medical"
-                />
-                <NavItem
-                  href="/resources"
-                  label="Resources"
-                  Icon={Package}
-                  hideLabel
-                  title="/resources"
-                />
-                <NavItem
-                  href="/nearby"
-                  label="Nearby"
-                  Icon={MapPin}
-                  hideLabel
-                  title="/nearby"
-                />
-                <NavItem
+                <NavIcon href="/family" Icon={Users} title="Family" />
+                <NavIcon href="/medical" Icon={Stethoscope} title="Medical" />
+                <NavIcon href="/resources" Icon={Package} title="Resources" />
+                <NavIcon href="/nearby" Icon={MapPin} title="Nearby" />
+                <NavIcon
                   href="/events/calendar"
-                  label="Calendar"
                   Icon={Calendar}
-                  hideLabel
-                  title="/events/calendar"
+                  title="Calendar"
                 />
-                <NavItem
+                <NavIcon
                   href="/notifications"
-                  label="Notifications"
                   Icon={BellPlus}
-                  hideLabel
-                  title="/notifications"
+                  title="Notifications"
                 />
-                <NavItem
-                  href="/chat"
-                  label="Chat"
-                  Icon={MessageCircle}
-                  hideLabel
-                  title="/chat"
-                />
-                <div className="relative group">
-                  <button
-                    onClick={() => router.push("/me")}
-                    className="ml-2 h-9 w-9 rounded-lg flex items-center justify-center text-xs font-bold text-jewel-deep shadow-lg"
-                    style={{ background: roleColors[user.role] || "#78716c" }}
-                    title="Profile"
-                  >
-                    {initials}
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-jewel-50 bg-jewel-ruby rounded-full">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
-                    )}
-                  </button>
-                  <div className="hidden group-hover:block absolute right-0 mt-2 w-48 bg-jewel-50 border border-jewel-400/20 rounded-lg shadow-jewel z-50">
-                    <div className="px-4 py-3 border-b border-jewel-400/20">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-semibold text-jewel-deep ${roleColors[user.role] || "bg-jewel-400"}`}
-                        >
-                          {user.role ? user.role.replace(/_/g, " ") : "Unknown"}
-                        </span>
-                        {statusChip}
-                      </div>
-                      <div className="mt-1 text-xs text-jewel-500">
-                        {user.email}
-                      </div>
+                <NavIcon href="/chat" Icon={MessageCircle} title="Chat" />
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Right section */}
+        <div className="flex items-center gap-1 ml-1">
+          {!loading && !user && (
+            <Link
+              href="/signin"
+              className="px-4 py-1.5 rounded-full bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep text-xs font-semibold
+                hover:shadow-lg hover:shadow-jewel-gold/25 transition-all duration-300 hover:scale-[1.03]"
+            >
+              Sign in
+            </Link>
+          )}
+
+          {!loading && user && (
+            <>
+              {/* Notification badge (mobile shortcut) */}
+              <Link
+                href="/notifications"
+                className="md:hidden relative p-2.5 rounded-xl text-jewel-600 hover:text-jewel-gold hover:bg-jewel-100 dark:text-jewel-400 dark:hover:bg-jewel-800/50 transition-all"
+              >
+                <BellPlus className="h-[18px] w-[18px]" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-jewel-ruby opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-jewel-ruby" />
+                  </span>
+                )}
+              </Link>
+
+              {/* Profile avatar */}
+              <div className="relative group">
+                <button
+                  onClick={() => router.push("/me")}
+                  className="h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold text-jewel-deep
+                    ring-2 ring-offset-1 ring-offset-jewel-50 dark:ring-offset-jewel-900
+                    shadow-lg hover:scale-[1.05] transition-transform duration-200"
+                  style={{ background: roleColors[user.role] || "#78716c" }}
+                  title="Profile"
+                >
+                  {initials}
+                </button>
+
+                {/* Dropdown */}
+                <div className="hidden group-hover:block absolute right-0 mt-3 w-56
+                  bg-jewel-50/95 dark:bg-jewel-900/95 backdrop-blur-xl
+                  border border-jewel-400/20 dark:border-jewel-400/10
+                  rounded-2xl shadow-elevated z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-jewel-400/20 dark:border-jewel-400/10">
+                    <div className="font-medium text-sm text-jewel-900 dark:text-jewel-100">
+                      {user.name}
                     </div>
+                    <div className="text-xs text-jewel-500 mt-0.5">
+                      {user.email}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-semibold text-jewel-deep ${roleColors[user.role] || "bg-jewel-400"}`}
+                      >
+                        {user.role ? user.role.replace(/_/g, " ") : "Unknown"}
+                      </span>
+                      {user.status ? (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-jewel-emerald/20 text-jewel-emerald border border-jewel-emerald/30">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-jewel-200/50 text-jewel-600 border border-jewel-400/20">
+                          Inactive
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="py-1">
                     <button
                       onClick={() => router.push("/me/edit")}
-                      className="w-full text-left px-4 py-2 hover:bg-jewel-100 text-sm text-jewel-700"
+                      className="w-full text-left px-4 py-2.5 hover:bg-jewel-100 dark:hover:bg-jewel-800/50 text-sm text-jewel-700 dark:text-jewel-300 transition-colors"
                     >
                       Edit profile
                     </button>
@@ -306,96 +285,130 @@ export default function NavBar() {
                         localStorage.removeItem("token");
                         router.push("/signin");
                       }}
-                      className="w-full text-left px-4 py-2 hover:bg-jewel-100 text-sm text-jewel-700"
+                      className="w-full text-left px-4 py-2.5 hover:bg-jewel-ruby/10 text-sm text-jewel-ruby transition-colors"
                     >
                       Sign out
                     </button>
                   </div>
                 </div>
-              </>
-            ) : (
-              <Link
-                href="/signin"
-                className="ml-4 px-5 py-2 rounded-lg bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep text-sm font-semibold"
-              >
-                Sign in
-              </Link>
-            )}
-          </div>
-        )}
-
-        {/* Mobile toggle */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden h-9 w-9 flex items-center justify-center rounded-lg hover:bg-jewel-100"
-        >
-          {mobileMenuOpen ? (
-            <X className="h-5 w-5 text-jewel-900" />
-          ) : (
-            <Menu className="h-5 w-5 text-jewel-900" />
-          )}
-        </button>
-      </div>
-
-      {/* Mobile menu */}
-      {mobileMenuOpen && !loading && (
-        <div className="md:hidden bg-jewel-50/95 border-t border-jewel-400/20 px-4 py-4">
-          <div className="mb-2">
-            <NavItem href="/" label="Home" Icon={Home} />
-            <NavItem href="/contact" label="Contact" Icon={Phone} />
-            <NavItem href="/search" label="Search" Icon={Search} />
-          </div>
-          {user ? (
-            <>
-              <div className="h-px bg-jewel-400/30 my-2" />
-              <div className="mb-2">
-                <NavItem href="/family" label="Family" Icon={Users} />
-                <NavItem href="/medical" label="Medical" Icon={Stethoscope} />
-                <NavItem href="/resources" label="Resources" Icon={Package} />
-                <NavItem href="/nearby" label="Nearby" Icon={MapPin} />
-                <NavItem
-                  href="/events/calendar"
-                  label="Calendar"
-                  Icon={Calendar}
-                />
-                <NavItem href="/chat" label="Chat" Icon={MessageSquare} />
               </div>
-              <div className="h-px bg-jewel-400/30 my-2" />
-              <Link
-                href="/notifications"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"
-              >
-                <div className="relative">
-                  <BellPlus className="h-4 w-4" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none text-jewel-50 bg-jewel-ruby rounded-full">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                </div>
-                <span>Notifications</span>
-              </Link>
-              <NavItem href="/me" label={user.name} />
-              <button
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  router.push("/signin");
-                }}
-                className="block w-full mt-3 py-2 rounded-lg bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep"
-              >
-                Sign out
-              </button>
             </>
-          ) : (
-            <Link
-              href="/signin"
-              className="block text-center mt-3 py-2 rounded-lg bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep"
-            >
-              Sign in
-            </Link>
           )}
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2.5 rounded-xl text-jewel-600 hover:text-jewel-gold hover:bg-jewel-100 dark:text-jewel-400 dark:hover:bg-jewel-800/50 transition-all"
+          >
+            {mobileMenuOpen ? (
+              <X className="h-[18px] w-[18px]" />
+            ) : (
+              <Menu className="h-[18px] w-[18px]" />
+            )}
+          </button>
         </div>
+      </motion.nav>
+
+      {/* Mobile menu dropdown */}
+      <AnimatePresence>
+        {mobileMenuOpen && !loading && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="fixed top-20 left-4 right-4 z-50 md:hidden
+              bg-jewel-50/95 dark:bg-jewel-900/95 backdrop-blur-xl
+              border border-jewel-400/20 dark:border-jewel-400/10
+              rounded-2xl shadow-elevated overflow-hidden"
+          >
+            <div className="p-3 space-y-1">
+              <MobileLink href="/" Icon={Home} label="Home" onClick={() => setMobileMenuOpen(false)} />
+              <MobileLink href="/contact" Icon={Phone} label="Contact" onClick={() => setMobileMenuOpen(false)} />
+              <MobileLink href="/search" Icon={Search} label="Search" onClick={() => setMobileMenuOpen(false)} />
+            </div>
+
+            {user && (
+              <>
+                <div className="h-px bg-jewel-400/20 dark:bg-jewel-400/10 mx-3" />
+                <div className="p-3 space-y-1">
+                  <MobileLink href="/family" Icon={Users} label="Family" onClick={() => setMobileMenuOpen(false)} />
+                  <MobileLink href="/medical" Icon={Stethoscope} label="Medical" onClick={() => setMobileMenuOpen(false)} />
+                  <MobileLink href="/resources" Icon={Package} label="Resources" onClick={() => setMobileMenuOpen(false)} />
+                  <MobileLink href="/nearby" Icon={MapPin} label="Nearby" onClick={() => setMobileMenuOpen(false)} />
+                  <MobileLink href="/events/calendar" Icon={Calendar} label="Calendar" onClick={() => setMobileMenuOpen(false)} />
+                  <MobileLink href="/chat" Icon={MessageSquare} label="Chat" onClick={() => setMobileMenuOpen(false)} />
+                  <MobileLink href="/notifications" Icon={BellPlus} label="Notifications" onClick={() => setMobileMenuOpen(false)} unreadCount={unreadCount} />
+                </div>
+                <div className="h-px bg-jewel-400/20 dark:bg-jewel-400/10 mx-3" />
+                <div className="p-3">
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem("token");
+                      setMobileMenuOpen(false);
+                      router.push("/signin");
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep text-sm font-semibold
+                      hover:shadow-lg hover:shadow-jewel-gold/25 transition-all"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </>
+            )}
+
+            {!user && (
+              <div className="p-3">
+                <Link
+                  href="/signin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full py-2.5 rounded-xl bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep text-sm font-semibold text-center
+                    hover:shadow-lg hover:shadow-jewel-gold/25 transition-all"
+                >
+                  Sign in
+                </Link>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+function MobileLink({
+  href,
+  Icon,
+  label,
+  onClick,
+  unreadCount,
+}: {
+  href: string;
+  Icon: ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+  unreadCount?: number;
+}) {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+        isActive
+          ? "bg-jewel-gold/15 text-jewel-gold"
+          : "text-jewel-700 dark:text-jewel-300 hover:bg-jewel-100 dark:hover:bg-jewel-800/50 hover:text-jewel-gold"
+      }`}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+      {unreadCount !== undefined && unreadCount > 0 && (
+        <span className="ml-auto px-1.5 py-0.5 text-[10px] font-semibold text-jewel-50 bg-jewel-ruby rounded-full">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
       )}
-    </nav>
+    </Link>
   );
 }

@@ -89,6 +89,7 @@ export default function ContactPage() {
                         const active = formData.type === t.value;
                         return (
                             <Button
+                                key={t.value}
                                 variant="secondary"
                                 onClick={() => setFormData((p) => ({ ...p, type: t.value }))}
                                 className={`relative overflow-hidden rounded-2xl p-4 border transition-all

@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@repo/ui/button";
+import { GlowCard } from "@repo/ui/glow-card";
 import {
   Users,
   Shield,
@@ -177,11 +178,8 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className="group relative p-6 bg-jewel-50/60 backdrop-blur-sm border border-jewel-400/20 rounded-2xl hover:border-jewel-gold/40 hover:shadow-jewel transition-all duration-300 hover:scale-[1.02]"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-jewel-gold/5 to-jewel-emerald/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                <div className="relative">
+                <GlowCard className="p-6 h-full">
                   <div className="inline-flex p-3 bg-gradient-to-br from-jewel-200 to-jewel-100 rounded-xl mb-4">
                     <feature.icon className="w-6 h-6 text-jewel-600" />
                   </div>
@@ -193,7 +191,7 @@ export default function Home() {
                   <p className="text-jewel-600 text-sm leading-relaxed">
                     {feature.description}
                   </p>
-                </div>
+                </GlowCard>
               </motion.div>
             ))}
           </div>
