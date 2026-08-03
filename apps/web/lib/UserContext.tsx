@@ -36,6 +36,7 @@ interface UserContextValue {
   loading: boolean;
   refresh: () => void;
   logout: () => void;
+  updateProfile: (patch: Partial<User["profile"]>) => void;
 }
 
 const UserContext = createContext<UserContextValue>({
@@ -43,6 +44,7 @@ const UserContext = createContext<UserContextValue>({
   loading: true,
   refresh: () => {},
   logout: () => {},
+  updateProfile: () => {},
 });
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -81,6 +83,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
     window.dispatchEvent(new Event("authChanged"));
   }, []);
 
+  const updateProfile = useCallback((patch: Partial<User["profile"]>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        profile: { ...(prev.profile ?? {}), ...patch },
+      };
+    });
+  }, []);
+
   useEffect(() => {
     mountedRef.current = true;
     fetchUser(true);
@@ -96,7 +108,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [fetchUser]);
 
   return (
-    <UserContext.Provider value={{ user, loading, refresh: () => fetchUser(true), logout }}>
+    <UserContext.Provider value={{ user, loading, refresh: () => fetchUser(true), logout, updateProfile }}>
       {children}
     </UserContext.Provider>
   );

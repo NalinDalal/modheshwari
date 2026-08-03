@@ -11,29 +11,10 @@ import apiFetch from "../../../lib/api";
 import { API_BASE } from "../../../lib/config";
 import { useUser } from "../../../lib/UserContext";
 
-interface Profile {
-  phone?: string | null;
-  address?: string | null;
-  profession?: string | null;
-  gotra?: string | null;
-  location?: string | null;
-  status?: string | null;
-  bloodGroup?: string | null;
-  allergies?: string | null;
-  medicalNotes?: string | null;
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  profile: Profile | null;
-}
-
 export default function EditProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, loading, refresh } = useUser();
+  const { user, loading, updateProfile } = useUser();
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState(() => ({
     bloodGroup: "",
@@ -82,7 +63,8 @@ export default function EditProfilePage() {
 
       if (data.status === "success") {
         toast("Profile updated successfully.", { variant: "success" });
-        refresh();
+        const updated = data.data;
+        if (updated) updateProfile(updated);
         router.push("/me");
       } else {
         toast(data.message || "Failed to update profile.", { variant: "error" });
