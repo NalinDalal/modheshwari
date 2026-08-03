@@ -8,7 +8,10 @@ let JWT_REFRESH_SECRET: string;
 if (typeof window === "undefined") {
   const { join } = require("path");
   const { config } = require("dotenv");
-  config({ path: join(process.cwd(), "../../.env") });
+  const cwd = typeof process !== "undefined" && process.cwd ? process.cwd() : __dirname;
+  if (cwd) {
+    config({ path: join(cwd, "../../.env") });
+  }
 
   if (!process.env.JWT_SECRET) {
     throw new Error("Missing JWT_SECRET in environment variables");
