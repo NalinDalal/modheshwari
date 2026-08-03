@@ -29,8 +29,6 @@ export async function handleGetMe(req: Request): Promise<Response> {
         email: true,
         role: true,
         status: true,
-        createdAt: true,
-        updatedAt: true,
 
         profile: {
           select: {
@@ -41,8 +39,6 @@ export async function handleGetMe(req: Request): Promise<Response> {
             location: true,
             locationLat: true,
             locationLng: true,
-            locationUpdatedAt: true,
-            status: true,
             bloodGroup: true,
             allergies: true,
             medicalNotes: true,
@@ -88,8 +84,6 @@ export async function handleGetMe(req: Request): Promise<Response> {
           uniqueId: fm.family.uniqueId,
         },
       })),
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
     };
 
     logger.info(`/me fetched for userId=${user.id}`);
