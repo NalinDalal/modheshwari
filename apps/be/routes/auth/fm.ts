@@ -1,11 +1,7 @@
 import prisma from "@modheshwari/db";
-import {
-  comparePassword,
-  signJWT,
-  success,
-  failure,
-  hashPassword,
-} from "@modheshwari/utils/index";
+import { comparePassword, hashPassword } from "@modheshwari/utils/hash";
+import { signJWT } from "@modheshwari/utils/jwt";
+import { success, failure } from "@modheshwari/utils/response";
 
 import { logger } from "../../lib/logger";
 

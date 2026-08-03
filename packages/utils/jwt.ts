@@ -5,7 +5,10 @@ import { config } from "dotenv";
 import jwt from "jsonwebtoken";
 
 // Load .env from monorepo root if not already loaded
-config({ path: join(process.cwd(), "../../.env") });
+const cwd = typeof process !== "undefined" && process.cwd ? process.cwd() : __dirname;
+if (cwd) {
+  config({ path: join(cwd, "../../.env") });
+}
 
 // Check for secrets *after* loading .env
 if (!process.env.JWT_SECRET) {

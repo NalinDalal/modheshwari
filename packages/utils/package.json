@@ -3,18 +3,6 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
-  "exports": {
-    ".": "./index.ts",
-    "./format": "./format.ts",
-    "./jwt": "./jwt.ts",
-    "./hash": "./hash.ts",
-    "./response": "./response.ts",
-    "./constants": "./constants.ts",
-    "./rateLimit": "./rateLimit.ts",
-    "./match": "./match.ts",
-    "./pagination": "./pagination.ts",
-    "./phone": "./phone.ts"
-  },
   "devDependencies": {
     "@types/bun": "latest"
   },
