@@ -6,7 +6,7 @@
  */
 
 import prisma from "@modheshwari/db";
-import { verifyJWT } from "@modheshwari/utils";
+import { verifyJWT } from "@modheshwari/utils/jwt";
 
 import { kafka } from "../kafka/config";
 
