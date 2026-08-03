@@ -1,33 +1,22 @@
 //auth continuation — managing session identity after login.
+import { join } from "path";
+
+import { config } from "dotenv";
 import jwt from "jsonwebtoken";
 
-let JWT_SECRET: string;
-let JWT_REFRESH_SECRET: string;
+// Load .env from monorepo root if not already loaded
+config({ path: join(process.cwd(), "../../.env") });
 
-// Server-only: load .env and secrets
-if (typeof window === "undefined") {
-  const { join } = require("path");
-  const { config } = require("dotenv");
-  const cwd = typeof process !== "undefined" && process.cwd ? process.cwd() : __dirname;
-  if (cwd) {
-    config({ path: join(cwd, "../../.env") });
-  }
-
-  if (!process.env.JWT_SECRET) {
-    throw new Error("Missing JWT_SECRET in environment variables");
-  }
-  if (!process.env.JWT_REFRESH_SECRET) {
-    throw new Error("Missing JWT_REFRESH_SECRET in environment variables");
-  }
-
-  JWT_SECRET = process.env.JWT_SECRET!;
-  JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
-} else {
-  // Client-side: these functions should never be called, but provide stubs
-  // so the module can be imported without crashing
-  JWT_SECRET = "";
-  JWT_REFRESH_SECRET = "";
+// Check for secrets *after* loading .env
+if (!process.env.JWT_SECRET) {
+  throw new Error("Missing JWT_SECRET in environment variables");
 }
+if (!process.env.JWT_REFRESH_SECRET) {
+  throw new Error("Missing JWT_REFRESH_SECRET in environment variables");
+}
+
+const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 
 export interface AuthPayload {
   userId?: string;
