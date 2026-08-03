@@ -7,6 +7,8 @@ import { Button } from "@repo/ui/button";
 import { useToast } from "@repo/ui/toast";
 
 import useNotifications from "../../hooks/useNotifications";
+import { useUser } from "../../lib/UserContext";
+import apiFetch from "../../lib/api";
 import { API_BASE } from "../../lib/config";
 
 /**
@@ -83,7 +85,7 @@ function dedupeKey(n: Notification): string {
 export default function NotificationsPage(): React.ReactElement {
     const { notifications: hookNotifications, unreadCount, refresh, markRead, markAllRead, pulse } = useNotifications();
     const { toast } = useToast();
-    const [me, setMe] = useState<Me | null>(null);
+    const { user: me, loading: userLoading } = useUser();
 
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
@@ -100,30 +102,9 @@ export default function NotificationsPage(): React.ReactElement {
     const [broadcasting, setBroadcasting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-
-
-    const isAdmin = isAdminRole(me?.role);
-
-    const loadCurrentUser = useCallback(async () => {
-        const token = getToken();
-        if (!token) return;
-
-        try {
-            const res = await fetch(`${API_BASE}/me`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (!res.ok) return;
-
-            const js = await res.json();
-            setMe(js.data ?? null);
-        } catch (err) {
-            console.error("Failed to fetch user info", err);
-        }
-    }, []);
+    const isAdmin = isAdminRole(me?.role as Role);
 
     const fetchNotifications = useCallback(async () => {
-        // delegate to hook
         setError(null);
         setLoading(true);
         try {
@@ -140,9 +121,8 @@ export default function NotificationsPage(): React.ReactElement {
      * Initial load
      */
     useEffect(() => {
-        void loadCurrentUser();
         void fetchNotifications();
-    }, [loadCurrentUser, fetchNotifications]);
+    }, [fetchNotifications]);
 
     /**
      * Reset target role when role changes (avoid invalid selection)

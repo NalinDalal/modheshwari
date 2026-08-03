@@ -1,25 +1,14 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 import { Button } from "@repo/ui/button";
 import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../lib/config";
+import apiFetch from "../../lib/api";
+import { useUser } from "../../lib/UserContext";
 import { formatBloodGroup, toBloodGroupEnum, BLOOD_GROUPS } from "@modheshwari/utils";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
-interface Profile {
-  bloodGroup?: string;
-  allergies?: string;
-  medicalNotes?: string;
-}
 
 interface MedicalInfo {
   userId: string;
@@ -33,46 +22,12 @@ interface MedicalInfo {
 export default function Medical() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading, logout } = useUser();
 
-  const [user, setUser] = useState<User | null>(null);
-  const [myProfile, setMyProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-
+  const myProfile = user?.profile ?? null;
   const [medicalList, setMedicalList] = useState<MedicalInfo[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/signin");
-      return;
-    }
-
-    async function loadUserProfile() {
-      try {
-        const res = await fetch(`${API_BASE}/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (data.status === "success") {
-          setUser(data.data);
-          setMyProfile(data.data.profile || null);
-        } else {
-          toast("Auth expired, please log in again", { variant: "warning" });
-          localStorage.removeItem("token");
-          router.push("/signin");
-        }
-      } catch (err) {
-        console.error("Failed to fetch /me", err);
-        toast("Failed to fetch user info", { variant: "error" });
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadUserProfile();
-  }, [router]);
 
   async function fetchMedicalInfo(query: string) {
     if (!query.trim()) {
@@ -80,21 +35,15 @@ export default function Medical() {
       return;
     }
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     setSearchLoading(true);
 
     try {
       const enumFormat = toBloodGroupEnum(query);
 
-      const res = await fetch(
+      const data = await apiFetch(
         `${API_BASE}/medical/search?bloodGroup=${encodeURIComponent(enumFormat)}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { throwOnError: false },
       );
-      const data = await res.json();
       if (data.status === "success") {
         setMedicalList(data.data || []);
       } else {

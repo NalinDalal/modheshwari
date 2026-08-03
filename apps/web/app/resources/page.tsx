@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Package, Plus, Check, X, Loader2, AlertCircle } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
@@ -8,6 +8,8 @@ import { Button } from "@repo/ui/button";
 import { useToast } from "@repo/ui/toast";
 
 import { API_BASE } from "../../lib/config";
+import apiFetch from "../../lib/api";
+import { useUser } from "../../lib/UserContext";
 
 interface ResourceRequest {
   id: string;
@@ -73,42 +75,24 @@ function getStatusColor(status: string): string {
  */
 export default function ResourceRequestsPage(): React.JSX.Element {
   const { toast } = useToast();
+  const { user: me } = useUser();
   const [resource, setResource] = useState("");
   const [requests, setRequests] = useState<ResourceRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [me, setMe] = useState<Me | null>(null);
 
   useEffect(() => {
-    void loadCurrentUser();
     void fetchRequests();
   }, []);
-
-  async function loadCurrentUser(): Promise<void> {
-    try {
-      const token = getToken();
-      const res = await fetch(`${API_BASE}/me`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-      if (!res.ok) return;
-      const json = await res.json();
-      setMe(json.data || null);
-    } catch {
-      console.error("Failed to fetch user details");
-    }
-  }
 
   async function fetchRequests(): Promise<void> {
     setLoading(true);
     try {
-      const token = getToken();
-      const res = await fetch(`${API_BASE}/resource-requests`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const res = await apiFetch(`${API_BASE}/resource-requests`, { throwOnError: false });
       if (!res.ok) {
         setRequests([]);
         return;
       }
-      const json = await res.json();
+      const json = res.data ?? res;
       setRequests(json.data?.data || []);
     } catch {
       setRequests([]);

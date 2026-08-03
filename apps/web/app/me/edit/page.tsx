@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderFour } from "@repo/ui/loading";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
 import { Button } from "@repo/ui/button";
 import { useToast } from "@repo/ui/toast";
 
+import apiFetch from "../../../lib/api";
 import { API_BASE } from "../../../lib/config";
+import { useUser } from "../../../lib/UserContext";
 
 interface Profile {
   phone?: string | null;
@@ -31,51 +33,24 @@ interface User {
 export default function EditProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const { user, loading, refresh } = useUser();
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     bloodGroup: "",
     gotra: "",
     profession: "",
-  });
+  }));
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast("You need to sign in first.", { variant: "warning" });
-      router.push("/signin");
-      return;
-    }
-
-    async function loadUserProfile() {
-      try {
-        const res = await fetch(`${API_BASE}/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const data = await res.json();
-        if (data.status === "success") {
-          const user = data.data as User;
-          setFormData({
-            bloodGroup: user.profile?.bloodGroup || "",
-            gotra: user.profile?.gotra || "",
-            profession: user.profile?.profession || "",
-          });
-        } else {
-          toast("Auth expired, please log in again", { variant: "warning" });
-          localStorage.removeItem("token");
-          router.push("/signin");
-        }
-      } catch (err) {
-        console.error("Failed to fetch /me", err);
-        toast("Failed to fetch user info", { variant: "error" });
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadUserProfile();
-  }, [router]);
+  // Initialize form from context when user loads
+  const [initialized, setInitialized] = useState(false);
+  if (user && !initialized) {
+    setFormData({
+      bloodGroup: user.profile?.bloodGroup || "",
+      gotra: user.profile?.gotra || "",
+      profession: user.profile?.profession || "",
+    });
+    setInitialized(true);
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -100,18 +75,14 @@ export default function EditProfilePage() {
     setSaving(true);
 
     try {
-      const res = await fetch(`${API_BASE}/me`, {
+      const data = await apiFetch(`${API_BASE}/me`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
       if (data.status === "success") {
         toast("Profile updated successfully.", { variant: "success" });
+        refresh();
         router.push("/me");
       } else {
         toast(data.message || "Failed to update profile.", { variant: "error" });
