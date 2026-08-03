@@ -1,4 +1,4 @@
-import { isRateLimited } from "@modheshwari/utils/rate-limit";
+import { isRateLimited } from "@modheshwari/utils/rateLimit";
 
 import { authRoutes } from "./authRoutes";
 import { staticRoutes } from "./staticRoutes";

@@ -13,7 +13,7 @@ import {
   parsePagination,
   buildPaginationResponse,
 } from "@modheshwari/utils/pagination";
-import { isRateLimited } from "@modheshwari/utils/rate-limit";
+import { isRateLimited } from "@modheshwari/utils/rateLimit";
 
 import {
   parseQuery,
