@@ -8,7 +8,7 @@ import { useToast } from "@repo/ui/toast";
 import { API_BASE } from "../../lib/config";
 import apiFetch from "../../lib/api";
 import { useUser } from "../../lib/UserContext";
-import { formatBloodGroup, toBloodGroupEnum, BLOOD_GROUPS } from "@modheshwari/utils";
+import { formatBloodGroup, toBloodGroupEnum, BLOOD_GROUPS } from "@modheshwari/utils/format";
 
 interface MedicalInfo {
   userId: string;

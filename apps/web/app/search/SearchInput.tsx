@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { API_BASE } from "../../lib/config";
 import { Button } from "@repo/ui/button";
-import { formatBloodGroup } from "@modheshwari/utils";
+import { formatBloodGroup } from "@modheshwari/utils/format";
 
 interface SearchResult {
   id?: string;
