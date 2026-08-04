@@ -8,7 +8,6 @@ import { useToast } from "@repo/ui/toast";
 
 import useNotifications from "../../hooks/useNotifications";
 import { useUser } from "../../lib/UserContext";
-import apiFetch from "../../lib/api";
 import { API_BASE } from "../../lib/config";
 
 /**
@@ -32,13 +31,6 @@ type Role =
     | "GOTRA_HEAD"
     | "FAMILY_HEAD"
     | "MEMBER";
-
-type Me = {
-    id: string;
-    name: string;
-    email: string;
-    role: Role;
-};
 
 type Priority = "low" | "normal" | "high" | "urgent";
 type ReadFilter = "all" | "read" | "unread";
@@ -85,7 +77,7 @@ function dedupeKey(n: Notification): string {
 export default function NotificationsPage(): React.ReactElement {
     const { notifications: hookNotifications, unreadCount, refresh, markRead, markAllRead, pulse } = useNotifications();
     const { toast } = useToast();
-    const { user: me, loading: userLoading } = useUser();
+    const { user: me } = useUser();
 
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");

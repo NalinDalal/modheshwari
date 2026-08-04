@@ -22,7 +22,7 @@ interface MedicalInfo {
 export default function Medical() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, loading, logout } = useUser();
+  const { user, loading } = useUser();
 
   const myProfile = user?.profile ?? null;
   const [medicalList, setMedicalList] = useState<MedicalInfo[]>([]);

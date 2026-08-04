@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Package, Plus, Check, X, Loader2, AlertCircle } from "lucide-react";
 import { DreamySunsetBackground } from "@repo/ui/dreamySunsetBackground";
@@ -27,19 +27,6 @@ interface Approval {
   status: string;
   remarks?: string;
   reviewedAt?: string;
-}
-
-interface Me {
-  id: string;
-  name: string;
-  role:
-    | "MEMBER"
-    | "COMMUNITY_HEAD"
-    | "COMMUNITY_SUBHEAD"
-    | "GOTRA_HEAD"
-    | string;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 /**
