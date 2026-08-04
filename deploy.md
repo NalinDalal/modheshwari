@@ -228,18 +228,27 @@ services:
 
 ### 6. Initial Database Setup
 
+**If using Neon (hosted PostgreSQL):**
+
+```bash
+# Run migrations against Neon (DATABASE_URL in .env points to Neon)
+docker compose exec be bunx prisma migrate deploy --schema packages/db/schema.prisma
+```
+
+**If using local Docker PostgreSQL:**
+
 ```bash
 # Start database and redis first
-docker-compose up -d db redis
+docker compose up -d db redis
 
 # Wait for database to be ready
 sleep 10
 
 # Run migrations
-docker-compose exec db bunx prisma migrate deploy
+docker compose exec be bunx prisma migrate deploy --schema packages/db/schema.prisma
 
 # Optional: Seed database
-docker-compose exec db bun run db:seed
+docker compose exec be bun run db:seed
 ```
 
 ### 7. Deploy All Services
@@ -324,71 +333,161 @@ git push origin main
 
 ## Nginx Reverse Proxy (Production)
 
-### Install & Configure
+The nginx config is mounted from `nginx.conf` into the Docker container. Edit the file on the host, then restart:
 
 ```bash
-sudo nano /etc/nginx/sites-available/modheshwari
+nano nginx.conf
+docker compose restart nginx
 ```
 
+### Current nginx.conf (with SSL)
+
 ```nginx
-upstream nextjs {
-    server 127.0.0.1:3000;
+upstream web {
+    server web:3000;
 }
 
-upstream backend {
-    server 127.0.0.1:3001;
+upstream be {
+    server be:3001;
 }
 
-upstream websocket {
-    server 127.0.0.1:3002;
+upstream ws {
+    server ws:3002;
+}
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
 }
 
 server {
     listen 80;
-    server_name YOUR_VM_IP;  # Or your domain
+    server_name modheshwari.nerdev.in;
+    return 301 https://$host$request_uri;
+}
 
-    # Frontend
-    location / {
-        proxy_pass http://nextjs;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
+server {
+    listen 443 ssl;
+    server_name modheshwari.nerdev.in;
 
-    # Backend API
+    ssl_certificate /etc/letsencrypt/live/modheshwari.nerdev.in/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/modheshwari.nerdev.in/privkey.pem;
+
+    client_max_body_size 10M;
+
     location /api/ {
-        proxy_pass http://backend;
+        proxy_pass http://be;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # WebSocket
-    location /ws {
-        proxy_pass http://websocket;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+    location / {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+
+        if ($http_upgrade ~ "websocket") {
+            proxy_pass http://ws;
+        }
+        proxy_pass http://web;
     }
 }
 ```
 
-```bash
-sudo ln -s /etc/nginx/sites-available/modheshwari /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
 ### URLs After Nginx
 
-| Service   | URL                   |
-| --------- | --------------------- |
-| Web       | http://YOUR_VM_IP     |
-| API       | http://YOUR_VM_IP/api |
-| WebSocket | ws://YOUR_VM_IP/ws    |
+| Service   | URL                            |
+| --------- | ------------------------------ |
+| Web       | https://modheshwari.nerdev.in  |
+| API       | https://modheshwari.nerdev.in/api |
+| WebSocket | wss://modheshwari.nerdev.in/ws |
+
+---
+
+## SSL/HTTPS Setup (Let's Encrypt + Certbot)
+
+### Prerequisites
+- Domain pointing to your EC2 IP (A record in DNS)
+- Port 80 and 443 open in EC2 security group
+
+### 1. Install Certbot
+
+```bash
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+### 2. Get Certificate
+
+Since Docker nginx uses port 80, stop it first and use standalone mode:
+
+```bash
+cd ~/modheshwari
+docker compose stop nginx
+
+sudo certbot certonly --standalone -d modheshwari.nerdev.in
+
+docker compose start nginx
+```
+
+### 3. Update docker-compose.yml
+
+Add port 443 and cert volume to nginx service:
+
+```yaml
+nginx:
+    image: nginx:alpine
+    container_name: modheshwari-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+      - be
+      - ws
+```
+
+### 4. Update nginx.conf
+
+Add HTTP→HTTPS redirect and SSL server block (see nginx config above).
+
+### 5. Restart nginx
+
+```bash
+docker compose restart nginx
+```
+
+### 6. Auto-Renewal
+
+Certbot sets up automatic renewal, but Docker nginx needs restart after renewal:
+
+```bash
+echo '0 12 * * * /usr/bin/certbot renew --quiet --post-hook "cd /home/ubuntu/modheshwari && docker compose restart nginx"' | sudo crontab -
+```
+
+### 7. Cloudflare DNS
+
+| Type | Name | Value | Proxy |
+|------|------|-------|-------|
+| A | modheshwari | YOUR_EC2_IP | Proxied |
+
+### 8. Security Group
+
+| Type | Port | Source |
+|------|------|--------|
+| SSH | 22 | Your IP/32 |
+| HTTP | 80 | 0.0.0.0/0 |
+| HTTPS | 443 | 0.0.0.0/0 |
 
 ---
 
@@ -638,6 +737,36 @@ docker compose --env-file .env build 2>&1 | grep "transferring context"
 With proper `.dockerignore`, context drops to ~16KB — transfers in under 1 second.
 
 ### 6. Lint Warnings = Build Failures in CI
+
+`next lint` with `--max-warnings 0` means any warning fails the build. Common issues:
+
+- Unused imports (`useCallback`, `apiFetch`)
+- Unused variables (`logout`, `userLoading`, `Me` type)
+
+Fix: Remove unused imports/variables before pushing.
+
+### 7. EBS Volume Needs Manual Resize
+
+**Problem:** Expanded EBS volume from AWS console but `df -h` still shows old size.
+
+**Fix:** SSH into instance and resize the filesystem:
+```bash
+sudo growpart /dev/nvme0n1 1
+sudo resize2fs /dev/nvme0n1p1
+```
+
+**Lesson:** AWS console expands the volume, but the OS filesystem needs manual resize.
+
+### 8. SSL Requires Port 443 in Both Security Group and Docker
+
+**Problem:** Cloudflare 521/522 errors even after certbot succeeds.
+
+**Fix:** Both must be configured:
+1. Security group: Add HTTPS (443) inbound rule
+2. docker-compose.yml: Add `"443:443"` to nginx ports
+3. nginx.conf: Add SSL server block with cert paths
+
+### 9. Lint Warnings = Build Failures in CI
 
 `next lint` with `--max-warnings 0` means any warning fails the build. Common issues:
 
