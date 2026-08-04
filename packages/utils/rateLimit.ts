@@ -1,77 +1,66 @@
-/**
- * Performs rate limit operation.
- * @param {Request} req - Description of req
- * @param {{ max: number; windowMs: number; }} options - Description of options
- * @returns {boolean} Description of return value
- */
 /* -------------------------------------------
-   Simple in-memory sliding window rate limiter
+   In-memory sliding window rate limiter
    ------------------------------------------- */
 
 type RateLimitOptions = {
-    max: number; // max requests
-    windowMs: number; // time window
-    scope?: string; // endpoint / feature name
+    max: number;
+    windowMs: number;
+    scope?: string;
 };
 
-type HitStore = Map<string, number[]>;
+type Entry = { timestamps: number[]; lastCleanup: number };
 
-// Single store for all rate limits
-const hits: HitStore = new Map();
+const hits = new Map<string, Entry>();
+
+const CLEANUP_INTERVAL_MS = 60_000;
+const MAX_ENTRIES = 10_000;
 
 /* -------------------------------------------
    IP Resolution
-------------------------------------------- */
+   Prefer X-Real-IP (set by nginx, not spoofable)
+   over X-Forwarded-For (client-controlled)
+   ------------------------------------------- */
 
-/**
- * Performs get client ip operation.
- * @param {Request} req - Description of req
- * @returns {string} Description of return value
- */
 export function getClientIp(req: Request): string {
-    const header =
-        req.headers.get("x-forwarded-for") ||
-        req.headers.get("x-real-ip") ||
-        req.headers.get("cf-connecting-ip");
+    const realIp = req.headers.get("x-real-ip");
+    if (realIp) return realIp.trim();
 
-    if (header) return header.split(",")[0]?.trim() || "unknown";
+    const forwarded = req.headers.get("x-forwarded-for");
+    if (forwarded) return forwarded.split(",")[0]?.trim() || "unknown";
 
     return (req as any)?.ip || "unknown";
 }
 
 /* -------------------------------------------
    Rate Limiter
-------------------------------------------- */
+   ------------------------------------------- */
 
-/**
- * Performs is rate limited operation.
- * @param {Request} req - Description of req
- * @param {RateLimitOptions} { max, windowMs, scope = "global" } - Description of { max, windowMs, scope = "global" }
- * @returns {boolean} Description of return value
- */
 export function isRateLimited(
     req: Request,
     { max, windowMs, scope = "global" }: RateLimitOptions,
 ): boolean {
     const ip = getClientIp(req);
     const now = Date.now();
-
-    // key = ip + endpoint scope
     const key = `${scope}:${ip}`;
-    const timestamps = hits.get(key) || [];
 
-    // sliding window: keep only recent timestamps
-    const recent = timestamps.filter((t) => now - t < windowMs);
-    recent.push(now);
-
-    hits.set(key, recent);
-
-    // opportunistic cleanup (prevents memory leak)
-    if (hits.size > 10_000) {
-        for (const [k, v] of hits) {
-            if (v.length === 0) hits.delete(k);
-        }
+    let entry = hits.get(key);
+    if (!entry) {
+        entry = { timestamps: [], lastCleanup: now };
+        hits.set(key, entry);
     }
 
-    return recent.length > max;
+    // sliding window: keep only recent timestamps
+    entry.timestamps = entry.timestamps.filter((t) => now - t < windowMs);
+    entry.timestamps.push(now);
+
+    // periodic cleanup to prevent memory leak
+    if (hits.size > MAX_ENTRIES || now - entry.lastCleanup > CLEANUP_INTERVAL_MS) {
+        for (const [k, v] of hits) {
+            v.timestamps = v.timestamps.filter((t) => now - t < windowMs);
+            if (v.timestamps.length === 0) hits.delete(k);
+        }
+        entry.lastCleanup = now;
+    }
+
+    return entry.timestamps.length > max;
 }

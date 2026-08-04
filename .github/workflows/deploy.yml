@@ -52,13 +52,54 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
+          timeout: 30s
+          command_timeout: 30m
           script: |
+            set -e
             cd ~/modheshwari
+
+            # Save current commit for rollback
+            PREV_COMMIT=$(git rev-parse HEAD)
+            echo "Previous commit: $PREV_COMMIT"
+
+            # Pull new code
             git stash
-            git pull
+            git pull || { echo "git pull failed, rolling back"; git checkout "$PREV_COMMIT"; exit 1; }
+
             export COMPOSE_HTTP_TIMEOUT=300
             export DOCKER_CLIENT_TIMEOUT=300
-            docker compose build be
-            docker compose build ws
-            docker compose build web
+
+            # Build new images
+            if ! docker compose build; then
+              echo "Build failed, rolling back"
+              git checkout "$PREV_COMMIT"
+              docker compose build
+              docker compose --env-file .env up -d
+              exit 1
+            fi
+
+            # Deploy
             docker compose --env-file .env up -d
+
+            # Health check with retries
+            echo "Waiting for services to start..."
+            sleep 15
+            HEALTHY=false
+            for i in 1 2 3 4 5; do
+              echo "Health check attempt $i/5..."
+              if docker compose exec -T be bun -e "try { const r = await fetch('http://localhost:3001/api/health'); process.exit(r.ok ? 0 : 1) } catch { process.exit(1) }" 2>/dev/null; then
+                HEALTHY=true
+                break
+              fi
+              sleep 10
+            done
+
+            if [ "$HEALTHY" = false ]; then
+              echo "Health check failed, rolling back to $PREV_COMMIT"
+              git checkout "$PREV_COMMIT"
+              docker compose build
+              docker compose --env-file .env up -d
+              exit 1
+            fi
+
+            echo "Deploy successful"

@@ -2,15 +2,24 @@ global:
   resolve_timeout: 5m
 
 route:
-  receiver: 'dev-null'
+  receiver: 'default'
+  group_by: ['alertname', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
 
 receivers:
-  - name: 'dev-null'
-
-  - name: 'pagerduty'
+  - name: 'default'
     pagerduty_configs:
-      - routing_key: 'REPLACE_WITH_PAGERDUTY_INTEGRATION_KEY'
+      - routing_key: '${PAGERDUTY_INTEGRATION_KEY}'
         severity: '{{ .CommonLabels.severity }}'
         details:
           summary: '{{ .CommonAnnotations.summary }}'
           description: '{{ .CommonAnnotations.description }}'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname']
