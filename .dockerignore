@@ -35,6 +35,4 @@ asyncapi.yaml
 eslint.config.js
 tsconfig.json
 turbo.json
-package.json
-bun.lock
 .dockerignore
