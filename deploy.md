@@ -557,3 +557,91 @@ curl http://localhost:3001/api/health
 | `.env.example`                 | Environment template              |
 | `.github/workflows/deploy.yml` | CI/CD pipeline                    |
 | `deploy.md`                    | This file                         |
+
+---
+
+## Lessons Learned (Real Deployment Issues)
+
+### 1. Instance Type Matters for Building
+
+`t2.micro` (1GB RAM) **cannot build this project**. Docker build OOM kills during `bun install` and `bunx turbo run build`. Minimum: `t3.medium` (4GB RAM).
+
+**Symptoms:**
+- `signal: killed` during build
+- Build hangs for 900+ seconds then fails
+
+**Fix:** Upgrade to `t3.medium` via EC2 console → Stop → Change Instance Type → Start.
+
+### 2. `.dockerignore` Must Be Careful
+
+Excluding the wrong files breaks the build. The Dockerfile needs these files in the build context:
+
+**Must KEEP (do NOT exclude):**
+- `package.json`, `bun.lock` — for `bun install`
+- `apps/*/package.json`, `packages/*/package.json` — workspace setup
+- `packages/db/schema.prisma` — for `prisma generate`
+- `turbo.json` — for `turbo run build`
+- `tsconfig.json`, `eslint.config.js` — may be needed during build
+
+**Safe to exclude:**
+- `**/node_modules`, `**/.next`, `**/dist`, `**/build`
+- `.git`, `.env`, `.env*.local`, `**/.turbo`
+- `tests`, `scripts`, `infra`, `monitoring`
+- `*.md`, `*.yaml`, `*.yml`, `nginx.conf`
+- `.vscode`, `.idea`, `*.log`, `coverage`, `.github`
+
+**Symptom of bad `.dockerignore`:**
+```
+Could not find turbo.json or turbo.jsonc
+```
+or
+```
+/package.json: not found
+```
+
+### 3. EC2 Public IP Changes on Stop/Start
+
+When you stop/start or change instance type, the **public IP changes**. You must update:
+
+1. **GitHub Actions secrets** → `HOST` value
+2. **Your SSH config** on local machine
+3. **Any hardcoded IPs** in configs
+
+Find new IP: EC2 Console → Instances → check Public IPv4 address.
+
+### 4. Disk Fills Up Fast with Docker
+
+Docker images + build cache can consume 10-15GB on a 19GB volume. Regular cleanup:
+
+```bash
+# Check disk usage
+df -h /
+
+# Clean everything (images, volumes, cache)
+docker system prune -a --volumes -f
+
+# Check what's using space
+docker system df
+```
+
+**Recommended:** Use 30GB+ gp3 volume for production.
+
+### 5. Build Context Size Affects Speed
+
+Large build context = slow transfers. First build had 83MB context taking 21 minutes just to transfer.
+
+```bash
+# Check context size during build
+docker compose --env-file .env build 2>&1 | grep "transferring context"
+```
+
+With proper `.dockerignore`, context drops to ~16KB — transfers in under 1 second.
+
+### 6. Lint Warnings = Build Failures in CI
+
+`next lint` with `--max-warnings 0` means any warning fails the build. Common issues:
+
+- Unused imports (`useCallback`, `apiFetch`)
+- Unused variables (`logout`, `userLoading`, `Me` type)
+
+Fix: Remove unused imports/variables before pushing.
