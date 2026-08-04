@@ -54,6 +54,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd ~/modheshwari
+            git stash
             git pull
             export COMPOSE_HTTP_TIMEOUT=300
             export DOCKER_CLIENT_TIMEOUT=300
