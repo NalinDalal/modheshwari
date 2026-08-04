@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM oven/bun:1.3.11 AS base
 WORKDIR /app
 
@@ -13,7 +14,7 @@ COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
 COPY packages/db/package.json ./packages/db/package.json
 COPY packages/db/schema.prisma ./packages/db/schema.prisma
-RUN bun install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules

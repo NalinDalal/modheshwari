@@ -55,4 +55,9 @@ jobs:
           script: |
             cd ~/modheshwari
             git pull
-            docker compose --env-file .env up -d --build
+            export COMPOSE_HTTP_TIMEOUT=300
+            export DOCKER_CLIENT_TIMEOUT=300
+            docker compose build be
+            docker compose build ws
+            docker compose build web
+            docker compose --env-file .env up -d
