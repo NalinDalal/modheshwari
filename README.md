@@ -37,6 +37,10 @@ flowchart LR
     H --> C
 ```
 
+## API docs
+
+The current API contract is documented in [openapi.yaml](openapi.yaml). Regenerate it with `bun run openapi:gen` when backend routes change.
+
 ## Repository structure
 
 - apps/be — Bun-based backend API and business workflows
@@ -86,6 +90,16 @@ flowchart LR
    ```
 
 The web app will typically be available at http://localhost:3000, the backend at http://localhost:3001/api/health, and the websocket service at http://localhost:3002/health.
+
+## Demo credentials
+
+If you seed the database with `bun run db:seed`, you can sign in with any of these demo accounts using the password `demo123`:
+
+- `vikram@demo.com` - community head
+- `sunita@demo.com` - community subhead
+- `ramesh@demo.com` - gotra head
+- `rajesh@demo.com` - family head
+- `neha@demo.com` - member
 
 ## Useful commands
 
