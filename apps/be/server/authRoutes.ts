@@ -1,7 +1,14 @@
 import type { Route } from "./types";
 import * as handlers from "./handlers";
+import { handleRefresh } from "../routes/auth/refresh";
 
 export const authRoutes: Route[] = [
+  // Token refresh
+  {
+    path: "/api/refresh",
+    method: "POST",
+    handler: (r: Request) => handleRefresh(r),
+  },
   // Signup routes
   {
     path: "/api/signup/communityhead",
