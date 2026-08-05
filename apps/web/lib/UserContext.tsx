@@ -107,8 +107,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
   }, [fetchUser]);
 
+  const refresh = useCallback(() => fetchUser(true), [fetchUser]);
+
   return (
-    <UserContext.Provider value={{ user, loading, refresh: () => fetchUser(true), logout, updateProfile }}>
+    <UserContext.Provider value={{ user, loading, refresh, logout, updateProfile }}>
       {children}
     </UserContext.Provider>
   );
