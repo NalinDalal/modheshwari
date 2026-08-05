@@ -58,7 +58,7 @@ export default function FamilyPageContent() {
     }, []);
 
     const fetchMembers = useCallback(
-        async (all = false) => {
+        async (all = false, signal?: AbortSignal) => {
             if (!token) return;
 
             setLoading(true);
@@ -67,6 +67,7 @@ export default function FamilyPageContent() {
                     `${API_BASE}/family/members${all ? "?all=true" : ""}`,
                     {
                         headers: { Authorization: `Bearer ${token}` },
+                        signal,
                     },
                 );
 
@@ -80,6 +81,7 @@ export default function FamilyPageContent() {
                 const data = await res.json();
                 setMembers(data.data?.members || []);
             } catch (err) {
+                if (err instanceof DOMException && err.name === "AbortError") return;
                 console.error("Error fetching members:", err);
             } finally {
                 setLoading(false);
@@ -117,7 +119,10 @@ export default function FamilyPageContent() {
     };
 
     useEffect(() => {
-        if (token) fetchMembers(showAll);
+        if (!token) return;
+        const controller = new AbortController();
+        fetchMembers(showAll, controller.signal);
+        return () => controller.abort();
     }, [token, showAll, fetchMembers]);
 
     if (hydrated && !token) return <NotAuthenticated />;
