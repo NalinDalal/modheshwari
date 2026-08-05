@@ -48,7 +48,7 @@ export default function MedicalRecordsPage() {
     return Object.values(form).some((v) => v.trim().length > 0);
   }, [form]);
 
-  const loadRecords = useCallback(async () => {
+  const loadRecords = useCallback(async (signal?: AbortSignal) => {
     setError(null);
     setLoading(true);
 
@@ -56,12 +56,14 @@ export default function MedicalRecordsPage() {
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE}/medical-records`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
+        signal,
       });
       if (!res.ok) throw new Error("Failed to load records");
 
       const json = await res.json();
       setRecords(json.data?.items ?? []);
     } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return;
       console.error(e);
       setError("Could not load medical records.");
     } finally {
@@ -70,7 +72,9 @@ export default function MedicalRecordsPage() {
   }, []);
 
   useEffect(() => {
-    void loadRecords();
+    const controller = new AbortController();
+    void loadRecords(controller.signal);
+    return () => controller.abort();
   }, [loadRecords]);
 
   async function handleCreate(e: React.FormEvent) {
