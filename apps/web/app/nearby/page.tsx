@@ -50,8 +50,7 @@ export default function NearbyPage() {
       return;
     }
 
-    const getErrorMessage = (err: unknown) =>
-      err instanceof Error ? err.message : "Failed to fetch nearby users";
+    const controller = new AbortController();
 
     async function fetchNearby() {
       try {
@@ -60,7 +59,7 @@ export default function NearbyPage() {
 
         const resp = await apiFetch(
           `${API_BASE}/users/nearby?radiusKm=${radiusKm}`,
-          { throwOnError: false },
+          { throwOnError: false, signal: controller.signal },
         );
         const data = resp && (resp.ok === false ? resp.data : resp);
 
@@ -75,14 +74,18 @@ export default function NearbyPage() {
           throw new Error(msg);
         }
       } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
         console.error(err);
-        setError(getErrorMessage(err));
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch nearby users",
+        );
       } finally {
         setLoading(false);
       }
     }
 
     fetchNearby();
+    return () => controller.abort();
   }, [radiusKm, router]);
 
   if (loading) {
