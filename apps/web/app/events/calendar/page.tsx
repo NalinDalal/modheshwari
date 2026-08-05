@@ -44,12 +44,13 @@ export default function EventsCalendar() {
     async function load() {
       setLoading(true);
       try {
-        const start = new Date(monthStart).toISOString();
-        const end = new Date(monthEnd);
-        end.setHours(23, 59, 59, 999);
+        const ms = startOfMonth(current);
+        const me = endOfMonth(current);
+        const start = ms.toISOString();
+        me.setHours(23, 59, 59, 999);
         const json = await apiFetch(
           `${base}/events?status=APPROVED&startDate=${encodeURIComponent(start)}&endDate=${encodeURIComponent(
-            end.toISOString(),
+            me.toISOString(),
           )}&limit=500`,
           { throwOnError: false },
         );
@@ -91,7 +92,7 @@ export default function EventsCalendar() {
       }
     }
     load();
-  }, [base, current, monthEnd, monthStart]);
+  }, [base, current]);
 
   const firstDayIndex = monthStart.getDay();
   const daysInMonth = monthEnd.getDate();

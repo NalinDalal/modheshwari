@@ -1,6 +1,7 @@
 "use client";
 
 import { ToastProvider } from "@repo/ui/toast";
+import { UserProvider } from "../lib/UserContext";
 
 /**
  * Performs  providers operation.
@@ -8,5 +9,9 @@ import { ToastProvider } from "@repo/ui/toast";
  * @returns {React.JSX.Element} Description of return value
  */
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <ToastProvider>{children}</ToastProvider>;
+  return (
+    <ToastProvider>
+      <UserProvider>{children}</UserProvider>
+    </ToastProvider>
+  );
 }
