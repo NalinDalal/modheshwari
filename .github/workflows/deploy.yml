@@ -58,6 +58,27 @@ jobs:
             set -e
             cd ~/modheshwari
 
+            cleanup_docker() {
+              echo "Pruning dangling Docker images and build cache..."
+              docker image prune -f || true
+              docker builder prune -af || true
+            }
+
+            check_disk_space() {
+              MIN_FREE_MB=10000
+              AVAILABLE_MB=$(df -Pm . | awk 'NR==2 {print $4}')
+              echo "Available disk space: ${AVAILABLE_MB}MB"
+              if [ "$AVAILABLE_MB" -lt "$MIN_FREE_MB" ]; then
+                echo "Not enough disk space to build safely. Need at least ${MIN_FREE_MB}MB free."
+                exit 1
+              fi
+            }
+
+            prepare_for_build() {
+              cleanup_docker
+              check_disk_space
+            }
+
             # Save current commit for rollback
             PREV_COMMIT=$(git rev-parse HEAD)
             echo "Previous commit: $PREV_COMMIT"
@@ -69,17 +90,21 @@ jobs:
             export COMPOSE_HTTP_TIMEOUT=300
             export DOCKER_CLIENT_TIMEOUT=300
 
+            prepare_for_build
+
             # Build new images
             if ! docker compose build; then
               echo "Build failed, rolling back"
+              cleanup_docker
               git checkout "$PREV_COMMIT"
+              prepare_for_build
               docker compose build
-              docker compose --env-file .env up -d
+              docker compose --env-file .env up -d --remove-orphans
               exit 1
             fi
 
             # Deploy
-            docker compose --env-file .env up -d
+            docker compose --env-file .env up -d --remove-orphans
 
             # Health check with retries
             echo "Waiting for services to start..."
@@ -96,10 +121,14 @@ jobs:
 
             if [ "$HEALTHY" = false ]; then
               echo "Health check failed, rolling back to $PREV_COMMIT"
+              cleanup_docker
               git checkout "$PREV_COMMIT"
+              prepare_for_build
               docker compose build
-              docker compose --env-file .env up -d
+              docker compose --env-file .env up -d --remove-orphans
               exit 1
             fi
+
+            cleanup_docker
 
             echo "Deploy successful"

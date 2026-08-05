@@ -1,0 +1,30 @@
+name: Scheduled Docker Prune
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # weekly on Sunday at 03:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  prune:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+
+    steps:
+      - name: Prune Docker on EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          timeout: 30s
+          command_timeout: 15m
+          script: |
+            set -e
+            echo "Docker usage before prune:"
+            docker system df || true
+            docker system prune -af --volumes
+            echo "Docker usage after prune:"
+            docker system df || true
