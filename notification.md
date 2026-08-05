@@ -567,7 +567,7 @@ SENDER_EMAIL=verified@yourdomain.com
 
 ```bash
 FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+FIREBASE_PRIVATE_KEY=<redacted-private-key>
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
 ```
 
@@ -629,7 +629,7 @@ SENDER_EMAIL=your-email@gmail.com
 
 # Push Notifications
 FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+FIREBASE_PRIVATE_KEY=<redacted-private-key>
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@project.iam.gserviceaccount.com
 
 # SMS
