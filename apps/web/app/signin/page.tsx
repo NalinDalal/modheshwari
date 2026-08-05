@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
@@ -31,10 +32,12 @@ export default function SigninPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("familyhead");
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   async function handleLogin(e?: React.FormEvent) {
     if (e) e.preventDefault();
     setLoading(true);
+    setAuthError(null);
     try {
       const resp = await apiPost(
         `${API_BASE}/login/${role}`,
@@ -55,15 +58,17 @@ export default function SigninPage() {
         router.push("/me");
       } else {
         const msg =
-          (data && (data.message || data.error)) || "Invalid credentials";
+          (data && (data.message || data.error)) ||
+          "Sign in unsuccessful. Check your credentials and role.";
+        setAuthError(msg);
         toast(msg, { variant: "error" });
       }
     } catch (err) {
       console.error("Login error:", err);
-      toast(
-        "Network error: " + (err instanceof Error ? err.message : String(err)),
-        { variant: "error" },
-      );
+      const msg =
+        "Network error: " + (err instanceof Error ? err.message : String(err));
+      setAuthError(msg);
+      toast(msg, { variant: "error" });
     } finally {
       setLoading(false);
     }
@@ -95,7 +100,7 @@ export default function SigninPage() {
             </p>
           </div>
 
-          <div className="space-y-6">
+          <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <label className="block text-xs font-medium text-jewel-700 mb-3">
                 Select Your Role
@@ -105,13 +110,13 @@ export default function SigninPage() {
                   <label
                     key={r.value}
                     className={`
-                                            relative px-3 py-2 rounded-lg border cursor-pointer text-xs font-medium transition-all duration-300
-                                            ${
-                                              role === r.value
-                                                ? "bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep border-transparent shadow-lg shadow-jewel-gold/25"
-                                                : "bg-jewel-50 text-jewel-700 border-jewel-400/30 hover:bg-jewel-100 hover:border-jewel-gold/40"
-                                            }
-                                        `}
+                      relative px-3 py-2 rounded-lg border cursor-pointer text-xs font-medium transition-all duration-300
+                      ${
+                        role === r.value
+                          ? "bg-gradient-to-r from-jewel-gold to-jewel-500 text-jewel-deep border-transparent shadow-lg shadow-jewel-gold/25"
+                          : "bg-jewel-50 text-jewel-700 border-jewel-400/30 hover:bg-jewel-100 hover:border-jewel-gold/40"
+                      }
+                    `}
                   >
                     <input
                       type="radio"
@@ -156,21 +161,18 @@ export default function SigninPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && email && password) {
-                      void handleLogin();
-                    }
-                  }}
                   required
                 />
               </div>
             </div>
 
-            <Button
-              onClick={handleLogin}
-              disabled={loading || !email || !password}
-              className="w-full"
-            >
+            {authError ? (
+              <div className="rounded-lg border border-jewel-ruby/20 bg-jewel-ruby/5 px-4 py-3 text-sm text-jewel-ruby">
+                {authError}
+              </div>
+            ) : null}
+
+            <Button type="submit" disabled={loading || !email || !password} className="w-full">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -183,23 +185,23 @@ export default function SigninPage() {
                 </span>
               )}
             </Button>
-          </div>
+          </form>
 
           <div className="mt-6 pt-6 border-t border-jewel-400/20">
             <p className="text-center text-sm text-jewel-600">
               Don&apos;t have an account?{" "}
-              <a
+              <Link
                 href="/signup"
                 className="text-jewel-gold hover:text-jewel-500 font-medium transition-colors"
               >
                 Sign Up
-              </a>
+              </Link>
             </p>
           </div>
 
           <div className="mt-4 text-center">
             <span className="text-xs text-jewel-400">
-              Forgot your password? Contact your admin.
+              Forgot your password? Contact the admin or the person who created your account.
             </span>
           </div>
         </div>
