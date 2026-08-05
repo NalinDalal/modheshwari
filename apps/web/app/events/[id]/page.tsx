@@ -75,7 +75,6 @@ export default function EventDetailsPage() {
 
     const [hydrated, setHydrated] = useState(false);
     const [token, setToken] = useState<string | null>(null);
-    const [userId, setUserId] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
     const [event, setEvent] = useState<EventDetails | null>(null);
     const [loading, setLoading] = useState(true);
@@ -95,7 +94,6 @@ export default function EventDetailsPage() {
                 const parts = savedToken.split(".");
                 if (parts.length >= 2) {
                     const payload = JSON.parse(atob(parts[1]!));
-                    setUserId(payload.userId || payload.id);
                     setUserRole(payload.role || payload.userRole || null);
                 }
             } catch (err) {
