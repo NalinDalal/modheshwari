@@ -67,15 +67,14 @@ export default function ResourceRequestsPage(): React.JSX.Element {
   const [requests, setRequests] = useState<ResourceRequest[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    void fetchRequests();
-  }, []);
-
-  async function fetchRequests(): Promise<void> {
+  const fetchRequests = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      const res = await apiFetch(`${API_BASE}/resource-requests`, { throwOnError: false });
-      if (!res.ok) {
+      const res = await apiFetch(`${API_BASE}/resource-requests`, {
+        throwOnError: false,
+        signal,
+      });
+      if (res.ok === false) {
         setRequests([]);
         return;
       }
@@ -86,7 +85,13 @@ export default function ResourceRequestsPage(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchRequests(controller.signal);
+    return () => controller.abort();
+  }, [fetchRequests]);
 
   async function handleCreate(): Promise<void> {
     const token = getToken();
