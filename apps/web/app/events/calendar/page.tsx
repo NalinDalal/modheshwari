@@ -41,6 +41,8 @@ export default function EventsCalendar() {
   const monthEnd = endOfMonth(current);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function load() {
       setLoading(true);
       try {
@@ -52,7 +54,7 @@ export default function EventsCalendar() {
           `${base}/events?status=APPROVED&startDate=${encodeURIComponent(start)}&endDate=${encodeURIComponent(
             me.toISOString(),
           )}&limit=500`,
-          { throwOnError: false },
+          { throwOnError: false, signal: controller.signal },
         );
         let items: EventItem[] = [];
         if (json == null) {
@@ -86,12 +88,14 @@ export default function EventsCalendar() {
           setEvents(items);
         }
       } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
         console.error(e);
       } finally {
         setLoading(false);
       }
     }
     load();
+    return () => controller.abort();
   }, [base, current]);
 
   const firstDayIndex = monthStart.getDay();
