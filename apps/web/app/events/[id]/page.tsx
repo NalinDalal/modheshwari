@@ -104,30 +104,42 @@ export default function EventDetailsPage() {
         }
     }, []);
 
-    const fetchEvent = useCallback(async () => {
+    const fetchEvent = useCallback(async (signal?: AbortSignal) => {
         setLoading(true);
         try {
-            const data = await apiFetch(`${API_BASE}/events/${eventId}`);
+            const data = await apiFetch(`${API_BASE}/events/${eventId}`, { signal });
             const fetchedEvent = data?.data?.event as EventDetails;
             setEvent(fetchedEvent);
 
-            if (userId && fetchedEvent.registrations) {
-                const userRegistration = fetchedEvent.registrations.find(
-                    (r) => r.userId === userId,
-                );
-                setIsRegistered(!!userRegistration);
+            const savedToken = localStorage.getItem("token");
+            if (savedToken) {
+                try {
+                    const parts = savedToken.split(".");
+                    if (parts.length >= 2) {
+                        const payload = JSON.parse(atob(parts[1]!));
+                        const uid = payload.userId || payload.id;
+                        if (uid && fetchedEvent.registrations) {
+                            const userRegistration = fetchedEvent.registrations.find(
+                                (r) => r.userId === uid,
+                            );
+                            setIsRegistered(!!userRegistration);
+                        }
+                    }
+                } catch { /* ignore */ }
             }
         } catch (error) {
+            if (error instanceof DOMException && error.name === "AbortError") return;
             console.error("Error fetching event:", error);
         } finally {
             setLoading(false);
         }
-    }, [eventId, userId]);
+    }, [eventId]);
 
     useEffect(() => {
-        if (hydrated && eventId) {
-            fetchEvent();
-        }
+        if (!hydrated || !eventId) return;
+        const controller = new AbortController();
+        fetchEvent(controller.signal);
+        return () => controller.abort();
     }, [hydrated, eventId, fetchEvent]);
 
     const handleRegister = async () => {
