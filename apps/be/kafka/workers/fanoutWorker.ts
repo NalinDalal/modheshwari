@@ -60,26 +60,19 @@ export async function processFanoutMessage(opts: {
       }));
 
       if (redis) {
-        // Cache notifications per-user in Redis list for quick reads and later persistence
         const TTL = Number(
           process.env.NOTIFICATION_CACHE_TTL_SECONDS || 60 * 60 * 24 * 7,
-        ); // default 7 days
+        );
+        const pipeline = redis.pipeline();
         for (const item of data) {
           const key = `notifications:${item.userId}`;
-          try {
-            await redis.rPush(
-              key,
-              JSON.stringify({ ...item, cachedAt: new Date().toISOString() }),
-            );
-            await redis.expire(key, TTL);
-          } catch (e) {
-            console.warn(
-              "Failed to write notification to redis cache for",
-              item.userId,
-              e,
-            );
-          }
+          pipeline.rPush(
+            key,
+            JSON.stringify({ ...item, cachedAt: new Date().toISOString() }),
+          );
+          pipeline.expire(key, TTL);
         }
+        await pipeline.exec();
         created += data.length;
       } else {
         // prisma.notification.createMany is expected; in tests this is mocked
