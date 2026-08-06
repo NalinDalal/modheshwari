@@ -192,7 +192,7 @@ export async function handleCreateNotification(req: Request) {
                 const now = new Date().toISOString();
                 const previewId = result?.eventId || randomUUID();
                 const PREVIEW_TTL = Number(process.env.NOTIFICATION_PREVIEW_TTL_SECONDS || 60);
-                const pipeline = redis.pipeline();
+                const pipeline = redis.multi();
                 for (const u of users) {
                     const payload = JSON.stringify({ notification: { previewId, message, subject: subject ?? null, createdAt: now } });
                     pipeline.publish(`inapp:${u.id}`, payload);

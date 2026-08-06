@@ -17,6 +17,52 @@ function profileCacheKey(userId: string): string {
   return `user:profile:${userId}`;
 }
 
+function fetchUserWithFamilies(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+
+      profile: {
+        select: {
+          phone: true,
+          address: true,
+          profession: true,
+          gotra: true,
+          location: true,
+          locationLat: true,
+          locationLng: true,
+          bloodGroup: true,
+          allergies: true,
+          medicalNotes: true,
+        },
+      },
+
+      families: {
+        select: {
+          id: true,
+          familyId: true,
+          joinedAt: true,
+          family: {
+            select: {
+              id: true,
+              name: true,
+              uniqueId: true,
+            },
+          },
+          role: true,
+        },
+      },
+    },
+  });
+}
+
+type MeUser = NonNullable<Awaited<ReturnType<typeof fetchUserWithFamilies>>>;
+
 /**
  * GET /api/me
  * Returns the authenticated user's details and the families they belong to.
@@ -32,52 +78,14 @@ export async function handleGetMe(req: Request): Promise<Response> {
     const cacheKey = profileCacheKey(userId);
     const cached = await redis.get(cacheKey);
 
-    let user;
+    let user: MeUser | null;
 
     if (cached) {
-      user = JSON.parse(cached);
+      // Dates come back as ISO strings after the JSON round-trip; the response
+      // is re-serialized below, so the wire shape is identical either way.
+      user = JSON.parse(cached) as MeUser;
     } else {
-      user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          status: true,
-
-          profile: {
-            select: {
-              phone: true,
-              address: true,
-              profession: true,
-              gotra: true,
-              location: true,
-              locationLat: true,
-              locationLng: true,
-              bloodGroup: true,
-              allergies: true,
-              medicalNotes: true,
-            },
-          },
-
-          families: {
-            select: {
-              id: true,
-              familyId: true,
-              joinedAt: true,
-              family: {
-                select: {
-                  id: true,
-                  name: true,
-                  uniqueId: true,
-                },
-              },
-              role: true,
-            },
-          },
-        },
-      });
+      user = await fetchUserWithFamilies(userId);
 
       if (user) {
         await redis.set(cacheKey, JSON.stringify(user), {
