@@ -163,9 +163,7 @@ export async function handleListEvents(req: Request): Promise<Response> {
         const ed = new Date(endDate);
         if (!isNaN(ed.getTime())) dateFilter.lte = ed;
       }
-      if (Object.keys(dateFilter).length > 0) {
-        where.date = dateFilter;
-      }
+      where.date = dateFilter;
     }
 
     // Get total count
@@ -237,7 +235,7 @@ export async function handleListEventsCompact(req: Request): Promise<Response> {
         const ed = new Date(endDate);
         if (!isNaN(ed.getTime())) dateFilter.lte = ed;
       }
-      if (Object.keys(dateFilter).length > 0) where.date = dateFilter;
+      where.date = dateFilter;
     }
 
     const limitParam = Number(url.searchParams.get("limit") || 500);
