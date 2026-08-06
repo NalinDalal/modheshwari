@@ -59,16 +59,20 @@ jobs:
             cd ~/modheshwari
 
             cleanup_docker() {
-              echo "Pruning all unused Docker resources..."
+              echo "Pruning dangling containers, images, volumes, networks..."
               docker container prune -f || true
-              docker image prune -af || true
+              docker image prune -f || true
               docker volume prune -f || true
-              docker builder prune -af || true
               docker network prune -f || true
             }
 
+            cleanup_after_build() {
+              echo "Pruning old build cache (keeping last 2GB)..."
+              docker builder prune -f --keep-storage=2g || true
+            }
+
             check_disk_space() {
-              MIN_FREE_MB=15000
+              MIN_FREE_MB=8000
               AVAILABLE_MB=$(df -Pm . | awk 'NR==2 {print $4}')
               echo "Available disk space: ${AVAILABLE_MB}MB"
               if [ "$AVAILABLE_MB" -lt "$MIN_FREE_MB" ]; then
@@ -131,6 +135,6 @@ jobs:
               exit 1
             fi
 
-            cleanup_docker
+            cleanup_after_build
 
             echo "Deploy successful"
