@@ -34,6 +34,35 @@ async function getRecipientDetails(recipientId: string) {
         return null;
     }
 }
+
+/**
+ * Batch-fetch recipient details for multiple recipients in a single query.
+ */
+async function getRecipientDetailsBatch(recipientIds: string[]) {
+    try {
+        const users = await prisma.user.findMany({
+            where: { id: { in: recipientIds } },
+            include: { profile: true },
+        });
+
+        const map = new Map<string, Awaited<ReturnType<typeof getRecipientDetails>>>();
+        for (const user of users) {
+            map.set(user.id, {
+                email: user.email,
+                fcmToken: user.profile?.fcmToken || null,
+                phone: user.profile?.phone || null,
+                notificationPreferences: user.profile?.notificationPreferences as Record<
+                    string,
+                    boolean
+                > | null,
+            });
+        }
+
+        return map;
+    } catch {
+        return new Map<string, Awaited<ReturnType<typeof getRecipientDetails>>>();
+    }
+}
 /**
  * Check if recipient has enabled channel in their preferences
  */
@@ -141,10 +170,12 @@ export async function startRouterConsumer(): Promise<void> {
                     strategy === "ESCALATION" && priority !== "CRITICAL";
 
                 // Route to each recipient
+                const recipientDetailsMap = await getRecipientDetailsBatch(recipientIds);
+
                 for (const recipientId of recipientIds) {
                     try {
                         // Fetch recipient details
-                        const recipientDetails = await getRecipientDetails(recipientId);
+                        const recipientDetails = recipientDetailsMap.get(recipientId);
                         if (!recipientDetails) {
                             continue;
                         }
