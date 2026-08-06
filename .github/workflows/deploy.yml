@@ -82,13 +82,16 @@ jobs:
               check_disk_space
             }
 
+            # Ensure we're on main branch (previous rollback may have left detached HEAD)
+            git checkout main
+
             # Save current commit for rollback
             PREV_COMMIT=$(git rev-parse HEAD)
             echo "Previous commit: $PREV_COMMIT"
 
             # Pull new code
             git stash
-            git pull || { echo "git pull failed, rolling back"; git checkout "$PREV_COMMIT"; exit 1; }
+            git pull origin main || { echo "git pull failed, rolling back"; git reset --hard "$PREV_COMMIT"; exit 1; }
 
             export COMPOSE_HTTP_TIMEOUT=300
             export DOCKER_CLIENT_TIMEOUT=300
@@ -99,7 +102,7 @@ jobs:
             if ! docker compose build --no-parallel; then
               echo "Build failed, rolling back to $PREV_COMMIT"
               cleanup_docker
-              git checkout "$PREV_COMMIT"
+              git reset --hard "$PREV_COMMIT"
               docker compose --env-file .env up -d --remove-orphans
               exit 1
             fi
@@ -123,7 +126,7 @@ jobs:
             if [ "$HEALTHY" = false ]; then
               echo "Health check failed, rolling back to $PREV_COMMIT"
               cleanup_docker
-              git checkout "$PREV_COMMIT"
+              git reset --hard "$PREV_COMMIT"
               docker compose --env-file .env up -d --remove-orphans
               exit 1
             fi
