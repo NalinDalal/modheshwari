@@ -78,12 +78,20 @@ export async function handleCreateResourceRequest(
 
         /* -------- Identify approvers -------- */
 
-        const approvers: Array<{ id: string; role: string; name: string }> = [];
-
-        const communityHead = await prisma.user.findFirst({
-            where: { role: "COMMUNITY_HEAD", status: true },
-            select: { id: true, name: true },
-        });
+        const [communityHead, communitySub, profile] = await Promise.all([
+            prisma.user.findFirst({
+                where: { role: "COMMUNITY_HEAD", status: true },
+                select: { id: true, name: true },
+            }),
+            prisma.user.findFirst({
+                where: { role: "COMMUNITY_SUBHEAD", status: true },
+                select: { id: true, name: true },
+            }),
+            prisma.profile.findUnique({
+                where: { userId },
+                select: { gotra: true },
+            }),
+        ]);
 
         if (communityHead) {
             approvers.push({
@@ -93,11 +101,6 @@ export async function handleCreateResourceRequest(
             });
         }
 
-        const communitySub = await prisma.user.findFirst({
-            where: { role: "COMMUNITY_SUBHEAD", status: true },
-            select: { id: true, name: true },
-        });
-
         if (communitySub) {
             approvers.push({
                 id: communitySub.id,
@@ -106,27 +109,25 @@ export async function handleCreateResourceRequest(
             });
         }
 
-        const profile = await prisma.profile.findUnique({
-            where: { userId },
-            select: { gotra: true },
-        });
+        let gotraHead: { id: string; name: string } | null = null;
 
         if (profile?.gotra) {
-            const gotraHead = await prisma.user.findFirst({
+            gotraHead = await prisma.user.findFirst({
                 where: {
                     role: "GOTRA_HEAD",
                     status: true,
                     profile: { gotra: profile.gotra },
                 },
+                select: { id: true, name: true },
             });
+        }
 
-            if (gotraHead) {
-                approvers.push({
-                    id: gotraHead.id,
-                    role: "GOTRA_HEAD",
-                    name: gotraHead.name,
-                });
-            }
+        if (gotraHead) {
+            approvers.push({
+                id: gotraHead.id,
+                role: "GOTRA_HEAD",
+                name: gotraHead.name,
+            });
         }
 
         /* -------- Transaction -------- */
