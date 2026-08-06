@@ -8,6 +8,12 @@ on:
 permissions:
   contents: read
 
+# Shared with the deploy job so a prune can never land mid-deploy, when the
+# stack's images and named volumes are briefly unreferenced.
+concurrency:
+  group: ec2-production
+  cancel-in-progress: false
+
 jobs:
   prune:
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -25,6 +31,15 @@ jobs:
             set -e
             echo "Docker usage before prune:"
             docker system df || true
-            docker system prune -af --volumes
+
+            # Deliberately not `-af --volumes`:
+            #   -a         evicts every image not backed by a running container,
+            #              so the next deploy rebuilds cold and hits the same
+            #              disk pressure this prune exists to prevent.
+            #   --volumes  can reap the stack's named volumes (postgres-data,
+            #              redis-data, kafka-data) while they are unattached.
+            docker system prune -f --filter "until=72h"
+            docker builder prune -f --keep-storage=10g
+
             echo "Docker usage after prune:"
             docker system df || true
