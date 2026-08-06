@@ -58,12 +58,12 @@ export async function handleGetMessages(
         createdAt: true,
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: "asc",
       },
       take: limit,
     });
 
-    return success("Messages retrieved", messages.reverse());
+    return success("Messages retrieved", messages);
   } catch {
     return failure("Failed to fetch messages", null, 500);
   }
