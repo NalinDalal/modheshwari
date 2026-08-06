@@ -7,10 +7,17 @@ import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 
 import { requireAuth } from "../authMiddleware";
+import getRedisClient from "../lib/redisClient";
 import type { TreeView, TreeFormat } from "./types";
 import { buildAncestorTree, buildDescendantTree, buildFullTree } from "./builders";
 import { buildGraphData } from "./graph";
 import { getReciprocalType } from "./utils";
+
+const FAMILY_TREE_TTL = Number(process.env.FAMILY_TREE_TTL_SECONDS || 60);
+
+function familyTreeKey(userId: string, view: TreeView, depth: number): string {
+  return `familyTree:${userId}:${view}:${depth}`;
+}
 
 /**
  * GET /api/family/tree
@@ -64,12 +71,26 @@ export async function handleGetFamilyTree(req: Request): Promise<Response> {
     // Build tree based on view
     let treeNode = null;
 
-    if (view === "ancestors") {
-      treeNode = await buildAncestorTree(userId, depth);
-    } else if (view === "descendants") {
-      treeNode = await buildDescendantTree(userId, depth);
+    const redis = await getRedisClient();
+    const cacheKey = familyTreeKey(userId, view, depth);
+    const cached = await redis.get(cacheKey);
+
+    if (cached) {
+      treeNode = JSON.parse(cached);
     } else {
-      treeNode = await buildFullTree(userId, depth);
+      if (view === "ancestors") {
+        treeNode = await buildAncestorTree(userId, depth);
+      } else if (view === "descendants") {
+        treeNode = await buildDescendantTree(userId, depth);
+      } else {
+        treeNode = await buildFullTree(userId, depth);
+      }
+
+      if (treeNode) {
+        await redis.set(cacheKey, JSON.stringify(treeNode), {
+          EX: FAMILY_TREE_TTL,
+        });
+      }
     }
 
     if (!treeNode) {
@@ -190,6 +211,16 @@ export async function handleCreateRelationship(
       }
     }
 
+    // Invalidate family tree caches for both users
+    const redis = await getRedisClient();
+    const views: TreeView[] = ["ancestors", "descendants", "full"];
+    for (const view of views) {
+      for (const depth of [1, 2, 3, 5, 10]) {
+        await redis.del(familyTreeKey(userId, view, depth));
+        await redis.del(familyTreeKey(targetUserId, view, depth));
+      }
+    }
+
     return success(
       "Relationship created",
       { relation, reciprocalRelation },
@@ -240,6 +271,16 @@ export async function handleDeleteRelationship(
     await prisma.userRelation.delete({
       where: { id: relationId },
     });
+
+    // Invalidate family tree caches for both users
+    const redis = await getRedisClient();
+    const views: TreeView[] = ["ancestors", "descendants", "full"];
+    for (const view of views) {
+      for (const depth of [1, 2, 3, 5, 10]) {
+        await redis.del(familyTreeKey(relation.fromUserId, view, depth));
+        await redis.del(familyTreeKey(relation.toUserId, view, depth));
+      }
+    }
 
     return success("Relationship deleted", {}, 200);
   } catch {

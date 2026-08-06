@@ -2,6 +2,15 @@ import prisma from "@modheshwari/db";
 import { success, failure } from "@modheshwari/utils/response";
 
 import { getUserIdFromRequest } from "./auth";
+import getRedisClient from "../../lib/redisClient";
+
+const CONVERSATIONS_TTL = Number(
+  process.env.CONVERSATIONS_TTL_SECONDS || 30,
+);
+
+function conversationsCacheKey(userId: string): string {
+  return `user:conversations:${userId}`;
+}
 
 /**
  * GET /api/messages/conversations
@@ -14,82 +23,96 @@ export async function handleGetConversations(req: Request): Promise<Response> {
   }
 
   try {
-    const conversations = await prisma.conversation.findMany({
-      where: {
-        participants: {
-          has: userId,
-        },
-      },
-      orderBy: {
-        lastMessageAt: "desc",
-      },
-      include: {
-        messages: {
-          take: 1,
-          orderBy: {
-            createdAt: "desc",
+    const redis = await getRedisClient();
+    const cacheKey = conversationsCacheKey(userId);
+    const cached = await redis.get(cacheKey);
+
+    let conversationsWithDetails;
+
+    if (cached) {
+      conversationsWithDetails = JSON.parse(cached);
+    } else {
+      const conversations = await prisma.conversation.findMany({
+        where: {
+          participants: {
+            has: userId,
           },
         },
-      },
-    });
+        orderBy: {
+          lastMessageAt: "desc",
+        },
+        include: {
+          messages: {
+            take: 1,
+            orderBy: {
+              createdAt: "desc",
+            },
+          },
+        },
+      });
 
-    // Get participant details — batch all participant IDs into a single query
-    const allOtherIds = new Set<string>();
-    for (const conv of conversations) {
-      for (const pid of conv.participants) {
-        if (pid !== userId) allOtherIds.add(pid);
+      // Get participant details — batch all participant IDs into a single query
+      const allOtherIds = new Set<string>();
+      for (const conv of conversations) {
+        for (const pid of conv.participants) {
+          if (pid !== userId) allOtherIds.add(pid);
+        }
       }
-    }
 
-    const participantUsers =
-      allOtherIds.size > 0
-        ? await prisma.user.findMany({
-            where: { id: { in: [...allOtherIds] } },
-            select: {
-              id: true,
-              name: true,
-              profile: {
-                select: {
-                  profession: true,
-                  location: true,
+      const participantUsers =
+        allOtherIds.size > 0
+          ? await prisma.user.findMany({
+              where: { id: { in: [...allOtherIds] } },
+              select: {
+                id: true,
+                name: true,
+                profile: {
+                  select: {
+                    profession: true,
+                    location: true,
+                  },
                 },
               },
-            },
-          })
-        : [];
+            })
+          : [];
 
-    const participantMap = new Map(participantUsers.map((u) => [u.id, u]));
+      const participantMap = new Map(participantUsers.map((u) => [u.id, u]));
 
-    // Batch unread counts — single query with groupBy
-    const unreadCounts = await prisma.message.groupBy({
-      by: ["conversationId"],
-      where: {
-        conversationId: { in: conversations.map((c) => c.id) },
-        senderId: { not: userId },
-        NOT: { readBy: { has: userId } },
-      },
-      _count: true,
-    });
+      // Batch unread counts — single query with groupBy
+      const unreadCounts = await prisma.message.groupBy({
+        by: ["conversationId"],
+        where: {
+          conversationId: { in: conversations.map((c) => c.id) },
+          senderId: { not: userId },
+          NOT: { readBy: { has: userId } },
+        },
+        _count: true,
+      });
 
-    const unreadMap = new Map(
-      unreadCounts.map((u) => [u.conversationId, u._count]),
-    );
-
-    const conversationsWithDetails = conversations.map((conv) => {
-      const otherParticipantIds = conv.participants.filter(
-        (id: string) => id !== userId,
+      const unreadMap = new Map(
+        unreadCounts.map((u) => [u.conversationId, u._count]),
       );
-      return {
-        id: conv.id,
-        lastMessageAt: conv.lastMessageAt,
-        lastMessage: (conv as any).lastMessage,
-        participants: otherParticipantIds
-          .map((pid: string) => participantMap.get(pid))
-          .filter(Boolean),
-        unreadCount: unreadMap.get(conv.id) ?? 0,
-        latestMessage: conv.messages[0] ?? null,
-      };
-    });
+
+      conversationsWithDetails = conversations.map((conv) => {
+        const otherParticipantIds = conv.participants.filter(
+          (id: string) => id !== userId,
+        );
+        return {
+          id: conv.id,
+          lastMessageAt: conv.lastMessageAt,
+          lastMessage: (conv as any).lastMessage,
+          participants: otherParticipantIds
+            .map((pid: string) => participantMap.get(pid))
+            .filter(Boolean),
+          unreadCount: unreadMap.get(conv.id) ?? 0,
+          latestMessage: conv.messages[0] ?? null,
+        };
+      });
+
+      await redis.set(cacheKey, JSON.stringify(conversationsWithDetails), {
+        EX: CONVERSATIONS_TTL,
+      });
+    }
 
     return success("Conversations retrieved", conversationsWithDetails);
   } catch {
@@ -142,7 +165,7 @@ export async function handleCreateConversation(
       },
     });
 
-    if (existingConversation) {
+  if (existingConversation) {
       return success("Conversation found", existingConversation);
     }
 
@@ -152,6 +175,16 @@ export async function handleCreateConversation(
         participants: allParticipants,
       },
     });
+
+    // Invalidate conversations cache for all participants
+    try {
+      const redis = await getRedisClient();
+      for (const pid of allParticipants) {
+        await redis.del(conversationsCacheKey(pid));
+      }
+    } catch {
+      // Cache invalidation failure is non-critical
+    }
 
     return success("Conversation created", conversation, 201);
   } catch (err: any) {

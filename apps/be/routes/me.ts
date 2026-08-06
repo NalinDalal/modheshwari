@@ -9,6 +9,13 @@ import {
   normalizeBloodGroup,
 } from "../utils/searchParser";
 import { logger } from "../lib/logger";
+import getRedisClient from "../lib/redisClient";
+
+const PROFILE_TTL = Number(process.env.PROFILE_TTL_SECONDS || 300);
+
+function profileCacheKey(userId: string): string {
+  return `user:profile:${userId}`;
+}
 
 /**
  * GET /api/me
@@ -21,47 +28,63 @@ export async function handleGetMe(req: Request): Promise<Response> {
     if (!userId) return failure("Unauthorized", "Auth Error", 401);
 
     // --- Step 2: Fetch user + family memberships ---
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        status: true,
+    const redis = await getRedisClient();
+    const cacheKey = profileCacheKey(userId);
+    const cached = await redis.get(cacheKey);
 
-        profile: {
-          select: {
-            phone: true,
-            address: true,
-            profession: true,
-            gotra: true,
-            location: true,
-            locationLat: true,
-            locationLng: true,
-            bloodGroup: true,
-            allergies: true,
-            medicalNotes: true,
-          },
-        },
+    let user;
 
-        families: {
-          select: {
-            id: true,
-            familyId: true,
-            joinedAt: true,
-            family: {
-              select: {
-                id: true,
-                name: true,
-                uniqueId: true,
-              },
+    if (cached) {
+      user = JSON.parse(cached);
+    } else {
+      user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          status: true,
+
+          profile: {
+            select: {
+              phone: true,
+              address: true,
+              profession: true,
+              gotra: true,
+              location: true,
+              locationLat: true,
+              locationLng: true,
+              bloodGroup: true,
+              allergies: true,
+              medicalNotes: true,
             },
-            role: true,
+          },
+
+          families: {
+            select: {
+              id: true,
+              familyId: true,
+              joinedAt: true,
+              family: {
+                select: {
+                  id: true,
+                  name: true,
+                  uniqueId: true,
+                },
+              },
+              role: true,
+            },
           },
         },
-      },
-    });
+      });
+
+      if (user) {
+        await redis.set(cacheKey, JSON.stringify(user), {
+          EX: PROFILE_TTL,
+        });
+      }
+    }
 
     if (!user) return failure("User not found", "Not Found", 404);
 
@@ -261,6 +284,14 @@ export async function handleUpdateMe(req: Request): Promise<Response> {
         bloodGroup: true,
       },
     });
+
+    // Invalidate profile cache
+    try {
+      const redis = await getRedisClient();
+      await redis.del(profileCacheKey(userId));
+    } catch {
+      // Cache invalidation failure is non-critical
+    }
 
     // --- Step 4: Send success response ---
     return success("Profile updated successfully", updatedProfile);
