@@ -78,6 +78,8 @@ export async function handleCreateResourceRequest(
 
         /* -------- Identify approvers -------- */
 
+        const approvers: Array<{ id: string; role: string; name: string }> = [];
+
         const [communityHead, communitySub, profile] = await Promise.all([
             prisma.user.findFirst({
                 where: { role: "COMMUNITY_HEAD", status: true },

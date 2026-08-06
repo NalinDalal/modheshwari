@@ -63,7 +63,7 @@ export async function processFanoutMessage(opts: {
         const TTL = Number(
           process.env.NOTIFICATION_CACHE_TTL_SECONDS || 60 * 60 * 24 * 7,
         );
-        const pipeline = redis.pipeline();
+        const pipeline = redis.multi();
         for (const item of data) {
           const key = `notifications:${item.userId}`;
           pipeline.rPush(
