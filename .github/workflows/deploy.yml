@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   ci:
@@ -36,14 +37,57 @@ jobs:
       - name: Run all checks and build
         run: bunx turbo run lint check-types build
 
-  deploy:
+  build-and-push:
     needs: ci
     runs-on: blacksmith-4vcpu-ubuntu-2404
     if: github.ref == 'refs/heads/main'
 
-    # Shared with the scheduled Docker prune so the two can never touch the
-    # EC2 box at the same time. Scoped to this job so PR CI is not queued
-    # behind a running production deploy.
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push be
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: runner-be
+          push: true
+          tags: ghcr.io/nerdev-co/modheshwari-be:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push web
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: runner-web
+          push: true
+          tags: ghcr.io/nerdev-co/modheshwari-web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push ws
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: runner-ws
+          push: true
+          tags: ghcr.io/nerdev-co/modheshwari-ws:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    if: github.ref == 'refs/heads/main'
+
     concurrency:
       group: ec2-production
       cancel-in-progress: false
@@ -61,76 +105,14 @@ jobs:
             set -e
             cd ~/modheshwari
 
-            cleanup_docker() {
-              echo "Pruning dangling containers, images, volumes, networks..."
-              docker container prune -f || true
-              docker image prune -f || true
-              docker volume prune -f || true
-              docker network prune -f || true
-            }
-
-            cleanup_after_build() {
-              echo "Pruning old build cache (keeping last 2GB)..."
-              docker builder prune -f --keep-storage=2g || true
-            }
-
-            check_disk_space() {
-              MIN_FREE_MB=8000
-              AVAILABLE_MB=$(df -Pm . | awk 'NR==2 {print $4}')
-              echo "Available disk space: ${AVAILABLE_MB}MB"
-              if [ "$AVAILABLE_MB" -lt "$MIN_FREE_MB" ]; then
-                echo "Not enough disk space to build safely. Need at least ${MIN_FREE_MB}MB free."
-                exit 1
-              fi
-            }
-
-            prepare_for_build() {
-              cleanup_docker
-              check_disk_space
-            }
-
-            # Build sequentially: building all three at once is what exhausted
-            # the disk previously. Used by both the forward and rollback paths.
-            build_images() {
-              docker compose build be && docker compose build ws && docker compose build web
-            }
-
-            rollback_to() {
-              TARGET="$1"
-              echo "Rolling back to $TARGET"
-              cleanup_docker
-              git reset --hard "$TARGET"
-              if ! build_images; then
-                echo "Rollback build failed; leaving current containers running"
-                exit 1
-              fi
-              docker compose --env-file .env up -d --remove-orphans
-              exit 1
-            }
-
-            # Ensure we're on main branch (previous rollback may have left detached HEAD)
-            git checkout main
-
-            # Save current commit for rollback
-            PREV_COMMIT=$(git rev-parse HEAD)
-            echo "Previous commit: $PREV_COMMIT"
+            # Login to GHCR
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             export COMPOSE_HTTP_TIMEOUT=300
             export DOCKER_CLIENT_TIMEOUT=300
 
-            # Reclaim disk and bail before touching the working tree, so a
-            # low-disk abort leaves the box on the currently deployed commit.
-            prepare_for_build
-
-            # Discard local drift, then pull new code. Deliberately not `git
-            # stash`: stashes were never popped and accumulated on the box.
-            git reset --hard HEAD
-            git pull origin main || { echo "git pull failed, rolling back"; git reset --hard "$PREV_COMMIT"; exit 1; }
-
-            if ! build_images; then
-              echo "Build failed"
-              rollback_to "$PREV_COMMIT"
-            fi
+            # Pull pre-built images
+            docker compose pull be web ws
 
             # Deploy
             docker compose --env-file .env up -d --remove-orphans
@@ -150,9 +132,10 @@ jobs:
 
             if [ "$HEALTHY" = false ]; then
               echo "Health check failed"
-              rollback_to "$PREV_COMMIT"
+              exit 1
             fi
 
-            cleanup_after_build
+            # Cleanup old images
+            docker image prune -f || true
 
             echo "Deploy successful"
