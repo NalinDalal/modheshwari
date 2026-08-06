@@ -15,8 +15,7 @@
     "openapi:gen": "bun run packages/scripts/generateOpenapi.ts",
     "asyncapi:gen": "bun run packages/scripts/generate-asyncapi.ts",
     "db:studio": "bun scripts/prisma-studio.ts",
-    "db:seed": "tsx packages/db/seed.ts",
-    "stress-test": "bash ./scripts/run-stress-test.sh"
+    "db:seed": "tsx packages/db/seed.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
