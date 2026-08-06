@@ -12,24 +12,62 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Make scripts executable
-        run: |
-          chmod +x ./scripts/*.sh
-
-      - name: Load .env if present (local testing only)
-        run: |
-          if [ -f .env ]; then
-            while IFS='=' read -r key val; do
-              if [[ -n "$key" && ! "$key" =~ ^# ]]; then
-                echo "$key=$val" >> $GITHUB_ENV
-              fi
-            done < .env
-          fi
-
       - name: Run Postgres backup
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          PG_DOCKER_IMAGE: ${{ vars.PG_DOCKER_IMAGE }}
         run: |
-          ./scripts/postgres-backup.sh
+          set -euo pipefail
+
+          BACKUP_DIR="$GITHUB_WORKSPACE/scripts/backups"
+          mkdir -p "$BACKUP_DIR"
+
+          TIMESTAMP=$(date -u +"%Y%m%dT%H%M%SZ")
+          FILENAME="db-${TIMESTAMP}.dump"
+          OUT_PATH="$BACKUP_DIR/$FILENAME"
+
+          echo "Creating PostgreSQL dump: $OUT_PATH"
+
+          if command -v pg_dump >/dev/null 2>&1; then
+            if [ -n "${DATABASE_URL:-}" ]; then
+              pg_dump --format=custom --file="$OUT_PATH" --dbname="$DATABASE_URL"
+            else
+              pg_dump --format=custom --file="$OUT_PATH"
+            fi
+          else
+            echo "pg_dump not found locally. Trying Docker fallback..."
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "pg_dump not found and Docker is not available." >&2
+              exit 127
+            fi
+
+            DOCKER_IMAGE="${PG_DOCKER_IMAGE:-postgres:17}"
+            echo "Using Docker image: $DOCKER_IMAGE"
+
+            docker run --rm \
+              -v "$BACKUP_DIR":/backups \
+              -e DATABASE_URL="${DATABASE_URL:-}" \
+              -e PGHOST="${PGHOST:-}" -e PGPORT="${PGPORT:-}" -e PGUSER="${PGUSER:-}" -e PGPASSWORD="${PGPASSWORD:-}" -e PGDATABASE="${PGDATABASE:-}" \
+              "$DOCKER_IMAGE" bash -lc "if [ -n \"\$DATABASE_URL\" ]; then pg_dump --format=custom --file=/backups/${FILENAME} --dbname=\"\$DATABASE_URL\"; else pg_dump --format=custom --file=/backups/${FILENAME}; fi"
+          fi
+
+          echo "Backup created: $OUT_PATH"
+
+          if [ -n "${AWS_S3_BUCKET:-}" ]; then
+            if [ -z "${AWS_ACCESS_KEY_ID:-}" ] || [ -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
+              echo "AWS credentials not set; skipping S3 upload" >&2
+            elif ! command -v aws >/dev/null 2>&1; then
+              echo "aws CLI not found; skipping S3 upload" >&2
+            else
+              echo "Uploading $OUT_PATH to s3://$AWS_S3_BUCKET/"
+              aws s3 cp "$OUT_PATH" "s3://$AWS_S3_BUCKET/$(basename "$OUT_PATH")"
+              echo "Upload complete"
+            fi
+          fi
+
+          echo "Done."
