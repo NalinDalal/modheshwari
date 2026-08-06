@@ -101,9 +101,10 @@ export async function handleGetConversations(req: Request): Promise<Response> {
           id: conv.id,
           lastMessageAt: conv.lastMessageAt,
           lastMessage: (conv as any).lastMessage,
-          participants: otherParticipantIds
-            .map((pid: string) => participantMap.get(pid))
-            .filter(Boolean),
+          participants: otherParticipantIds.flatMap((pid: string) => {
+            const p = participantMap.get(pid);
+            return p ? [p] : [];
+          }),
           unreadCount: unreadMap.get(conv.id) ?? 0,
           latestMessage: conv.messages[0] ?? null,
         };
