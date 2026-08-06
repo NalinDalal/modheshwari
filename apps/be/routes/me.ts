@@ -104,7 +104,7 @@ export async function handleGetMe(req: Request): Promise<Response> {
       role: user.role,
       status: user.status,
       profile: user.profile,
-      families: user.families.map((fm) => ({
+      families: user.families.map((fm: any) => ({
         id: fm.id,
         familyId: fm.familyId,
         role: fm.role,

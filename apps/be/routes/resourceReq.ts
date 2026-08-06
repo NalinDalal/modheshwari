@@ -77,6 +77,7 @@ export async function handleCreateResourceRequest(
         }
 
         /* -------- Identify approvers -------- */
+        const approvers: { id: string; role: string; name: string | null }[] = [];
 
         const approvers: Array<{ id: string; role: string; name: string }> = [];
 
