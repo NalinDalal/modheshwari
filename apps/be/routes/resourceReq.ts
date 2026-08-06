@@ -77,9 +77,8 @@ export async function handleCreateResourceRequest(
         }
 
         /* -------- Identify approvers -------- */
-        const approvers: { id: string; role: string; name: string | null }[] = [];
 
-        const approvers: Array<{ id: string; role: string; name: string }> = [];
+        const approvers: Array<{ id: string; role: string; name: string | null }> = [];
 
         const [communityHead, communitySub, profile] = await Promise.all([
             prisma.user.findFirst({
@@ -149,7 +148,7 @@ export async function handleCreateResourceRequest(
                     data: {
                         requestId: rr.id,
                         approverId: a.id,
-                        approverName: a.name,
+                        approverName: a.name ?? "",
                         role: a.role as any,
                         status: "PENDING",
                     },
