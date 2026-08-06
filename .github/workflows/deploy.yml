@@ -103,11 +103,12 @@ jobs:
             prepare_for_build
 
             # Build images sequentially to avoid peak disk usage
-            if ! docker compose build --no-parallel; then
+            if ! (docker compose build be && docker compose build ws && docker compose build web); then
               echo "Build failed, rolling back to $PREV_COMMIT"
               cleanup_docker
               git reset --hard "$PREV_COMMIT"
-              docker compose --env-file .env up -d --remove-orphans
+              docker compose --env-file .env down --rmi local 2>/dev/null || true
+              docker compose --env-file .env up -d --remove-orphans --build
               exit 1
             fi
 
@@ -131,7 +132,8 @@ jobs:
               echo "Health check failed, rolling back to $PREV_COMMIT"
               cleanup_docker
               git reset --hard "$PREV_COMMIT"
-              docker compose --env-file .env up -d --remove-orphans
+              docker compose --env-file .env down --rmi local 2>/dev/null || true
+              docker compose --env-file .env up -d --remove-orphans --build
               exit 1
             fi
 
