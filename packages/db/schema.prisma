@@ -92,6 +92,8 @@ model Family {
   head         User?          @relation("FamilyHead", fields: [headId], references: [id])
   members      FamilyMember[]
   MemberInvite MemberInvite[]
+
+  @@index([headId])
 }
 
 model FamilyMember {
@@ -117,6 +119,8 @@ model UserRelation {
 
   @@unique([fromUserId, toUserId, type])
   @@index([toUserId])
+  @@index([fromUserId])
+  @@index([fromUserId, type])
 }
 
 model Event {
@@ -162,6 +166,7 @@ model EventRegistration {
 
   @@index([eventId])
   @@index([userId])
+  @@unique([eventId, userId])
 }
 
 model Payment {
@@ -282,6 +287,7 @@ model Notification {
   @@index([userId, read])
   @@index([createdAt])
   @@index([deliveryStrategy, read])
+  @@index([userId, createdAt])
 }
 
 model NotificationDelivery {
