@@ -22,15 +22,36 @@ COPY . .
 RUN bunx prisma generate --schema packages/db/schema.prisma
 RUN bunx turbo run build --filter=web...
 
-FROM base AS runner
+FROM base AS runner-base
 ENV NODE_ENV=production
 RUN groupadd --system app && useradd --system --gid app app
-COPY --from=builder --chown=app:app /app/apps/be ./apps/be
-COPY --from=builder --chown=app:app /app/apps/ws ./apps/ws
-COPY --from=builder --chown=app:app /app/apps/web ./apps/web
+COPY --from=deps /app/package.json /app/bun.lock ./
+COPY --from=deps /app/apps/be/package.json ./apps/be/package.json
+COPY --from=deps /app/apps/ws/package.json ./apps/ws/package.json
+COPY --from=deps /app/apps/web/package.json ./apps/web/package.json
+COPY --from=deps /app/packages/ui/package.json ./packages/ui/package.json
+COPY --from=deps /app/packages/utils/package.json ./packages/utils/package.json
+COPY --from=deps /app/packages/eslint-config/package.json ./packages/eslint-config/package.json
+COPY --from=deps /app/packages/typescript-config/package.json ./packages/typescript-config/package.json
+COPY --from=deps /app/packages/db/package.json ./packages/db/package.json
+COPY --from=deps /app/packages/db/schema.prisma ./packages/db/schema.prisma
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile --production
 COPY --from=builder --chown=app:app /app/packages ./packages
-COPY --from=builder --chown=app:app /app/node_modules ./node_modules
-USER app
 
-EXPOSE 3000 3001 3002
+FROM runner-base AS runner-be
+COPY --from=builder --chown=app:app /app/apps/be ./apps/be
+USER app
+EXPOSE 3001
+CMD ["sh"]
+
+FROM runner-base AS runner-web
+COPY --from=builder --chown=app:app /app/apps/web ./apps/web
+USER app
+EXPOSE 3000
+CMD ["sh"]
+
+FROM runner-base AS runner-ws
+COPY --from=builder --chown=app:app /app/apps/ws ./apps/ws
+USER app
+EXPOSE 3002
 CMD ["sh"]

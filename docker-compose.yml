@@ -66,6 +66,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner-be
     container_name: modheshwari-be
     restart: unless-stopped
     env_file:
@@ -97,6 +98,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner-web
     container_name: modheshwari-web
     restart: unless-stopped
     env_file:
@@ -124,6 +126,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner-ws
     container_name: modheshwari-ws
     restart: unless-stopped
     env_file:

@@ -59,13 +59,16 @@ jobs:
             cd ~/modheshwari
 
             cleanup_docker() {
-              echo "Pruning dangling Docker images and build cache..."
-              docker image prune -f || true
+              echo "Pruning all unused Docker resources..."
+              docker container prune -f || true
+              docker image prune -af || true
+              docker volume prune -f || true
               docker builder prune -af || true
+              docker network prune -f || true
             }
 
             check_disk_space() {
-              MIN_FREE_MB=10000
+              MIN_FREE_MB=15000
               AVAILABLE_MB=$(df -Pm . | awk 'NR==2 {print $4}')
               echo "Available disk space: ${AVAILABLE_MB}MB"
               if [ "$AVAILABLE_MB" -lt "$MIN_FREE_MB" ]; then
@@ -92,13 +95,11 @@ jobs:
 
             prepare_for_build
 
-            # Build new images
-            if ! docker compose build; then
-              echo "Build failed, rolling back"
+            # Build images sequentially to avoid peak disk usage
+            if ! docker compose build --no-parallel; then
+              echo "Build failed, rolling back to $PREV_COMMIT"
               cleanup_docker
               git checkout "$PREV_COMMIT"
-              prepare_for_build
-              docker compose build
               docker compose --env-file .env up -d --remove-orphans
               exit 1
             fi
@@ -123,8 +124,6 @@ jobs:
               echo "Health check failed, rolling back to $PREV_COMMIT"
               cleanup_docker
               git checkout "$PREV_COMMIT"
-              prepare_for_build
-              docker compose build
               docker compose --env-file .env up -d --remove-orphans
               exit 1
             fi
